@@ -1,0 +1,223 @@
+---
+#
+# Tasks and roles for all hosts
+#
+- hosts: home_server
+  gather_facts: false
+
+  # pre_tasks:
+  #     - import_tasks: tasks/ssh_juggle_port.yml
+  #       tags:
+  #           - port
+
+- hosts: home_server
+  become: true
+
+  roles:
+      #
+      # Basics
+      #
+      - role: system
+        tags:
+            - system
+
+      # - role: geerlingguy.security
+      #   tags:
+      #       - security
+
+      # - role: docker
+      #   tags:
+      #       - docker
+
+      # - role: network/avahi
+      #   tags:
+      #       - avahi
+      #   when: enable_avahi | default(False)
+
+      # - role: chriswayg.msmtp-mailer
+      #   tags:
+      #       - msmtp
+
+      # - role: oefenweb.dns
+      #   tags:
+      #       - dns
+
+      # - role: geerlingguy.ntp
+      #   tags:
+      #       - ntp
+
+      # - role: linux-system-roles.cockpit
+      #   tags:
+      #       - cockpit
+      #   when: enable_cockpit | default(False)
+
+      # #
+      # # Security
+      # #
+      # - role: security/fail2ban
+      #   tags:
+      #       - fail2ban
+      #   when: enable_fail2ban | default(False)
+
+      # - role: security/iptables
+      #   tags:
+      #       - iptables
+      #   when: enable_iptables | default(False)
+
+      # - role: security/crowdsec
+      #   tags:
+      #       - crowdsec
+      #   when: enable_crowdsec | default(False)
+
+      # - role: security/endlessh
+      #   tags:
+      #       - endlessh
+      #   when: enable_endlessh | default(False)
+
+      # #
+      # # Network
+      # #
+      # - role: network/swag
+      #   become: no
+      #   tags:
+      #       - swag
+      #       - containers
+
+      # - role: network/bunkerized-nginx
+      #   become: no
+      #   tags:
+      #       - bunkerized-nginx
+      #       - containers
+      #   when: enable_bunkerized_nginx | default(False)
+
+      # - role: network/wireguard
+      #   become: no
+      #   tags:
+      #       - wireguard
+      #       - containers
+      #   when: enable_wireguard | default(False)
+
+      # - role: network/ikev2
+      #   become: no
+      #   tags:
+      #       - ikev2
+      #       - containers
+      #   when: enable_ikev2 | default(False)
+
+      # - role: network/ddclient
+      #   become: yes
+      #   when: enable_ddclient | default(False)
+      #   tags:
+      #       - ddclient
+
+      # - role: network/duckdns
+      #   become: no
+      #   when: enable_duckdns | default(False)
+      #   tags:
+      #       - duckdns
+
+      # - role: network/cloudflare-ddns
+      #   become: no
+      #   tags:
+      #       - cloudflare-ddns
+      #       - containers
+      #   when: enable_cloudflare_ddns | default(False)
+
+      # - role: network/adguard
+      #   become: no
+      #   tags:
+      #       - adguard
+      #       - containers
+      #   when: enable_adguard | default(False)
+
+      # - role: network/ikev2
+      #   become: no
+      #   when: enable_ikev2 | default(False)
+      #   tags:
+      #       - containers
+      #       - ikev2
+
+      # #
+      # # Filesystems
+      # #
+      # - role: filesystems/mergerfs
+      #   become: yes
+      #   tags:
+      #       - mergerfs
+      #   when: enable_nas_stuff | default(False)
+
+      # - role: filesystems/mounts
+      #   become: yes
+      #   tags:
+      #       - mounts
+      #   when: enable_nas_stuff | default(False)
+
+      # - role: filesystems/hd-idle
+      #   become: yes
+      #   tags:
+      #       - hd-idle
+      #   when: enable_nas_stuff | default(False)
+
+      # - role: stuvusit.smartd
+      #   become: yes
+      #   tags:
+      #       - smartd
+      #   when: enable_nas_stuff | default(False)
+
+      # - role: ironicbadger.snapraid
+      #   become: yes
+      #   tags:
+      #       - snapraid
+      #   when: enable_nas_stuff | default(False)
+
+      # #
+      # # Monitoring
+      # #
+      # - role: containers/monitoring/grafana
+      #   become: no
+      #   tags:
+      #       - grafana
+      #       - monitoring
+      #       - containers
+      #   when: enable_grafana | default(False)
+
+      # - role: containers/monitoring/prometheus
+      #   become: no
+      #   tags:
+      #       - prometheus
+      #       - monitoring
+      #       - containers
+      #   when: enable_prometheus | default(False)
+
+      # - role: geerlingguy.node_exporter
+      #   tags:
+      #       - node_exporter
+      #       - monitoring
+      #       - containers
+      #   when: enable_node_exporter | default(False)
+
+      # #
+      # # Home automation
+      # #
+      # - role: containers/homeautomation/deconz
+      #   tags:
+      #       - deconz
+      #       - smarthome
+      #       - containers
+      #   when: enable_deconz | default(False)
+
+      # - role: containers/homeautomation/homeassistant
+      #   become: no
+      #   tags:
+      #       - homeassistant
+      #       - smarthome
+      #       - containers
+      #   when: enable_homeassistant | default(False)
+
+      # - role: containers/homeautomation/mqtt
+      #   become: no
+      #   tags:
+      #       - mqtt
+      #       - smarthome
+      #       - containers
+      #   when: enable_homeassistant | default(False)
