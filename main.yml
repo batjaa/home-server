@@ -2,7 +2,7 @@
 #
 # Tasks and roles for all hosts
 #
-- hosts: home_server
+- hosts: homeserver
   gather_facts: false
 
   # pre_tasks:
@@ -10,7 +10,7 @@
   #       tags:
   #           - port
 
-- hosts: home_server
+- hosts: homeserver
   become: true
 
   roles:

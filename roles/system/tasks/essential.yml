@@ -51,22 +51,22 @@
     name: "{{ extra_packages }}"
     state: present
 
-# - name: Set the hostname
-#   hostname:
-#     name: "{{ inventory_hostname }}"
+- name: Set the hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
 
-# - name: Replace the hostname entry with our own
-#   ansible.builtin.lineinfile:
-#     path: /etc/hosts
-#     insertafter: ^127\.0\.0\.1 *localhost
-#     line: "127.0.0.1 {{ inventory_hostname }}"
-#     owner: root
-#     group: root
-#     mode: '0644'
+- name: Replace the hostname entry with our own
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    insertafter: ^127\.0\.0\.1 *localhost
+    line: "127.0.0.1 {{ inventory_hostname }}"
+    owner: root
+    group: root
+    mode: '0644'
 
-# - name: Disable cron e-mail notifications
-#   cron:
-#     name: MAILTO
-#     user: root
-#     env: yes
-#     job: ""
+- name: Disable cron e-mail notifications
+  cron:
+    name: MAILTO
+    user: root
+    env: yes
+    job: ""
