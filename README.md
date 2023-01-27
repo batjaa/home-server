@@ -27,6 +27,22 @@ cp hosts_example hosts
 vi hosts
 ```
 
+Create a Keychain item for your Ansible Vault password (on macOS):
+```
+security add-generic-password \
+               -a YOUR_USERNAME \
+               -s ansible-vault-password \
+               -w
+```
+
+The `pass.sh` script will extract the Ansible Vault password from your Keychain automatically each time Ansible requests it.
+
+Create an encrypted `secret.yml` file with the same password and adjust the variables:
+```
+ansible-vault create host_vars/YOUR_HOSTNAME/secret.yml
+ansible-vault edit host_vars/YOUR_HOSTNAME/secret.yml
+```
+
 Install the dependencies:
 ```
 ansible-galaxy install -r requirements.yml
