@@ -32,7 +32,7 @@
       # - role: network/avahi
       #   tags:
       #       - avahi
-      #   when: enable_avahi | default(False)
+      #   when: enable_avahi | default(false)
 
       - role: chriswayg.msmtp-mailer
         tags:
@@ -42,14 +42,14 @@
       #   tags:
       #       - dns
 
-      # - role: geerlingguy.ntp
-      #   tags:
-      #       - ntp
+      - role: geerlingguy.ntp
+        tags:
+            - ntp
 
       # - role: linux-system-roles.cockpit
       #   tags:
       #       - cockpit
-      #   when: enable_cockpit | default(False)
+      #   when: enable_cockpit | default(false)
 
       # #
       # # Security
@@ -57,22 +57,22 @@
       # - role: security/fail2ban
       #   tags:
       #       - fail2ban
-      #   when: enable_fail2ban | default(False)
+      #   when: enable_fail2ban | default(false)
 
       # - role: security/iptables
       #   tags:
       #       - iptables
-      #   when: enable_iptables | default(False)
+      #   when: enable_iptables | default(false)
 
       # - role: security/crowdsec
       #   tags:
       #       - crowdsec
-      #   when: enable_crowdsec | default(False)
+      #   when: enable_crowdsec | default(false)
 
       # - role: security/endlessh
       #   tags:
       #       - endlessh
-      #   when: enable_endlessh | default(False)
+      #   when: enable_endlessh | default(false)
 
       # #
       # # Network
@@ -88,31 +88,31 @@
       #   tags:
       #       - bunkerized-nginx
       #       - containers
-      #   when: enable_bunkerized_nginx | default(False)
+      #   when: enable_bunkerized_nginx | default(false)
 
       # - role: network/wireguard
       #   become: no
       #   tags:
       #       - wireguard
       #       - containers
-      #   when: enable_wireguard | default(False)
+      #   when: enable_wireguard | default(false)
 
       # - role: network/ikev2
       #   become: no
       #   tags:
       #       - ikev2
       #       - containers
-      #   when: enable_ikev2 | default(False)
+      #   when: enable_ikev2 | default(false)
 
       # - role: network/ddclient
       #   become: yes
-      #   when: enable_ddclient | default(False)
+      #   when: enable_ddclient | default(false)
       #   tags:
       #       - ddclient
 
       # - role: network/duckdns
       #   become: no
-      #   when: enable_duckdns | default(False)
+      #   when: enable_duckdns | default(false)
       #   tags:
       #       - duckdns
 
@@ -121,18 +121,18 @@
       #   tags:
       #       - cloudflare-ddns
       #       - containers
-      #   when: enable_cloudflare_ddns | default(False)
+      #   when: enable_cloudflare_ddns | default(false)
 
       # - role: network/adguard
       #   become: no
       #   tags:
       #       - adguard
       #       - containers
-      #   when: enable_adguard | default(False)
+      #   when: enable_adguard | default(false)
 
       # - role: network/ikev2
       #   become: no
-      #   when: enable_ikev2 | default(False)
+      #   when: enable_ikev2 | default(false)
       #   tags:
       #       - containers
       #       - ikev2
@@ -144,31 +144,31 @@
       #   become: yes
       #   tags:
       #       - mergerfs
-      #   when: enable_nas_stuff | default(False)
+      #   when: enable_nas_stuff | default(false)
 
       # - role: filesystems/mounts
       #   become: yes
       #   tags:
       #       - mounts
-      #   when: enable_nas_stuff | default(False)
+      #   when: enable_nas_stuff | default(false)
 
       # - role: filesystems/hd-idle
       #   become: yes
       #   tags:
       #       - hd-idle
-      #   when: enable_nas_stuff | default(False)
+      #   when: enable_nas_stuff | default(false)
 
       # - role: stuvusit.smartd
       #   become: yes
       #   tags:
       #       - smartd
-      #   when: enable_nas_stuff | default(False)
+      #   when: enable_nas_stuff | default(false)
 
       # - role: ironicbadger.snapraid
       #   become: yes
       #   tags:
       #       - snapraid
-      #   when: enable_nas_stuff | default(False)
+      #   when: enable_nas_stuff | default(false)
 
       # #
       # # Monitoring
@@ -179,7 +179,7 @@
       #       - grafana
       #       - monitoring
       #       - containers
-      #   when: enable_grafana | default(False)
+      #   when: enable_grafana | default(false)
 
       # - role: containers/monitoring/prometheus
       #   become: no
@@ -187,14 +187,14 @@
       #       - prometheus
       #       - monitoring
       #       - containers
-      #   when: enable_prometheus | default(False)
+      #   when: enable_prometheus | default(false)
 
       # - role: geerlingguy.node_exporter
       #   tags:
       #       - node_exporter
       #       - monitoring
       #       - containers
-      #   when: enable_node_exporter | default(False)
+      #   when: enable_node_exporter | default(false)
 
       # #
       # # Home automation
@@ -204,7 +204,7 @@
       #       - deconz
       #       - smarthome
       #       - containers
-      #   when: enable_deconz | default(False)
+      #   when: enable_deconz | default(false)
 
       # - role: containers/homeautomation/homeassistant
       #   become: no
@@ -212,7 +212,7 @@
       #       - homeassistant
       #       - smarthome
       #       - containers
-      #   when: enable_homeassistant | default(False)
+      #   when: enable_homeassistant | default(false)
 
       # - role: containers/homeautomation/mqtt
       #   become: no
@@ -220,4 +220,4 @@
       #       - mqtt
       #       - smarthome
       #       - containers
-      #   when: enable_homeassistant | default(False)
+      #   when: enable_homeassistant | default(false)

@@ -1,0 +1,89 @@
+#
+# System
+#
+version: jammy
+
+apt_mirror: http://archive.ubuntu.com/ubuntu
+
+locale: en_US.UTF-8
+
+timezone: America/Los_Angeles
+
+extra_packages:
+    - fish # fish shell
+    - iperf3 # network throughput test
+    - speedtest-cli # internet connection measurement
+    - htop # process viewer
+    - stow # software package installation manager
+    - git
+    - neofetch # system information tool
+    - neovim # vim alternative
+    - tmux # terminal multiplexer
+    - mosh # mobile shell
+    - rsync
+    - lm-sensors # hardware monitoring tools
+    - iotop # io monitor
+    - ncdu # convenient way to see disk usage
+    - hddtemp # hard disk temperature sensor
+
+username: agumon
+
+guid: '1000'
+
+shell: /bin/bash
+
+#
+# Email credentials (for SMART and Snapraid error reporting)
+#
+
+email: agumon@example.com
+
+email_login: '{{ email }}'
+
+email_smtp_host: smtp.mailbox.org
+
+email_smtp_port: 465
+
+email_smtp_port_startls: 587
+
+#
+# SSH (geerlingguy.security)
+#
+security_ssh_port: 50
+
+security_sudoers_passwordless: ['{{ username }}']
+
+security_autoupdate_reboot: true
+
+security_autoupdate_mail_to: '{{ email }}'
+
+security_autoupdate_reboot_time: '23:00'
+
+security_autoupdate_mail_on_error: false
+
+
+#
+# Docker
+#
+docker_dir: /opt/docker/data
+
+# 
+# MSMTP
+# 
+msmtp_accounts:
+    - account: mailbox
+      host: '{{ email_smtp_host }}'
+      port: '{{ email_smtp_port_startls }}'
+      auth: 'on'
+      from: '{{ email }}'
+      user: '{{ email }}'
+      password: '{{ email_password }}'
+
+msmtp_default_account: 'mailbox'
+
+msmtp_alias_default: '{{ email }}'
+
+#
+# NTP
+# 
+ntp_timezone: '{{ timezone }}'
