@@ -1,3 +1,4 @@
 ---
 roles:
     - name: geerlingguy.security
+    - name: chriswayg.msmtp-mailer

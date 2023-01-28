@@ -34,9 +34,9 @@
       #       - avahi
       #   when: enable_avahi | default(False)
 
-      # - role: chriswayg.msmtp-mailer
-      #   tags:
-      #       - msmtp
+      - role: chriswayg.msmtp-mailer
+        tags:
+            - msmtp
 
       # - role: oefenweb.dns
       #   tags:
