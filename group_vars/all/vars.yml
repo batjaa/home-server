@@ -85,5 +85,10 @@ msmtp_alias_default: '{{ email }}'
 
 #
 # NTP
-# 
+#
 ntp_timezone: '{{ timezone }}'
+
+#
+# Security
+#
+enable_endlessh: false
