@@ -32,6 +32,23 @@ guid: '1000'
 
 shell: /bin/bash
 
+host_local: 'home.local'
+
+#
+# Networks
+#
+vpn_network: '192.168.50.0/24'
+
+lan_network: '10.0.0.0/24'
+
+swag_network: '10.0.1.0/27'
+
+swag_base: "{{ '.'.join(swag_network.split('.')[0:3]) }}"
+
+swag_gateway: "{{ '.'.join(swag_network.split('.')[0:3]) }}.1"
+
+swag_interface: eth1
+
 #
 # Email credentials (for SMART and Snapraid error reporting)
 #
@@ -67,9 +84,9 @@ security_autoupdate_mail_on_error: false
 #
 docker_dir: /opt/docker/data
 
-# 
+#
 # MSMTP
-# 
+#
 msmtp_accounts:
     - account: mailbox
       host: '{{ email_smtp_host }}'
@@ -92,3 +109,9 @@ ntp_timezone: '{{ timezone }}'
 # Security
 #
 enable_endlessh: false
+
+
+#
+# SWAG
+#
+enable_swag_internal: true

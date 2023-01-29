@@ -74,14 +74,14 @@
             - endlessh
         when: enable_endlessh | default(false)
 
-      # #
-      # # Network
-      # #
-      # - role: network/swag
-      #   become: no
-      #   tags:
-      #       - swag
-      #       - containers
+      #
+      # Network
+      #
+      - role: network/swag
+        become: no
+        tags:
+            - swag
+            - containers
 
       # - role: network/bunkerized-nginx
       #   become: no
@@ -129,13 +129,6 @@
       #       - adguard
       #       - containers
       #   when: enable_adguard | default(false)
-
-      # - role: network/ikev2
-      #   become: no
-      #   when: enable_ikev2 | default(false)
-      #   tags:
-      #       - containers
-      #       - ikev2
 
       # #
       # # Filesystems
