@@ -43,6 +43,8 @@ vpn_network: '192.168.50.0/24'
 # 10.0.0.0  10.0.0.1 - 10.0.0.30    10.0.0.31
 lan_network: '10.0.0.0/24'
 
+lan_base: "{{ '.'.join(lan_network.split('.')[0:3]) }}"
+
 # For internal swag macvlan
 # 10.0.0.32   10.0.0.33 - 10.0.0.62   10.0.0.63
 # swag_network: '10.0.0.32/27'
