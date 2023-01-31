@@ -2,11 +2,20 @@
 - name: Create and chmod Grafana folder
   become: yes
   file:
-    path: "{{ docker_dir }}/{{ container_name }}"
+    path: "{{ docker_dir }}/{{ container_name }}/data"
     owner: 472
     group: 0
     state: directory
     recurse: yes
+
+- name: Copy dashboards
+  become: yes
+  copy:
+    src: "provisioning"
+    dest: "{{ docker_dir }}/{{ container_name }}"
+    owner: 472
+    group: 0
+    mode: 0755
 
 - name: Make sure the Grafana container is created and running
   docker_container:
@@ -21,5 +30,6 @@
     env:
       "TZ": "{{ timezone }}"
     volumes:
-      - "{{ docker_dir }}/{{ container_name }}:/var/lib/grafana"
+      - "{{ docker_dir }}/{{ container_name }}/data:/var/lib/grafana"
+      - "{{ docker_dir }}/{{ container_name }}/provisioning:/etc/grafana/provisioning"
     restart_policy: unless-stopped
