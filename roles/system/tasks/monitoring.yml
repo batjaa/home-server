@@ -11,7 +11,7 @@
 
 - name: Install github3 module
   pip:
-    name: 
+    name:
       - github3.py
 
 - name: Check if process-exporter is installed
@@ -20,7 +20,7 @@
   register: process_exporter
   changed_when: false
   failed_when: false
-  
+
 - name: Check the process-exporter version if installed
   shell:
     cmd: "process-exporter --version | grep -o '[0-9]\\.[0-9]*\\.[0-9]*'"
@@ -44,7 +44,7 @@
   changed_when: process_exporter_release.tag != ("v" + process_exporter_version.stdout)
 
 - name: Install latest process-exporter
-  apt: 
+  apt:
     deb: "https://github.com/ncabatoff/process-exporter/releases/download/{{ process_exporter_release.tag }}/process-exporter_{{ process_exporter_release.tag | regex_replace('^v','') }}_linux_{{ arch }}.deb"
   when: process_exporter_release.tag != ("v" + process_exporter_version.stdout)
 
@@ -80,12 +80,12 @@
     owner: root
     group: root
     mode: 0755
-  notify: 
+  notify:
     - monitoring systemd reload
   with_fileglob:
     - files/monitoring/*.service
     - files/monitoring/*.timer
- 
+
 - name: Start and enable the systemd services
   systemd:
     state: started
