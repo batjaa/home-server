@@ -163,31 +163,31 @@
       #       - snapraid
       #   when: enable_nas_stuff | default(false)
 
-      # #
-      # # Monitoring
-      # #
-      # - role: containers/monitoring/grafana
-      #   become: no
-      #   tags:
-      #       - grafana
-      #       - monitoring
-      #       - containers
-      #   when: enable_grafana | default(false)
+      #
+      # Monitoring
+      #
+      - role: containers/monitoring/grafana
+        become: no
+        tags:
+            - grafana
+            - monitoring
+            - containers
+        when: enable_grafana | default(false)
 
-      # - role: containers/monitoring/prometheus
-      #   become: no
-      #   tags:
-      #       - prometheus
-      #       - monitoring
-      #       - containers
-      #   when: enable_prometheus | default(false)
+      - role: containers/monitoring/prometheus
+        become: no
+        tags:
+            - prometheus
+            - monitoring
+            - containers
+        when: enable_prometheus | default(false)
 
-      # - role: geerlingguy.node_exporter
-      #   tags:
-      #       - node_exporter
-      #       - monitoring
-      #       - containers
-      #   when: enable_node_exporter | default(false)
+      - role: geerlingguy.node_exporter
+        tags:
+            - node_exporter
+            - monitoring
+            - containers
+        when: enable_node_exporter | default(false)
 
       # #
       # # Home automation
