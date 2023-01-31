@@ -11,7 +11,7 @@
   #           - port
 
 - hosts: homeserver
-  become: true
+  become: yes
 
   roles:
       #
@@ -78,7 +78,7 @@
       # Network
       #
       - role: network/swag
-        become: no
+        become: yes
         tags:
             - swag
             - containers

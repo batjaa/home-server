@@ -32,20 +32,25 @@ guid: '1000'
 
 shell: /bin/bash
 
-host_local: 'home.local'
+host_local: 'home.site'
 
 #
 # Networks
 #
 vpn_network: '192.168.50.0/24'
 
+# e.g. for physical ports of switch
+# 10.0.0.0  10.0.0.1 - 10.0.0.30    10.0.0.31
 lan_network: '10.0.0.0/24'
 
-swag_network: '10.0.1.0/27'
+# For internal swag macvlan
+# 10.0.0.32   10.0.0.33 - 10.0.0.62   10.0.0.63
+# swag_network: '10.0.0.32/27'
+swag_network: '{{ lan_network }}'
 
 swag_base: "{{ '.'.join(swag_network.split('.')[0:3]) }}"
 
-swag_gateway: "{{ '.'.join(swag_network.split('.')[0:3]) }}.1"
+swag_gateway: "{{ '.'.join(swag_network.split('.')[0:3]) }}.33"
 
 swag_interface: eth1
 
@@ -108,10 +113,19 @@ ntp_timezone: '{{ timezone }}'
 #
 # Security
 #
-enable_endlessh: false
+enable_endlessh: true
 
 
 #
 # SWAG
 #
 enable_swag_internal: true
+
+#
+# Monitoring
+#
+enable_grafana: true
+
+enable_prometheus: true
+
+enable_node_exporter: true

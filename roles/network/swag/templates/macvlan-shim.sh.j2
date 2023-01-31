@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+ip link add macvlan0-shim link {{ swag_interface }} type macvlan mode bridge
+ip addr add {{ internal_macvlan_ip }} dev macvlan0-shim
+ip link set macvlan0-shim up
+ip route add {{ lan_network }} dev macvlan0-shim

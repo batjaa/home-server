@@ -1,5 +1,5 @@
 - name: Create an internal macvlan network
-  when: enable_swag_internal | default(False)
+  when: enable_swag_internal | default(false)
   docker_network:
       name: swag_internal_macvlan
       driver: macvlan
@@ -11,8 +11,32 @@
   notify:
       - restart swag internal
 
+- name: Copy macvlan bridge script
+  when: enable_swag_internal | default(false)
+  template:
+    src: "macvlan-shim.sh.j2"
+    dest: "/usr/local/bin/internal-vlan.sh"
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Add macvlan service script
+  when: enable_swag_internal | default(false)
+  copy:
+    src: "vlan.service"
+    dest: "/etc/systemd/system/internal-vlan.service"
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Start and enable the systemd services
+  systemd:
+    state: started
+    enabled: true
+    name: internal-vlan
+
 - name: Create a public macvlan network
-  when: enable_swag_public | default(False)
+  when: enable_swag_public | default(false)
   docker_network:
       name: swag_public_macvlan
       driver: macvlan

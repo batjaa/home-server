@@ -1,0 +1,4 @@
+---
+internal_swag_ip: '{{ swag_base }}.34'
+
+internal_macvlan_ip: '{{ swag_base }}.62/32'
