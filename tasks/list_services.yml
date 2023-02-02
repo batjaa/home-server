@@ -5,9 +5,9 @@
   delegate_to: localhost
   become: no
   find:
-    paths: 
+    paths:
       # - "roles/containers/services"
-      # - "roles/containers/media"
+      - "roles/containers/media"
       # - "roles/containers/homeautomation"
       - "roles/containers/monitoring"
       # - "roles/containers/system"
@@ -22,7 +22,7 @@
     files_matching: main.yml
     name: "{{ item.path.split('/')[-1] }}"
   with_items: "{{ containers.files }}"
-   
+
 - name: Empty the variables (In case the task is called twice)
   set_fact:
     web_applications: []

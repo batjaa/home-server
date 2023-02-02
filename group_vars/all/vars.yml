@@ -146,3 +146,9 @@ disks:
 
 parity_disks:
     - { path: /mnt/parity1, src: /dev/disk/by-label/Data1, fstype: exfat, content: true }
+
+
+#
+# Media
+#
+enable_plex: false
