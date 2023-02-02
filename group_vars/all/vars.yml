@@ -131,3 +131,18 @@ enable_grafana: true
 enable_prometheus: true
 
 enable_node_exporter: true
+
+#
+# Snapraid and MergerFS
+#
+mergerfs_root: /mnt/storage
+
+enable_mergerfs: false
+
+disks:
+    - { path: /mnt/data1, src: /dev/disk/by-label/Data1, fstype: btrfs, content: true }
+    - { path: /mnt/data2, src: /dev/disk/by-label/Data2, fstype: btrfs, content: true }
+    - { path: /mnt/data3, src: /dev/disk/by-label/Data3, fstype: btrfs, content: true }
+
+parity_disks:
+    - { path: /mnt/parity1, src: /dev/disk/by-label/Data1, fstype: exfat, content: true }

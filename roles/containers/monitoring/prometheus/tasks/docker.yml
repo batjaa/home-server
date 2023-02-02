@@ -17,7 +17,7 @@
       "PUID": "{{ guid }}"
       "PGID": "{{ guid }}"
       "TZ": "{{ timezone }}"
-    user: "1001"
+    user: "{{ guid }}"
     volumes:
       - "{{ docker_dir }}/{{ container_name }}/etc:/etc/prometheus"
       - "{{ docker_dir }}/{{ container_name }}/prometheus:/prometheus"

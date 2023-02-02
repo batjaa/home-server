@@ -130,20 +130,20 @@
       #       - containers
       #   when: enable_adguard | default(false)
 
-      # #
-      # # Filesystems
-      # #
-      # - role: filesystems/mergerfs
-      #   become: yes
-      #   tags:
-      #       - mergerfs
-      #   when: enable_nas_stuff | default(false)
+      #
+      # Filesystems
+      #
+      - role: filesystems/mergerfs
+        become: yes
+        tags:
+            - mergerfs
+        when: enable_mergerfs | default(false)
 
-      # - role: filesystems/mounts
-      #   become: yes
-      #   tags:
-      #       - mounts
-      #   when: enable_nas_stuff | default(false)
+      - role: filesystems/mounts
+        become: yes
+        tags:
+            - mounts
+        when: enable_mergerfs | default(false)
 
       # - role: filesystems/hd-idle
       #   become: yes

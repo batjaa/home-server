@@ -2,12 +2,12 @@
 - name: Set the name of a sudo group
   set_fact:
     sudo_group: sudo
-   
+
 - name: Create a login user
   user:
     name: "{{ username }}"
     password: "{{ password | password_hash('sha512') }}"
-    groups: 
+    groups:
       - "{{ sudo_group }}"
       - users
     state: present
@@ -19,16 +19,16 @@
     state: present
 
 # - name: Ensure group "sambashare" exists
-#   when: enable_samba | default(False) 
+#   when: enable_samba | default(False)
 #   group:
 #     name: "sambashare"
 #     state: present
- 
+
 # - name: Append the samba group
-#   when: enable_samba | default(False) 
+#   when: enable_samba | default(False)
 #   user:
 #     name: "{{ username }}"
-#     groups: 
+#     groups:
 #       - sambashare
 #     append: true
 
@@ -49,7 +49,7 @@
     line: '%{{ sudo_group }} ALL=(ALL) NOPASSWD: ALL'
     validate: '/usr/sbin/visudo -cf %s'
 
-- name: Copy the public SSH key 
+- name: Copy the public SSH key
   authorized_key:
     user: "{{ username }}"
     state: present
@@ -58,7 +58,7 @@
     - remove default user
 
 - name: Set the default shell
-  user: 
+  user:
     name: "{{ username }}"
     shell: "{{ shell }}"
 
