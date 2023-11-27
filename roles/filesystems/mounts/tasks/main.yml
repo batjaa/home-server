@@ -50,6 +50,15 @@
     state: mounted
   when: disks[0] is defined
 
+# - name: Mount the mergerfs parity array
+#   mount:
+#     name: "{{ cache_root }}"
+#     src: /mnt/parity*
+#     opts: direct_io,defaults,allow_other,fsname=mergerfs_cache,category.create=mfs
+#     fstype: fuse.mergerfs
+#     state: mounted
+#   when: parity_disks[0] is defined
+
 # - name: Mount the mergerfs cache only array
 #   mount:
 #     name: "{{ cache_root }}"

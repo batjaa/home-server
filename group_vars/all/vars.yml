@@ -32,6 +32,7 @@ guid: '1000'
 
 shell: /bin/bash
 
+host: 'home.rocks'
 host_local: 'home.site'
 
 #
@@ -117,11 +118,16 @@ ntp_timezone: '{{ timezone }}'
 #
 enable_endlessh: true
 
+#
+# Cloudflare DDNS
+#
+enable_cloudflare_ddns: false
 
 #
 # SWAG
 #
-enable_swag_internal: true
+enable_swag_internal: false
+enable_swag_public: false
 
 #
 # Monitoring
@@ -152,3 +158,18 @@ parity_disks:
 # Media
 #
 enable_plex: false
+
+enable_photoprism: false
+
+# Photoprism
+mysql_root_password: root
+mysql_user: photoprism
+mysql_password: photoprism
+mysql_db: photoprism
+photoprism_password: photoprism
+
+#
+# Home Automation
+#
+enable_homeassistant: false
+

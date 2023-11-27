@@ -8,7 +8,7 @@
     paths:
       # - "roles/containers/services"
       - "roles/containers/media"
-      # - "roles/containers/homeautomation"
+      - "roles/containers/homeautomation"
       - "roles/containers/monitoring"
       # - "roles/containers/system"
     file_type: directory

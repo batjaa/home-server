@@ -116,12 +116,12 @@
       #   tags:
       #       - duckdns
 
-      # - role: network/cloudflare-ddns
-      #   become: no
-      #   tags:
-      #       - cloudflare-ddns
-      #       - containers
-      #   when: enable_cloudflare_ddns | default(false)
+      - role: network/cloudflare-ddns
+        become: no
+        tags:
+            - cloudflare-ddns
+            - containers
+        when: enable_cloudflare_ddns | default(false)
 
       # - role: network/adguard
       #   become: no
@@ -189,9 +189,9 @@
             - containers
         when: enable_node_exporter | default(false)
 
-      # #
-      # # Home automation
-      # #
+      #
+      # Home automation
+      #
       # - role: containers/homeautomation/deconz
       #   tags:
       #       - deconz
@@ -199,13 +199,13 @@
       #       - containers
       #   when: enable_deconz | default(false)
 
-      # - role: containers/homeautomation/homeassistant
-      #   become: no
-      #   tags:
-      #       - homeassistant
-      #       - smarthome
-      #       - containers
-      #   when: enable_homeassistant | default(false)
+      - role: containers/homeautomation/homeassistant
+        become: no
+        tags:
+            - homeassistant
+            - smarthome
+            - containers
+        when: enable_homeassistant | default(false)
 
       # - role: containers/homeautomation/mqtt
       #   become: no
@@ -214,3 +214,62 @@
       #       - smarthome
       #       - containers
       #   when: enable_homeassistant | default(false)
+
+      #
+      # Media
+      #
+      # - role: containers/media/deluge
+      #   become: no
+      #   tags:
+      #       - deluge
+      #       - containers
+      #   when: enable_deluge | default(False)
+
+      # - role: containers/media/sonarr
+      #   become: no
+      #   tags:
+      #       - sonarr
+      #       - containers
+      #   when: enable_sonarr | default(False)
+
+      # - role: containers/media/radarr
+      #   become: no
+      #   tags:
+      #       - radarr
+      #       - containers
+      #   when: enable_radarr | default(False)
+
+      # - role: containers/media/booksonic
+      #   become: no
+      #   tags:
+      #       - booksonic
+      #       - containers
+      #   when: enable_booksonic | default(False)
+
+      - role: containers/media/plex
+        become: no
+        tags:
+            - plex
+            - containers
+        when: enable_plex | default(False)
+
+      # - role: containers/media/jellyfin
+      #   become: no
+      #   tags:
+      #       - jellyfin
+      #       - containers
+      #   when: enable_jellyfin | default(False)
+
+      # - role: containers/media/openbooks
+      #   become: no
+      #   tags:
+      #       - openbooks
+      #       - containers
+      #   when: enable_openbooks | default(False)
+
+      - role: containers/media/photoprism
+        become: no
+        tags:
+            - photoprism
+            - containers
+        when: enable_photoprism | default(False)
