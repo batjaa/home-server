@@ -318,8 +318,7 @@
       #   when: enable_openbooks | default(False)
 
       - role: containers/media/photoprism
-        become: no
         tags:
             - photoprism
             - containers
-        when: enable_photoprism | default(False)
+        when: enable_photoprism | default(false) | bool

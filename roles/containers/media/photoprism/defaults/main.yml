@@ -1,9 +1,17 @@
+---
 container_name: photoprism
+photoprism_db_container: photoprism-mariadb
+photoprism_network: photoprism-net
 
-url: "photoprism.{{ host_local }}"
+# Host port that SWAG proxies to (bound to localhost only)
+photoprism_port: 2342
 
-homer_category: media
+# Where the originals live. PhotoPrism scans this path for photos.
+photoprism_originals: "{{ mergerfs_root }}/Photos"
 
-dashboard_name: "PhotoPrism"
+# DB defaults (override secrets in host_vars/secret.yml)
+photoprism_db_name: photoprism
+photoprism_db_user: photoprism
 
-ip_address: "{{ swag_base }}.39"
+# Optional: hardware acceleration — set to true if Intel iGPU available
+photoprism_intel_gpu: false
