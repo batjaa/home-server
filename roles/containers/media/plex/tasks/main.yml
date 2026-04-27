@@ -1,21 +1,32 @@
 ---
 # More info: https://docs.linuxserver.io/images/docker-plex
+- name: Ensure Plex config and media directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+  loop:
+    - "{{ docker_dir }}/{{ container_name }}"
+    - "{{ mergerfs_root }}/Media"
+    - "{{ mergerfs_root }}/Media/TV"
+    - "{{ mergerfs_root }}/Media/Movies"
+    - "{{ mergerfs_root }}/Media/Music"
+
 - name: Make sure the Plex container is created and running
   docker_container:
     name: "{{ container_name }}"
-    image: "lscr.io/linuxserver/plex"
+    image: "lscr.io/linuxserver/plex:latest"
     pull: yes
-    networks:
-      - name: swag_internal_macvlan
-        ipv4_address: "{{ ip_address }}"
-    # devices:
-    #   - "/dev/dri:/dev/dri"
-    state: 'started'
+    state: started
+    network_mode: host
     env:
-      "PUID": "{{ guid }}"
-      "PGID": "{{ guid }}"
-      "TZ": "{{ timezone }}"
-      "VERSION": "latest"
+      PUID: "{{ guid }}"
+      PGID: "{{ guid }}"
+      TZ: "{{ timezone }}"
+      VERSION: "docker"
+      PLEX_CLAIM: "{{ plex_claim_token | default('') }}"
     volumes:
       - "{{ docker_dir }}/{{ container_name }}:/config"
       - "{{ mergerfs_root }}/Media/TV:/tv"

@@ -1,19 +1,60 @@
-- include_tasks: check_status.yml
-  when: enable_swag_public | default(false) or enable_swag_internal | default(false)
+---
+# Simplified SWAG role:
+# - host networking (binds 80/443 directly)
+# - wildcard cert for *.{{ host }} via Cloudflare DNS-01
+# - proxy configs for each enabled service in proxy-confs/
 
-- include_tasks: list_services.yml
-  when: enable_swag_public | default(false) or enable_swag_internal | default(false)
+- name: Ensure SWAG directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+  loop:
+    - "{{ docker_dir }}/swag"
+    - "{{ docker_dir }}/swag/nginx"
+    - "{{ docker_dir }}/swag/nginx/proxy-confs"
+    - "{{ docker_dir }}/swag/dns-conf"
+    - "{{ docker_dir }}/swag/letsencrypt"
 
-- include_tasks: install_configs.yml
-  when: enable_swag_public | default(false) or enable_swag_internal | default(false)
+- name: Install Cloudflare DNS-01 credentials
+  template:
+    src: dns-conf/cloudflare.ini.j2
+    dest: "{{ docker_dir }}/swag/dns-conf/cloudflare.ini"
+    mode: '0600'
+  no_log: true
 
-- include_tasks: cloudflare_real_ips.yml
-  when: enable_swag_public | default(false)
+- name: Install proxy configs
+  template:
+    src: "{{ item }}"
+    dest: "{{ docker_dir }}/swag/nginx/proxy-confs/{{ item | basename | regex_replace('.j2$', '') }}"
+    mode: '0644'
+  with_fileglob:
+    - "templates/proxy-confs/*.j2"
+  notify: restart swag
 
-- include_tasks: networks.yml
-
-- include_tasks: docker.yml
-  when: enable_swag_public | default(false) or enable_swag_internal | default(false)
-
-- include_tasks: cloudflare_internal_dns.yml
-  when: enable_swag_internal | default(false)
+- name: Make sure the SWAG container is running
+  docker_container:
+    name: swag
+    image: ghcr.io/linuxserver/swag:latest
+    pull: yes
+    state: started
+    network_mode: host
+    capabilities:
+      - NET_ADMIN
+    env:
+      PUID: "{{ guid }}"
+      PGID: "{{ guid }}"
+      TZ: "{{ timezone }}"
+      URL: "{{ host }}"
+      SUBDOMAINS: "wildcard"
+      VALIDATION: "dns"
+      DNSPLUGIN: "cloudflare"
+      EMAIL: "{{ email }}"
+      STAGING: "{{ swag_staging | default('false') }}"
+    volumes:
+      - "{{ docker_dir }}/swag/nginx:/config/nginx"
+      - "{{ docker_dir }}/swag/dns-conf:/config/dns-conf"
+      - "{{ docker_dir }}/swag/letsencrypt:/config/etc/letsencrypt"
+    restart_policy: unless-stopped
