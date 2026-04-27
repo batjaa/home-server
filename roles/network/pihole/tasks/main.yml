@@ -1,0 +1,72 @@
+---
+- name: Disable systemd-resolved DNS stub listener
+  become: yes
+  lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: '^#?DNSStubListener='
+    line: 'DNSStubListener=no'
+  register: resolved_config
+
+- name: Remove resolv.conf symlink and set static DNS
+  become: yes
+  copy:
+    content: |
+      nameserver 1.1.1.1
+      nameserver 8.8.8.8
+    dest: /etc/resolv.conf
+    mode: '0644'
+  when: resolved_config.changed
+
+- name: Stop and disable systemd-resolved
+  become: yes
+  service:
+    name: systemd-resolved
+    state: stopped
+    enabled: no
+  when: resolved_config.changed
+
+- name: Create Pi-hole config directory
+  become: yes
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "users"
+    mode: "0775"
+
+- name: Make sure the {{ container_name }} container is created and running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "pihole/pihole:latest"
+    pull: yes
+    state: 'started'
+    env:
+      "TZ": "{{ timezone }}"
+      "FTLCONF_dns_listeningMode": "ALL"
+    ports:
+      - "{{ pihole_dns_port }}:53/tcp"
+      - "{{ pihole_dns_port }}:53/udp"
+      - "{{ pihole_web_port }}:80/tcp"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}/etc-pihole:/etc/pihole"
+      - "{{ docker_dir }}/{{ container_name }}/etc-dnsmasq.d:/etc/dnsmasq.d"
+    restart_policy: unless-stopped
+  register: pihole_container
+
+- name: Wait for Pi-hole to be ready
+  pause:
+    seconds: 10
+  when: pihole_container.changed
+
+- name: Set Pi-hole admin password (v6+)
+  command: "docker exec pihole pihole setpassword '{{ pihole_password }}'"
+  changed_when: true
+  no_log: true
+
+- name: Build DNS hosts list
+  set_fact:
+    pihole_hosts: "{{ (pihole_local_dns + pihole_split_dns) | map(attribute='ip') | zip((pihole_local_dns + pihole_split_dns) | map(attribute='domain')) | map('join', ' ') | list }}"
+
+- name: Configure local DNS records (Pi-hole v6)
+  command: "docker exec pihole pihole-FTL --config dns.hosts '{{ pihole_hosts | to_json }}'"
+  changed_when: true

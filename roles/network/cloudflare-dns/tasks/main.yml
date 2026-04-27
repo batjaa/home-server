@@ -1,0 +1,68 @@
+---
+# Manage Cloudflare DNS records via API.
+# Runs on the controller (delegate_to: localhost) — no SSH overhead, single API caller.
+
+- name: Look up Cloudflare zone ID
+  delegate_to: localhost
+  become: no
+  uri:
+    url: "https://api.cloudflare.com/client/v4/zones?name={{ cloudflare_zone }}"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ cloudflare_dns_token }}"
+      Content-Type: "application/json"
+    return_content: yes
+    status_code: 200
+  register: cf_zone_resp
+  no_log: true
+  run_once: true
+
+- name: Set zone ID fact
+  set_fact:
+    cloudflare_zone_id: "{{ cf_zone_resp.json.result[0].id }}"
+  run_once: true
+
+- name: Fetch existing DNS records
+  delegate_to: localhost
+  become: no
+  uri:
+    url: "https://api.cloudflare.com/client/v4/zones/{{ cloudflare_zone_id }}/dns_records?per_page=200"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ cloudflare_dns_token }}"
+      Content-Type: "application/json"
+    return_content: yes
+    status_code: 200
+  register: cf_records_resp
+  no_log: true
+  run_once: true
+
+- name: Build lookup of existing records by full name+type
+  set_fact:
+    cf_existing: >-
+      {{ dict(cf_records_resp.json.result
+              | map(attribute='name')
+              | zip(cf_records_resp.json.result)) }}
+
+- name: Create or update each declared record
+  delegate_to: localhost
+  become: no
+  uri:
+    url: >-
+      https://api.cloudflare.com/client/v4/zones/{{ cloudflare_zone_id }}/dns_records{% if (item.name + '.' + cloudflare_zone) in cf_existing %}/{{ cf_existing[item.name + '.' + cloudflare_zone].id }}{% endif %}
+    method: "{{ 'PUT' if (item.name + '.' + cloudflare_zone) in cf_existing else 'POST' }}"
+    headers:
+      Authorization: "Bearer {{ cloudflare_dns_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      type: "{{ item.type }}"
+      name: "{{ item.name }}"
+      content: "{{ item.content }}"
+      proxied: "{{ item.proxied | default(false) }}"
+      ttl: "{{ item.ttl | default(1) }}"
+    status_code: 200
+  loop: "{{ cloudflare_records }}"
+  loop_control:
+    label: "{{ item.name }}.{{ cloudflare_zone }} ({{ item.type }})"
+  no_log: false

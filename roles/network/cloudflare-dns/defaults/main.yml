@@ -1,0 +1,8 @@
+---
+# Cloudflare zone (defaults to {{ host }})
+cloudflare_zone: "{{ host }}"
+
+# List of DNS records to manage. Example:
+#   cloudflare_records:
+#     - { name: plex, type: CNAME, content: '{{ host }}', proxied: false }
+cloudflare_records: []

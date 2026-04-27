@@ -1,0 +1,10 @@
+# Local DNS records managed by Ansible
+# Internal services (*.home.local)
+{% for record in pihole_local_dns %}
+address=/{{ record.domain }}/{{ record.ip }}
+{% endfor %}
+
+# Split DNS for external domains (*.batjaa.site → SWAG on LAN)
+{% for record in pihole_split_dns %}
+address=/{{ record.domain }}/{{ record.ip }}
+{% endfor %}

@@ -1,0 +1,4 @@
+---
+container_name: pihole
+pihole_web_port: "80"
+pihole_dns_port: "53"

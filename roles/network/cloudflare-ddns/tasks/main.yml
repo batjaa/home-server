@@ -11,7 +11,7 @@
       "TZ": "{{ timezone }}"
       "API_KEY": "{{ cloudflare_dns_token }}"
       "ZONE": "{{ host }}"
-      "PROXIED": "true"
+      "PROXIED": "false"
       "SUBDOMAIN": "ddns"
     restart_policy: unless-stopped
 
