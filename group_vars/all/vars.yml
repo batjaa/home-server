@@ -44,11 +44,13 @@ lan_network: '192.168.50.0/24'
 # Email credentials (for SMART and Snapraid error reporting)
 #
 
-email: agumon@example.com
+# Sender (verified in Postmark) and where alerts get delivered
+email: batjaa0615@gmail.com
 
-email_login: '{{ email }}'
+# Postmark SMTP — username and password are both the Server API Token
+email_login: '{{ email_postmark_token }}'
 
-email_smtp_host: smtp.mailbox.org
+email_smtp_host: smtp.postmarkapp.com
 
 email_smtp_port: 465
 
@@ -79,15 +81,15 @@ docker_dir: /opt/docker/data
 # MSMTP
 #
 msmtp_accounts:
-    - account: mailbox
+    - account: postmark
       host: '{{ email_smtp_host }}'
       port: '{{ email_smtp_port_startls }}'
       auth: 'on'
       from: '{{ email }}'
-      user: '{{ email }}'
-      password: '{{ email_password }}'
+      user: '{{ email_postmark_token }}'
+      password: '{{ email_postmark_token }}'
 
-msmtp_default_account: 'mailbox'
+msmtp_default_account: 'postmark'
 
 msmtp_alias_default: '{{ email }}'
 
