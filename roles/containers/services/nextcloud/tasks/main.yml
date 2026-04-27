@@ -1,0 +1,79 @@
+---
+- name: Ensure Nextcloud directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+  loop:
+    - "{{ docker_dir }}/{{ container_name }}"
+    - "{{ docker_dir }}/{{ container_name }}/html"
+    - "{{ docker_dir }}/{{ nextcloud_db_container }}"
+
+- name: Ensure Nextcloud data directory exists with world-writable mode
+  # Mergerfs squashes uid → 1000, but Nextcloud container runs as www-data (33).
+  # Mode 0777 lets the container write regardless of ownership view.
+  file:
+    path: "{{ nextcloud_data_dir }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0777'
+
+- name: Create Nextcloud Docker network
+  docker_network:
+    name: "{{ nextcloud_network }}"
+    state: present
+
+- name: Make sure the Nextcloud DB (MariaDB) container is running
+  docker_container:
+    name: "{{ nextcloud_db_container }}"
+    image: "mariadb:11"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ nextcloud_network }}"
+    networks_cli_compatible: yes
+    command: >-
+      --transaction-isolation=READ-COMMITTED
+      --log-bin=binlog
+      --binlog-format=ROW
+      --skip-innodb-read-only-compressed
+    env:
+      MARIADB_ROOT_PASSWORD: "{{ nextcloud_db_root_password }}"
+      MARIADB_DATABASE: "{{ nextcloud_db_name }}"
+      MARIADB_USER: "{{ nextcloud_db_user }}"
+      MARIADB_PASSWORD: "{{ nextcloud_db_password }}"
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ nextcloud_db_container }}:/var/lib/mysql"
+    restart_policy: unless-stopped
+
+- name: Make sure the Nextcloud container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "nextcloud:stable"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ nextcloud_network }}"
+    networks_cli_compatible: yes
+    published_ports:
+      - "127.0.0.1:{{ nextcloud_port }}:80"
+    env:
+      MYSQL_HOST: "{{ nextcloud_db_container }}"
+      MYSQL_DATABASE: "{{ nextcloud_db_name }}"
+      MYSQL_USER: "{{ nextcloud_db_user }}"
+      MYSQL_PASSWORD: "{{ nextcloud_db_password }}"
+      NEXTCLOUD_TRUSTED_DOMAINS: "nextcloud.{{ host }} nextcloud.home.local"
+      NEXTCLOUD_ADMIN_USER: "{{ nextcloud_admin_user | default('admin') }}"
+      NEXTCLOUD_ADMIN_PASSWORD: "{{ nextcloud_admin_password }}"
+      OVERWRITEHOST: "nextcloud.{{ host }}"
+      OVERWRITEPROTOCOL: "https"
+      TRUSTED_PROXIES: "127.0.0.1"
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}/html:/var/www/html"
+      - "{{ nextcloud_data_dir }}:/var/www/html/data"
+    restart_policy: unless-stopped

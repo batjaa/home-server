@@ -1,0 +1,15 @@
+---
+container_name: nextcloud
+nextcloud_db_container: nextcloud-db
+nextcloud_network: nextcloud-net
+
+# Host port that SWAG proxies to
+nextcloud_port: 8081
+
+# User data lives on plain ext4 (NVMe). mergerfs uid handling makes
+# permissions painful for non-1000 containers; revisit later if data grows.
+nextcloud_data_dir: "{{ docker_dir }}/{{ container_name }}-data"
+
+# Nextcloud DB defaults (override secret values in host_vars/secret.yml)
+nextcloud_db_name: nextcloud
+nextcloud_db_user: nextcloud
