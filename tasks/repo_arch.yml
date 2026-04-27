@@ -6,5 +6,5 @@
 
 - name: Set arm64 arch
   set_fact:
-    repo_arch: "{{ ansible_architecture }}"
-  when: ansible_architecture == "arm64"
+    repo_arch: arm64
+  when: ansible_architecture in ["arm64", "aarch64"]

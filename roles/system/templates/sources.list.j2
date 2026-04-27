@@ -1,15 +1,17 @@
-deb {{ apt_mirror }} {{ version }} main restricted
+{% set codename = version | default(ansible_lsb.codename) %}
+{% set mirror = apt_mirror | default('http://ports.ubuntu.com/ubuntu-ports' if ansible_architecture == 'aarch64' else 'http://archive.ubuntu.com/ubuntu') %}
+deb {{ mirror }} {{ codename }} main restricted
 
-deb {{ apt_mirror }} {{ version }}-updates main restricted
+deb {{ mirror }} {{ codename }}-updates main restricted
 
-deb {{ apt_mirror }} {{ version }} universe
-deb {{ apt_mirror }} {{ version }}-updates universe
+deb {{ mirror }} {{ codename }} universe
+deb {{ mirror }} {{ codename }}-updates universe
 
-deb {{ apt_mirror }} {{ version }} multiverse
-deb {{ apt_mirror }} {{ version }}-updates multiverse
+deb {{ mirror }} {{ codename }} multiverse
+deb {{ mirror }} {{ codename }}-updates multiverse
 
-deb {{ apt_mirror }} {{ version }}-backports main restricted universe multiverse
+deb {{ mirror }} {{ codename }}-backports main restricted universe multiverse
 
-deb {{ apt_mirror }} {{ version }}-security main restricted
-deb {{ apt_mirror }} {{ version }}-security universe
-deb {{ apt_mirror }} {{ version }}-security multiverse
+deb {{ mirror }} {{ codename }}-security main restricted
+deb {{ mirror }} {{ codename }}-security universe
+deb {{ mirror }} {{ codename }}-security multiverse

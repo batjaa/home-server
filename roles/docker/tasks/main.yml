@@ -11,14 +11,21 @@
 - name: Install Docker (Ubuntu)
   when: ansible_facts['distribution'] == 'Ubuntu'
   block:
-  - name: Add Docker GPG apt Key
-    apt_key:
+  - name: Create keyrings directory
+    file:
+      path: /etc/apt/keyrings
+      state: directory
+      mode: '0755'
+
+  - name: Add Docker GPG key
+    get_url:
       url: https://download.docker.com/linux/ubuntu/gpg
-      state: present
+      dest: /etc/apt/keyrings/docker.asc
+      mode: '0644'
 
   - name: Add Docker Repository
     apt_repository:
-      repo: "deb [arch={{ repo_arch }}] https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }} {{ ansible_lsb['codename'] }} stable"
+      repo: "deb [arch={{ repo_arch }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }} {{ ansible_lsb['codename'] }} stable"
       state: present
 
 # - name: Install Docker (Raspbian)
@@ -76,8 +83,9 @@
     append: yes
 
 - name: Install Docker Module for Python
-  pip:
-    name: docker
+  package:
+    name: python3-docker
+    state: present
 
 - name: Make sure Docker is running and enabled
   service:
