@@ -1,0 +1,13 @@
+---
+# Default mount options
+storage_btrfs_mount_opts: "subvol=@current,defaults,nofail"
+storage_data_mount_opts: "defaults,nofail"
+
+# Storage role state file
+storage_state_file: /var/lib/storage-role/state.yml
+
+# Cache directory on root NVMe
+storage_cache_dir: /mnt/storage_cache
+
+# Safety: wipes refuse to run unless explicitly confirmed
+confirm_storage_wipe: false

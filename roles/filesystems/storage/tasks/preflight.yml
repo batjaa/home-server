@@ -1,0 +1,62 @@
+---
+# Preflight: verify every declared drive matches the inventory.
+# Aborts the play if any check fails — defense in depth alongside verify-readiness.sh.
+
+- name: Preflight — drive identity matches inventory
+  block:
+    - name: Resolve by-id paths to real devices
+      stat:
+        path: "/dev/disk/by-id/{{ item.by_id }}"
+      register: drive_stat
+      loop: "{{ storage_drives }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Assert all expected drives are present
+      assert:
+        that:
+          - item.stat.exists
+        fail_msg: "Drive not found: /dev/disk/by-id/{{ item.item.by_id }} (role: {{ item.item.name }})"
+      loop: "{{ drive_stat.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Read actual size from each device
+      command: "blockdev --getsize64 /dev/disk/by-id/{{ item.by_id }}"
+      changed_when: false
+      check_mode: no
+      register: drive_size
+      loop: "{{ storage_drives }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Assert sizes match expected (±1%)
+      assert:
+        that:
+          - "((item.stdout | int / 1000 / 1000 / 1000) - item.item.expected_size_gb) | abs <= (item.item.expected_size_gb * 0.01)"
+        fail_msg: >-
+          Size mismatch for {{ item.item.name }}:
+          got {{ (item.stdout | int / 1000 / 1000 / 1000) | int }}GB,
+          expected {{ item.item.expected_size_gb }}GB
+      loop: "{{ drive_size.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Read filesystem UUIDs of all partitions
+      command: "lsblk -no UUID /dev/disk/by-id/{{ item.by_id }}"
+      changed_when: false
+      check_mode: no
+      register: drive_uuids
+      loop: "{{ storage_drives }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+  tags: [storage, preflight]
+
+- name: Build drive UUID lookup
+  set_fact:
+    storage_drive_uuids: >-
+      {{ dict(drive_uuids.results
+              | map(attribute='item.name')
+              | zip(drive_uuids.results | map(attribute='stdout_lines'))) }}
+  tags: [storage, preflight]

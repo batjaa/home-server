@@ -1,0 +1,91 @@
+---
+# Phase 2a — primary data drive (sda) + mergerfs cache union.
+# Non-destructive: sda data is preserved. fstab is backed up before edit.
+
+- name: "[data] Find primary drive in inventory"
+  set_fact:
+    primary: "{{ storage_drives | selectattr('name', 'equalto', 'primary') | first }}"
+
+- name: "[data] Backup /etc/fstab"
+  copy:
+    src: /etc/fstab
+    dest: "/etc/fstab.bak-{{ ansible_date_time.iso8601_basic_short }}"
+    remote_src: yes
+    force: no
+  changed_when: false
+
+# ── Move sda from /mnt/storage to /mnt/sda1 ────────────────────────────────
+- name: "[data] Detect current sda mountpoint"
+  command: "findmnt -no TARGET UUID={{ primary.expected_uuid }}"
+  register: sda_current
+  changed_when: false
+  failed_when: false
+
+- name: "[data] Unmount sda from /mnt/storage if it's there"
+  mount:
+    path: /mnt/storage
+    state: unmounted
+  when: sda_current.stdout == "/mnt/storage"
+
+- name: "[data] Remove old /mnt/storage fstab entry (sda direct)"
+  mount:
+    path: /mnt/storage
+    state: absent
+  when: sda_current.stdout == "/mnt/storage"
+
+- name: "[data] Ensure /mnt/sda1 directory exists"
+  file:
+    path: "{{ primary.mount }}"
+    state: directory
+    mode: '0755'
+
+- name: "[data] Mount sda at /mnt/sda1 (and add fstab entry)"
+  mount:
+    path: "{{ primary.mount }}"
+    src: "UUID={{ primary.expected_uuid }}"
+    fstype: btrfs
+    opts: "{{ storage_data_mount_opts }}"
+    state: mounted
+
+- name: "[data] Verify primary data is visible at /mnt/sda1"
+  command: "ls {{ primary.mount }}"
+  register: primary_ls
+  changed_when: false
+
+- name: "[data] Show primary contents"
+  debug:
+    msg: "/mnt/sda1 contents: {{ primary_ls.stdout_lines }}"
+
+# ── Cache directory on root NVMe ───────────────────────────────────────────
+- name: "[data] Ensure cache directory on root"
+  file:
+    path: "{{ storage_cache_dir }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+# ── /mnt/storage = mergerfs(cache : sda1) ──────────────────────────────────
+- name: "[data] Ensure /mnt/storage mountpoint exists"
+  file:
+    path: /mnt/storage
+    state: directory
+    mode: '0755'
+
+- name: "[data] Mount mergerfs storage union (and add fstab entry)"
+  mount:
+    path: /mnt/storage
+    src: "{{ storage_cache_dir }}:{{ primary.mount }}"
+    fstype: fuse.mergerfs
+    opts: >-
+      defaults,allow_other,use_ino,category.create=ff,minfreespace=200G,moveonenospc=1,fsname=mergerfs-storage
+    state: mounted
+
+- name: "[data] Verify mergerfs union shows primary data"
+  command: "ls /mnt/storage"
+  register: storage_ls
+  changed_when: false
+
+- name: "[data] Show /mnt/storage contents"
+  debug:
+    msg: "/mnt/storage union contents: {{ storage_ls.stdout_lines }}"

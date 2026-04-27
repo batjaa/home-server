@@ -1,0 +1,17 @@
+---
+# Phase 2b — backup drives. DESTRUCTIVE.
+# Wipes + reformats backup1, backup2, backup3 with @current subvolume layout.
+# Requires confirm_storage_wipe=true to actually wipe.
+
+- name: "[backups] PHASE 2b — destructive operations follow"
+  debug:
+    msg: |
+      About to format the backup drives. Existing data will be wiped.
+      confirm_storage_wipe = {{ confirm_storage_wipe | default(false) }}
+
+- name: "[backups] Format each backup drive"
+  loop: "{{ storage_drives | selectattr('role', 'equalto', 'backup') | list }}"
+  loop_control:
+    loop_var: drive
+    label: "{{ drive.name }}"
+  include_tasks: format_one_backup.yml

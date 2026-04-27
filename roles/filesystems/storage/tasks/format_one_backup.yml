@@ -1,0 +1,119 @@
+---
+# Format ONE backup drive. Called per-drive from format_backups.yml.
+# Variables: drive (the dict from storage_drives)
+
+- name: "{{ drive.name }} — check current state"
+  block:
+    - name: "{{ drive.name }} — get current UUIDs on device"
+      command: "lsblk -no UUID /dev/disk/by-id/{{ drive.by_id }}"
+      register: current_uuids
+      changed_when: false
+
+    - name: "{{ drive.name }} — set drive_in_target_state fact"
+      set_fact:
+        drive_in_target_state: "{{ drive.expected_uuid in (current_uuids.stdout_lines | map('lower') | list) }}"
+
+- name: "{{ drive.name }} — already formatted to expected UUID, verify @current subvol exists"
+  when: drive_in_target_state
+  block:
+    - name: "{{ drive.name }} — find partition path"
+      command: "lsblk -no PATH /dev/disk/by-id/{{ drive.by_id }}"
+      register: parts
+      changed_when: false
+
+    - name: "{{ drive.name }} — temp-mount fs root to inspect subvolumes"
+      block:
+        - name: "{{ drive.name }} — make temp mount dir"
+          file:
+            path: "/tmp/storage-fmt-{{ drive.name }}"
+            state: directory
+            mode: '0755'
+
+        - name: "{{ drive.name }} — mount fs root (subvolid=5)"
+          command: "mount -o subvolid=5 UUID={{ drive.expected_uuid }} /tmp/storage-fmt-{{ drive.name }}"
+          changed_when: false
+
+        - name: "{{ drive.name }} — list subvolumes"
+          command: "btrfs subvolume list /tmp/storage-fmt-{{ drive.name }}"
+          register: subvols
+          changed_when: false
+
+        - name: "{{ drive.name }} — assert @current subvolume exists"
+          assert:
+            that:
+              - "'@current' in subvols.stdout"
+            fail_msg: >-
+              {{ drive.name }} has expected UUID but no @current subvolume.
+              Filesystem is in inconsistent state — manual intervention required.
+      always:
+        - name: "{{ drive.name }} — unmount temp"
+          command: "umount /tmp/storage-fmt-{{ drive.name }}"
+          changed_when: false
+          failed_when: false
+
+    - name: "{{ drive.name }} — already in target state, skipping format"
+      debug:
+        msg: "{{ drive.name }} already has UUID {{ drive.expected_uuid }} and @current subvolume — skipping"
+
+- name: "{{ drive.name }} — needs formatting"
+  when: not drive_in_target_state
+  block:
+    - name: "{{ drive.name }} — assert confirm_storage_wipe=true before destructive ops"
+      assert:
+        that:
+          - confirm_storage_wipe | default(false) | bool
+        fail_msg: >-
+          {{ drive.name }} requires formatting (UUID does not match expected).
+          This will WIPE existing data on the drive.
+          Set `confirm_storage_wipe: true` in host_vars to allow.
+
+    - name: "{{ drive.name }} — unmount if currently mounted"
+      mount:
+        path: "{{ drive.mount }}"
+        state: unmounted
+      failed_when: false
+
+    - name: "{{ drive.name }} — wipe filesystem signatures"
+      command: "wipefs -a /dev/disk/by-id/{{ drive.by_id }}"
+
+    - name: "{{ drive.name }} — create GPT label and single partition"
+      shell: |
+        parted --script /dev/disk/by-id/{{ drive.by_id }} \
+          mklabel gpt \
+          mkpart primary btrfs 0% 100%
+        # Wait for kernel to recognize the new partition
+        partprobe /dev/disk/by-id/{{ drive.by_id }} || true
+        udevadm settle
+
+    - name: "{{ drive.name }} — wait for partition device"
+      wait_for:
+        path: "/dev/disk/by-id/{{ drive.by_id }}-part1"
+        state: present
+        timeout: 30
+
+    - name: "{{ drive.name }} — mkfs.btrfs with pinned UUID"
+      command: >-
+        mkfs.btrfs -L {{ drive.name }} -U {{ drive.expected_uuid }}
+        /dev/disk/by-id/{{ drive.by_id }}-part1
+
+    - name: "{{ drive.name }} — make temp mount dir"
+      file:
+        path: "/tmp/storage-fmt-{{ drive.name }}"
+        state: directory
+        mode: '0755'
+
+    - name: "{{ drive.name }} — mount fs root to create @current subvol"
+      command: "mount /dev/disk/by-id/{{ drive.by_id }}-part1 /tmp/storage-fmt-{{ drive.name }}"
+      changed_when: false
+
+    - name: "{{ drive.name }} — create @current subvolume"
+      command: "btrfs subvolume create /tmp/storage-fmt-{{ drive.name }}/@current"
+
+    - name: "{{ drive.name }} — unmount temp"
+      command: "umount /tmp/storage-fmt-{{ drive.name }}"
+      changed_when: false
+
+    - name: "{{ drive.name }} — remove temp dir"
+      file:
+        path: "/tmp/storage-fmt-{{ drive.name }}"
+        state: absent

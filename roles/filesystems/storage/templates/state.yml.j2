@@ -1,0 +1,17 @@
+# /var/lib/storage-role/state.yml — written by storage role on success
+# DO NOT edit by hand. Snapshot of what the role configured last time.
+schema_version: 1
+last_run_utc: "{{ ansible_date_time.iso8601 }}"
+
+drives:
+{% for d in storage_drives %}
+  {{ d.name }}:
+    by_id: "{{ d.by_id }}"
+    expected_uuid: "{{ d.expected_uuid }}"
+    mount: "{{ d.mount }}"
+    role: "{{ d.role }}"
+{% endfor %}
+
+mergerfs:
+  storage_branches: ["{{ storage_cache_dir }}", "/mnt/sda1"]
+  storage_options: "category.create=ff,minfreespace=200G,moveonenospc=1"

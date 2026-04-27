@@ -1,0 +1,12 @@
+---
+- name: "[state] Ensure state directory"
+  file:
+    path: "{{ storage_state_file | dirname }}"
+    state: directory
+    mode: '0755'
+
+- name: "[state] Write state.yml"
+  template:
+    src: state.yml.j2
+    dest: "{{ storage_state_file }}"
+    mode: '0644'

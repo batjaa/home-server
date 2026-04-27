@@ -1,0 +1,32 @@
+---
+# Storage role — controlled by storage_phase variable.
+#
+#   storage_phase=data       (default, safe) — Phase 2a only
+#   storage_phase=backups    — Phase 2b only (DESTRUCTIVE)
+#   storage_phase=all        — both
+#
+# Usage:
+#   ansible-playbook main.yml -l homeserver --tags="storage"
+#   ansible-playbook main.yml -l homeserver --tags="storage" -e storage_phase=backups
+
+- name: Install storage packages
+  package:
+    name:
+      - btrfs-progs
+      - parted
+      - smartmontools
+      - rsync
+      - mergerfs
+    state: present
+
+- import_tasks: preflight.yml
+
+# ── Phase 2a ──────────────────────────────────────────────────────────────
+- import_tasks: data.yml
+  when: storage_phase | default('data') in ['data', 'all']
+
+# ── Phase 2b ──────────────────────────────────────────────────────────────
+- import_tasks: backups.yml
+  when: storage_phase | default('data') in ['backups', 'all']
+
+- import_tasks: state.yml
