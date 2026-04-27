@@ -40,6 +40,12 @@
             - containers
         when: enable_pihole | default(false)
 
+      - role: geerlingguy.node_exporter
+        tags:
+            - node_exporter
+            - monitoring
+        when: enable_node_exporter | default(false)
+
 #
 # Home server
 #
@@ -208,21 +214,26 @@
       #
       # Monitoring
       #
-      - role: containers/monitoring/grafana
-        become: no
-        tags:
-            - grafana
-            - monitoring
-            - containers
-        when: enable_grafana | default(false)
-
       - role: containers/monitoring/prometheus
-        become: no
         tags:
             - prometheus
             - monitoring
             - containers
-        when: enable_prometheus | default(false)
+        when: enable_prometheus | default(false) | bool
+
+      - role: containers/monitoring/grafana
+        tags:
+            - grafana
+            - monitoring
+            - containers
+        when: enable_grafana | default(false) | bool
+
+      - role: containers/monitoring/cadvisor
+        tags:
+            - cadvisor
+            - monitoring
+            - containers
+        when: enable_cadvisor | default(false) | bool
 
       - role: geerlingguy.node_exporter
         tags:

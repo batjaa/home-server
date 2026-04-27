@@ -1,3 +1,50 @@
 ---
-- include_tasks: install_configs.yml
-- include_tasks: docker.yml
+- name: Ensure Prometheus directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: '65534'
+    group: '65534'
+    mode: '0755'
+  loop:
+    - "{{ docker_dir }}/{{ container_name }}"
+    - "{{ docker_dir }}/{{ container_name }}/etc"
+    - "{{ docker_dir }}/{{ container_name }}/data"
+
+- name: Create monitoring Docker network
+  docker_network:
+    name: "{{ prometheus_network }}"
+    state: present
+
+- name: Render prometheus.yml
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ docker_dir }}/{{ container_name }}/etc/prometheus.yml"
+    mode: '0644'
+  notify: restart prometheus
+
+- name: Make sure the Prometheus container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "prom/prometheus:latest"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ prometheus_network }}"
+    networks_cli_compatible: yes
+    published_ports:
+      - "127.0.0.1:{{ prometheus_port }}:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time={{ prometheus_retention }}"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-admin-api"
+    user: "65534:65534"
+    env:
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}/etc:/etc/prometheus"
+      - "{{ docker_dir }}/{{ container_name }}/data:/prometheus"
+    restart_policy: unless-stopped

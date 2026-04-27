@@ -1,8 +1,11 @@
 ---
 container_name: prometheus
+prometheus_network: monitoring-net
+prometheus_port: 9090
+prometheus_retention: 90d
 
-url: "prometheus.{{ host_local }}"
-
-homer_category: system
-
-ip_address: "{{ swag_base }}.36"
+# Targets to scrape — override in host_vars/homeserver/vars.yml
+prometheus_scrape_jobs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']

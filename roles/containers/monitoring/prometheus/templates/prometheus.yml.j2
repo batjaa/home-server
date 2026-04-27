@@ -1,0 +1,34 @@
+# Managed by Ansible — do not edit by hand.
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  external_labels:
+    site: home
+
+scrape_configs:
+{% for job in prometheus_scrape_jobs %}
+  - job_name: {{ job.job_name }}
+{% if job.metrics_path is defined %}
+    metrics_path: {{ job.metrics_path }}
+{% endif %}
+    static_configs:
+{% for sc in job.static_configs %}
+      - targets: {{ sc.targets | to_json }}
+{% if sc.labels is defined %}
+        labels: {{ sc.labels | to_json }}
+{% endif %}
+{% endfor %}
+{% if job.relabel_configs is defined %}
+    relabel_configs:
+{% for rc in job.relabel_configs %}
+      - source_labels: {{ rc.source_labels | to_json }}
+        target_label: {{ rc.target_label }}
+{% if rc.regex is defined %}
+        regex: '{{ rc.regex }}'
+{% endif %}
+{% if rc.replacement is defined %}
+        replacement: '{{ rc.replacement }}'
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}

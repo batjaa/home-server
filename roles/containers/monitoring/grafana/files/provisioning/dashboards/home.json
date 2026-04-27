@@ -1,0 +1,254 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    { "title": "Node Exporter Full", "type": "link", "url": "/d/node-exporter-full" },
+    { "title": "Cadvisor exporter",  "type": "link", "url": "/d/cadvisor-exporter" },
+    { "title": "Storage Health",     "type": "link", "url": "/d/storage-health" }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Hosts",
+      "collapsed": false
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 1 },
+      "id": 1,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "color": "red", "text": "DOWN" }, "1": { "color": "green", "text": "UP" } }, "type": "value" }
+          ],
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "red" }, { "color": "green", "value": 1 } ] }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "up{job=\"node\"}", "legendFormat": "{{instance}}", "refId": "A" }
+      ],
+      "title": "Hosts up",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 1 },
+      "id": 2,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green" }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 } ] },
+          "unit": "percent",
+          "max": 100,
+          "min": 0
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "lcd",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)", "legendFormat": "{{instance}}", "refId": "A" }
+      ],
+      "title": "CPU usage",
+      "type": "bargauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 1 },
+      "id": 3,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green" }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 } ] },
+          "unit": "percent",
+          "max": 100,
+          "min": 0
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "lcd",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100", "legendFormat": "{{instance}}", "refId": "A" }
+      ],
+      "title": "Memory usage",
+      "type": "bargauge"
+    },
+    {
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 101,
+      "title": "Storage",
+      "collapsed": false
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 6 },
+      "id": 4,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "color": "red", "text": "FAIL" }, "1": { "color": "green", "text": "PASS" } }, "type": "value" }
+          ],
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "red" }, { "color": "green", "value": 1 } ] }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "smart_health_ok", "legendFormat": "{{drive}}", "refId": "A" }
+      ],
+      "title": "SMART health",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 6 },
+      "id": 5,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green" }, { "color": "yellow", "value": 50 }, { "color": "red", "value": 60 } ] },
+          "unit": "celsius"
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "smart_temperature_celsius", "legendFormat": "{{drive}}", "refId": "A" }
+      ],
+      "title": "Drive temperatures",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 6 },
+      "id": 6,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "color": "red", "text": "FAIL" }, "1": { "color": "green", "text": "OK" } }, "type": "value" }
+          ],
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "red" }, { "color": "green", "value": 1 } ] }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+        "textMode": "value"
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "storage_backup_last_run_success", "refId": "A" }
+      ],
+      "title": "Last backup",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 6 },
+      "id": 7,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green" }, { "color": "yellow", "value": 86400 }, { "color": "red", "value": 172800 } ] },
+          "unit": "s"
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+        "textMode": "value"
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "time() - storage_backup_last_run_seconds", "refId": "A" }
+      ],
+      "title": "Time since last backup",
+      "type": "stat"
+    },
+    {
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 11 },
+      "id": 102,
+      "title": "Containers",
+      "collapsed": false
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "id": 8,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10, "gradientMode": "opacity", "stacking": { "mode": "normal" } },
+          "unit": "percentunit"
+        }
+      },
+      "options": { "legend": { "showLegend": true, "displayMode": "table", "placement": "right", "calcs": [ "mean", "lastNotNull" ] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name!=\"\"}[5m]))", "legendFormat": "{{name}}", "refId": "A" }
+      ],
+      "title": "Container CPU (cores)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "id": 9,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10, "gradientMode": "opacity", "stacking": { "mode": "normal" } },
+          "unit": "bytes"
+        }
+      },
+      "options": { "legend": { "showLegend": true, "displayMode": "table", "placement": "right", "calcs": [ "mean", "lastNotNull" ] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (name) (container_memory_working_set_bytes{name!=\"\"})", "legendFormat": "{{name}}", "refId": "A" }
+      ],
+      "title": "Container memory",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "tags": [ "home" ],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Home",
+  "uid": "home",
+  "version": 1,
+  "weekStart": ""
+}

@@ -1,0 +1,4 @@
+---
+container_name: cadvisor
+cadvisor_port: 8080
+cadvisor_network: monitoring-net

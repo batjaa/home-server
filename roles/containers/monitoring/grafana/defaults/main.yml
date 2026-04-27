@@ -1,8 +1,5 @@
 ---
 container_name: grafana
-
-url: "grafana.{{ host_local }}"
-
-homer_category: system
-
-ip_address: "{{ swag_base }}.35"
+grafana_network: monitoring-net
+grafana_port: 3000
+grafana_root_url: "https://grafana.{{ host }}"
