@@ -1,16 +1,49 @@
 ---
 #
-# Tasks and roles for all hosts
+# Pi infrastructure node (tentomon)
 #
-- hosts: homeserver
-  gather_facts: false
+- hosts: pi
+  become: yes
 
-  # pre_tasks:
-  #     - import_tasks: tasks/ssh_juggle_port.yml
-  #       tags:
-  #           - port
+  roles:
+      - role: system
+        tags:
+            - system
 
-- hosts: homeserver
+      - role: geerlingguy.security
+        tags:
+            - security
+
+      - role: docker
+        tags:
+            - docker
+        when: enable_docker | default(false)
+
+      - role: geerlingguy.ntp
+        tags:
+            - ntp
+
+      - role: network/cloudflare-ddns
+        tags:
+            - cloudflare-ddns
+            - containers
+        when: enable_cloudflare_ddns | default(false)
+
+      - role: network/cloudflare-dns
+        tags:
+            - cloudflare-dns
+        when: cloudflare_records | default([]) | length > 0
+
+      - role: network/pihole
+        tags:
+            - pihole
+            - containers
+        when: enable_pihole | default(false)
+
+#
+# Home server
+#
+- hosts: homeservers
   become: yes
 
   roles:
@@ -28,6 +61,7 @@
       - role: docker
         tags:
             - docker
+        when: enable_docker | default(false)
 
       # - role: network/avahi
       #   tags:
@@ -37,6 +71,7 @@
       - role: chriswayg.msmtp-mailer
         tags:
             - msmtp
+        when: enable_msmtp | default(false)
 
       # - role: oefenweb.dns
       #   tags:
@@ -78,10 +113,10 @@
       # Network
       #
       - role: network/swag
-        become: yes
         tags:
             - swag
             - containers
+        when: enable_swag | default(false) | bool
 
       # - role: network/bunkerized-nginx
       #   become: no
@@ -133,17 +168,24 @@
       #
       # Filesystems
       #
-      - role: filesystems/mergerfs
+      - role: filesystems/storage
         become: yes
         tags:
-            - mergerfs
-        when: enable_mergerfs | default(false)
+            - storage
+        when: enable_storage | default(false) | bool
 
-      - role: filesystems/mounts
-        become: yes
-        tags:
-            - mounts
-        when: enable_mergerfs | default(false)
+      # Legacy roles (superseded by filesystems/storage)
+      # - role: filesystems/mergerfs
+      #   become: yes
+      #   tags:
+      #       - mergerfs
+      #   when: enable_mergerfs | default(false)
+
+      # - role: filesystems/mounts
+      #   become: yes
+      #   tags:
+      #       - mounts
+      #   when: enable_mergerfs | default(false)
 
       # - role: filesystems/hd-idle
       #   become: yes
@@ -207,6 +249,15 @@
             - containers
         when: enable_homeassistant | default(false)
 
+      #
+      # Services
+      #
+      - role: containers/services/nextcloud
+        tags:
+            - nextcloud
+            - containers
+        when: enable_nextcloud | default(false) | bool
+
       # - role: containers/homeautomation/mqtt
       #   become: no
       #   tags:
@@ -247,7 +298,6 @@
       #   when: enable_booksonic | default(False)
 
       - role: containers/media/plex
-        become: no
         tags:
             - plex
             - containers
