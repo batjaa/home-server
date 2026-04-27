@@ -1,0 +1,33 @@
+---
+- name: Ensure Bazarr config dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Ensure arr Docker network
+  docker_network:
+    name: "{{ arr_network }}"
+    state: present
+
+- name: Make sure the Bazarr container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "lscr.io/linuxserver/bazarr:latest"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ arr_network }}"
+    networks_cli_compatible: yes
+    published_ports:
+      - "127.0.0.1:{{ bazarr_port }}:6767"
+    env:
+      PUID: "{{ guid }}"
+      PGID: "{{ guid }}"
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/config"
+      - "{{ mergerfs_root }}:/storage"
+    restart_policy: unless-stopped

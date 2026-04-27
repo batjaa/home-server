@@ -1,0 +1,4 @@
+---
+container_name: overseerr
+overseerr_port: 5055
+arr_network: arr-net

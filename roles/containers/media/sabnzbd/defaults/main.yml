@@ -1,0 +1,4 @@
+---
+container_name: sabnzbd
+sabnzbd_port: 8082
+arr_network: arr-net

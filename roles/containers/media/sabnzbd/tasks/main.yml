@@ -1,0 +1,61 @@
+---
+- name: Ensure SABnzbd config + usenet dirs exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+  loop:
+    - "{{ docker_dir }}/{{ container_name }}"
+    - "{{ mergerfs_root }}/usenet"
+    - "{{ mergerfs_root }}/usenet/incomplete"
+    - "{{ mergerfs_root }}/usenet/complete"
+    - "{{ mergerfs_root }}/usenet/complete/movies"
+
+- name: Ensure arr Docker network
+  docker_network:
+    name: "{{ arr_network }}"
+    state: present
+
+- name: Make sure the SABnzbd container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "lscr.io/linuxserver/sabnzbd:latest"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ arr_network }}"
+    networks_cli_compatible: yes
+    published_ports:
+      - "127.0.0.1:{{ sabnzbd_port }}:8080"
+    env:
+      PUID: "{{ guid }}"
+      PGID: "{{ guid }}"
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/config"
+      - "{{ mergerfs_root }}:/storage"
+    restart_policy: unless-stopped
+
+- name: Wait for sabnzbd.ini to be created
+  wait_for:
+    path: "{{ docker_dir }}/{{ container_name }}/sabnzbd.ini"
+    timeout: 30
+
+- name: Allow access via SWAG hostname (host_whitelist)
+  ini_file:
+    path: "{{ docker_dir }}/{{ container_name }}/sabnzbd.ini"
+    section: misc
+    option: host_whitelist
+    value: "sabnzbd.{{ host }}, sabnzbd.home.local, sabnzbd, localhost"
+    no_extra_spaces: yes
+    mode: '0644'
+  register: sab_ini
+
+- name: Restart SABnzbd if config changed
+  docker_container:
+    name: "{{ container_name }}"
+    state: started
+    restart: yes
+  when: sab_ini.changed

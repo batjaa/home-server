@@ -1,0 +1,31 @@
+---
+- name: Ensure Overseerr config dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Ensure arr Docker network
+  docker_network:
+    name: "{{ arr_network }}"
+    state: present
+
+- name: Make sure the Overseerr container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "sctx/overseerr:latest"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ arr_network }}"
+    networks_cli_compatible: yes
+    published_ports:
+      - "127.0.0.1:{{ overseerr_port }}:5055"
+    env:
+      LOG_LEVEL: "info"
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/app/config"
+    restart_policy: unless-stopped

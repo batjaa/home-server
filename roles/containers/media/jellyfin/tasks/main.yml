@@ -1,0 +1,25 @@
+---
+- name: Ensure Jellyfin config dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Make sure the Jellyfin container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "lscr.io/linuxserver/jellyfin:latest"
+    pull: yes
+    state: started
+    network_mode: host
+    env:
+      PUID: "{{ guid }}"
+      PGID: "{{ guid }}"
+      TZ: "{{ timezone }}"
+      JELLYFIN_PublishedServerUrl: "https://jellyfin.{{ host }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/config"
+      - "{{ mergerfs_root }}/Media:/media:ro"
+    restart_policy: unless-stopped

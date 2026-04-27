@@ -1,0 +1,3 @@
+---
+container_name: jellyfin
+mergerfs_root: /mnt/storage

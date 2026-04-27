@@ -1,0 +1,4 @@
+---
+container_name: radarr
+radarr_port: 7878
+arr_network: arr-net

@@ -333,3 +333,36 @@
             - photoprism
             - containers
         when: enable_photoprism | default(false) | bool
+
+      - role: containers/media/jellyfin
+        tags:
+            - jellyfin
+            - containers
+        when: enable_jellyfin | default(false) | bool
+
+      #
+      # *arr stack — movie automation
+      #
+      - role: containers/media/prowlarr
+        tags: [prowlarr, arr, containers]
+        when: enable_prowlarr | default(false) | bool
+
+      - role: containers/media/sabnzbd
+        tags: [sabnzbd, arr, containers]
+        when: enable_sabnzbd | default(false) | bool
+
+      - role: containers/media/radarr
+        tags: [radarr, arr, containers]
+        when: enable_radarr | default(false) | bool
+
+      - role: containers/media/sonarr
+        tags: [sonarr, arr, containers]
+        when: enable_sonarr | default(false) | bool
+
+      - role: containers/media/bazarr
+        tags: [bazarr, arr, containers]
+        when: enable_bazarr | default(false) | bool
+
+      - role: containers/media/overseerr
+        tags: [overseerr, arr, containers]
+        when: enable_overseerr | default(false) | bool

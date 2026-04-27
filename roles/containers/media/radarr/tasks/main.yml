@@ -1,0 +1,41 @@
+---
+- name: Ensure Radarr config dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Ensure Movies media dir exists
+  file:
+    path: "{{ mergerfs_root }}/Media/Movies"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Ensure arr Docker network
+  docker_network:
+    name: "{{ arr_network }}"
+    state: present
+
+- name: Make sure the Radarr container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "lscr.io/linuxserver/radarr:latest"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ arr_network }}"
+    networks_cli_compatible: yes
+    published_ports:
+      - "127.0.0.1:{{ radarr_port }}:7878"
+    env:
+      PUID: "{{ guid }}"
+      PGID: "{{ guid }}"
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/config"
+      - "{{ mergerfs_root }}:/storage"
+    restart_policy: unless-stopped

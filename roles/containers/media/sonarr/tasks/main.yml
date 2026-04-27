@@ -1,0 +1,49 @@
+---
+- name: Ensure Sonarr config dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Ensure TV media dir exists
+  file:
+    path: "{{ mergerfs_root }}/Media/TV"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Ensure usenet/complete/tv dir exists (sabnzbd category target)
+  file:
+    path: "{{ mergerfs_root }}/usenet/complete/tv"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Ensure arr Docker network
+  docker_network:
+    name: "{{ arr_network }}"
+    state: present
+
+- name: Make sure the Sonarr container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "lscr.io/linuxserver/sonarr:latest"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ arr_network }}"
+    networks_cli_compatible: yes
+    published_ports:
+      - "127.0.0.1:{{ sonarr_port }}:8989"
+    env:
+      PUID: "{{ guid }}"
+      PGID: "{{ guid }}"
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/config"
+      - "{{ mergerfs_root }}:/storage"
+    restart_policy: unless-stopped

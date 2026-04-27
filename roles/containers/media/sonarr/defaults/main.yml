@@ -1,0 +1,4 @@
+---
+container_name: sonarr
+sonarr_port: 8989
+arr_network: arr-net

@@ -1,0 +1,4 @@
+---
+container_name: prowlarr
+prowlarr_port: 9696
+arr_network: arr-net

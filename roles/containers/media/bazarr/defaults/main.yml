@@ -1,0 +1,4 @@
+---
+container_name: bazarr
+bazarr_port: 6767
+arr_network: arr-net
