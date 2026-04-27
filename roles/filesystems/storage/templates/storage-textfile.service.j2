@@ -1,0 +1,11 @@
+[Unit]
+Description=Emit storage health metrics for Prometheus textfile collector
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/storage-textfile
+Nice=15
+IOSchedulingClass=idle
+StandardOutput=journal
+StandardError=journal

@@ -112,6 +112,14 @@ rsync -aHAXE --delete --info=stats2 \
   "${SOURCE_DIR}/" "${DEST_DIR}/" \
   >>"$LOGFILE" 2>&1 || rsync_status=$?
 
+# rsync exit 24 = "some files vanished" — normal when backing up live services
+# (Nextcloud/Plex creating temp files that get deleted during the run).
+# Treat as a warning and continue with prune.
+if [[ $rsync_status -eq 24 ]]; then
+  log "WARN: rsync exit 24 (vanished source files) — treating as success"
+  rsync_status=0
+fi
+
 if [[ $rsync_status -ne 0 ]]; then
   log "ERROR: rsync failed with exit ${rsync_status}; NOT pruning snapshots"
   exit "$rsync_status"

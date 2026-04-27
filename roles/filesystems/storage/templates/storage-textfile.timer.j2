@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly storage health metrics
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=5m
+OnBootSec=2min
+
+[Install]
+WantedBy=timers.target

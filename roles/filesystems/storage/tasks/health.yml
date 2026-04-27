@@ -4,9 +4,11 @@
 # - btrfs scrub timers: monthly on each btrfs mountpoint
 # - storage-failures.log: aggregate OnFailure= log target
 
-- name: "[health] Install smartmontools"
+- name: "[health] Install smartmontools + jq (used by textfile collector)"
   package:
-    name: smartmontools
+    name:
+      - smartmontools
+      - jq
     state: present
 
 - name: "[health] Configure smartd.conf"
@@ -96,11 +98,59 @@
           create 0644 root root
       }
 
-- name: "[health] Show scrub timer schedule"
-  command: "systemctl list-timers 'btrfs-scrub@*' --no-pager"
-  changed_when: false
-  register: scrub_timers_list
+# ── Prometheus textfile collector for storage health ──────────────────────
+- name: "[health] Ensure textfile_collector dir for node_exporter"
+  file:
+    path: /var/lib/node_exporter/textfile_collector
+    state: directory
+    owner: node_exporter
+    group: node_exporter
+    mode: '0755'
 
-- name: "[health] Display scrub schedule"
+- name: "[health] Install storage-textfile script"
+  copy:
+    src: storage-textfile.sh
+    dest: /usr/local/sbin/storage-textfile
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "[health] Install storage-textfile.service"
+  template:
+    src: storage-textfile.service.j2
+    dest: /etc/systemd/system/storage-textfile.service
+    mode: '0644'
+  register: tf_service
+
+- name: "[health] Install storage-textfile.timer"
+  template:
+    src: storage-textfile.timer.j2
+    dest: /etc/systemd/system/storage-textfile.timer
+    mode: '0644'
+  register: tf_timer
+
+- name: "[health] Reload systemd if textfile units changed"
+  systemd:
+    daemon_reload: yes
+  when: tf_service.changed or tf_timer.changed
+
+- name: "[health] Enable and start storage-textfile.timer"
+  systemd:
+    name: storage-textfile.timer
+    enabled: yes
+    state: started
+
+- name: "[health] Run textfile collector once to seed metrics"
+  systemd:
+    name: storage-textfile.service
+    state: started
+  changed_when: false
+
+- name: "[health] Show scrub + textfile timers"
+  command: "systemctl list-timers 'btrfs-scrub@*' 'storage-textfile.timer' --no-pager"
+  changed_when: false
+  register: timers_list
+
+- name: "[health] Display schedule"
   debug:
-    msg: "{{ scrub_timers_list.stdout_lines }}"
+    msg: "{{ timers_list.stdout_lines }}"
