@@ -6,11 +6,11 @@ Credits: [notthebee](https://github.com/notthebee) & [geerlingguy](https://githu
 
 ## Hosts
 
-| Host | Hardware | IP | Role |
-|------|----------|----|------|
-| `homeserver` | - | `192.168.50.20` | Media, monitoring, home automation, reverse proxy |
-| `tentomon` | Raspberry Pi 4 4GB (Flirc case) | `192.168.50.10` | Pi-hole (DNS), Cloudflare DDNS |
-| `pikvm` | PiKVM | `192.168.50.156` | Remote KVM for homeserver |
+| Host | Hardware | IP | What runs here |
+|------|----------|----|----|
+| `homeserver` | x86_64 (Ubuntu 22.04) | `192.168.50.20` | SWAG, Plex, Jellyfin, Nextcloud, PhotoPrism, *arr stack (Prowlarr/Radarr/Sonarr/SABnzbd/Bazarr/Overseerr), monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage role |
+| `tentomon` | Raspberry Pi 4 4GB (Flirc case) | `192.168.50.10` | Pi-hole DNS, Cloudflare DDNS, Cloudflare DNS records, node_exporter |
+| `pikvm` | PiKVM | `192.168.50.156` | Remote KVM (out-of-band recovery) |
 
 ### MAC Addresses
 
@@ -548,6 +548,44 @@ mount | grep backup
 # After this completes, set confirm_storage_wipe: false again
 # so accidental re-runs can't wipe drives.
 ```
+
+### 5. Phase 3a–3d — Pool, mover, backup, health
+
+After the backup drives exist, layer in:
+
+| Phase | Command | What it does |
+|-------|---------|--------------|
+| **3a — pool** | `... -e storage_phase=pool` | mergerfs union of `/mnt/backup{1,2,3}` → `/mnt/backup_pool` |
+| **3b — mover** | `... -e storage_phase=mover` | systemd timer (daily 02:00) moves cache files >7d old onto sda1 |
+| **3c — backup** | `... -e storage_phase=backup` | systemd timer (daily 03:00) rsyncs `/mnt/storage` + `/opt/docker/data` → `/mnt/backup_pool` with btrfs snapshots, 14-day retention |
+| **3d — health** | `... -e storage_phase=health` | smartd config, btrfs scrub timers per mount, Prometheus textfile metrics |
+
+All four are idempotent and non-destructive — safe to re-run.
+
+## Disaster Recovery from Backup
+
+If `/opt/docker/data` is wiped (re-install, swapped server) but `/mnt/backup_pool/_docker_data/` is intact, you skip every service's first-run wizard:
+
+1. Boot homeserver, get through Phase 2a (sda mounted at `/mnt/sda1`, mergerfs at `/mnt/storage`)
+2. Phase 3a (backup_pool) so `/mnt/backup_pool/_docker_data/` is reachable
+3. Stop any containers that auto-started:
+   ```bash
+   ssh -p 100 batjaa@192.168.50.20 "sudo docker ps -q | xargs -r sudo docker stop"
+   ```
+4. Restore `/opt/docker/data`:
+   ```bash
+   ssh -p 100 batjaa@192.168.50.20 "sudo rsync -aHAX --delete /mnt/backup_pool/_docker_data/ /opt/docker/data/"
+   ```
+5. Re-run the playbook with all `enable_*` flags on:
+   ```bash
+   ansible-playbook main.yml -l homeserver
+   ```
+
+Containers come up reading their original config — API keys, library DBs, Plex/Jellyfin libraries, *arr quality profiles, indexer credentials all preserved. **No wizard click-through.**
+
+## Services
+
+Per-service runbooks (config steps that aren't yet automated, where credentials live, what manual setup is needed) are in [`docs/services.md`](docs/services.md).
 
 ## Day-to-day Usage
 
