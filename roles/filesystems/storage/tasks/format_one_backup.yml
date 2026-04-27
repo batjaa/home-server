@@ -91,9 +91,12 @@
         state: present
         timeout: 30
 
+    - name: "{{ drive.name }} — wipe partition signatures"
+      command: "wipefs -a /dev/disk/by-id/{{ drive.by_id }}-part1"
+
     - name: "{{ drive.name }} — mkfs.btrfs with pinned UUID"
       command: >-
-        mkfs.btrfs -L {{ drive.name }} -U {{ drive.expected_uuid }}
+        mkfs.btrfs -f -L {{ drive.name }} -U {{ drive.expected_uuid }}
         /dev/disk/by-id/{{ drive.by_id }}-part1
 
     - name: "{{ drive.name }} — make temp mount dir"
@@ -117,3 +120,19 @@
       file:
         path: "/tmp/storage-fmt-{{ drive.name }}"
         state: absent
+
+# Mount the @current subvolume at the final mountpoint (idempotent; runs
+# whether the drive was just formatted or was already in target state).
+- name: "{{ drive.name }} — ensure mountpoint exists"
+  file:
+    path: "{{ drive.mount }}"
+    state: directory
+    mode: '0755'
+
+- name: "{{ drive.name }} — mount @current subvolume (and add fstab entry)"
+  mount:
+    path: "{{ drive.mount }}"
+    src: "UUID={{ drive.expected_uuid }}"
+    fstype: btrfs
+    opts: "{{ storage_btrfs_mount_opts }}"
+    state: mounted
