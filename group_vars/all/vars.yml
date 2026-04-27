@@ -38,24 +38,7 @@ host_local: 'home.site'
 #
 # Networks
 #
-vpn_network: '192.168.50.0/24'
-
-# e.g. for physical ports of switch
-# 10.0.0.0  10.0.0.1 - 10.0.0.30    10.0.0.31
-lan_network: '10.0.0.0/24'
-
-lan_base: "{{ '.'.join(lan_network.split('.')[0:3]) }}"
-
-# For internal swag macvlan
-# 10.0.0.32   10.0.0.33 - 10.0.0.62   10.0.0.63
-# swag_network: '10.0.0.32/27'
-swag_network: '{{ lan_network }}'
-
-swag_base: "{{ '.'.join(swag_network.split('.')[0:3]) }}"
-
-swag_gateway: "{{ '.'.join(swag_network.split('.')[0:3]) }}.33"
-
-swag_interface: eth1
+lan_network: '192.168.50.0/24'
 
 #
 # Email credentials (for SMART and Snapraid error reporting)
@@ -124,10 +107,9 @@ enable_endlessh: true
 enable_cloudflare_ddns: false
 
 #
-# SWAG
+# SWAG (host-network reverse proxy with wildcard cert)
 #
-enable_swag_internal: false
-enable_swag_public: false
+enable_swag: false
 
 #
 # Monitoring
