@@ -1,0 +1,17 @@
+# Managed by Ansible — drive SMART monitoring config.
+# Format: <device> <directives>
+#   -a            : monitor everything (errors, attribute changes, self-tests)
+#   -o on         : enable automatic offline data collection
+#   -S on         : enable attribute autosave
+#   -s            : schedule self-tests (S=short, L=long)
+#                   syntax: T/MM/DD/d/HH where d=day-of-week (1-7), HH=hour
+#   -m {{ email }} : email destination for alerts (sent via msmtp)
+
+DEFAULT -a -o on -S on \
+  -s (S/../.././03|L/../../7/04) \
+  -m {{ email }} -M exec /usr/share/smartmontools/smartd_warning.sh
+
+# Each storage drive identified by serial via /dev/disk/by-id/
+{% for d in storage_drives %}
+/dev/disk/by-id/{{ d.by_id }}
+{% endfor %}

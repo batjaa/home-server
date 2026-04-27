@@ -1,0 +1,69 @@
+---
+# Phase 3b — cache mover (NVMe cache → /mnt/sda1).
+# Idempotent. Runs daily via systemd timer.
+
+- name: "[mover] Install cache-mover script"
+  copy:
+    src: cache-mover.sh
+    dest: /usr/local/sbin/cache-mover
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "[mover] Install cache-mover.service"
+  template:
+    src: cache-mover.service.j2
+    dest: /etc/systemd/system/cache-mover.service
+    mode: '0644'
+  register: mover_service
+
+- name: "[mover] Install cache-mover.timer"
+  template:
+    src: cache-mover.timer.j2
+    dest: /etc/systemd/system/cache-mover.timer
+    mode: '0644'
+  register: mover_timer
+
+- name: "[mover] Install logrotate config"
+  copy:
+    dest: /etc/logrotate.d/cache-mover
+    mode: '0644'
+    content: |
+      /var/log/cache-mover.log {
+          weekly
+          rotate 8
+          compress
+          missingok
+          notifempty
+          create 0644 root root
+      }
+
+- name: "[mover] Touch log file"
+  file:
+    path: /var/log/cache-mover.log
+    state: touch
+    owner: root
+    group: root
+    mode: '0644'
+    modification_time: preserve
+    access_time: preserve
+
+- name: "[mover] Reload systemd if unit files changed"
+  systemd:
+    daemon_reload: yes
+  when: mover_service.changed or mover_timer.changed
+
+- name: "[mover] Enable and start cache-mover.timer"
+  systemd:
+    name: cache-mover.timer
+    enabled: yes
+    state: started
+
+- name: "[mover] Show next scheduled run"
+  command: "systemctl list-timers cache-mover.timer --no-pager"
+  changed_when: false
+  register: timer_info
+
+- name: "[mover] Display timer status"
+  debug:
+    msg: "{{ timer_info.stdout_lines }}"

@@ -1,0 +1,12 @@
+[Unit]
+Description=Move stale files from NVMe cache to primary disk
+After=local-fs.target
+
+[Service]
+Type=oneshot
+Environment=CACHE_AGE_DAYS={{ cache_age_days | default(7) }}
+ExecStart=/usr/local/sbin/cache-mover
+StandardOutput=journal
+StandardError=journal
+Nice=10
+IOSchedulingClass=idle

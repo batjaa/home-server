@@ -1,0 +1,35 @@
+---
+# Phase 3a — mergerfs backup_pool union of /mnt/backup{1,2,3}.
+# Idempotent: just a mount + fstab entry. No data is moved.
+
+- name: "[pool] Build backup pool branches list"
+  set_fact:
+    backup_branches: >-
+      {{ storage_drives
+         | selectattr('role', 'equalto', 'backup')
+         | map(attribute='mount')
+         | join(':') }}
+
+- name: "[pool] Ensure /mnt/backup_pool mountpoint exists"
+  file:
+    path: /mnt/backup_pool
+    state: directory
+    mode: '0755'
+
+- name: "[pool] Mount mergerfs backup_pool union (and add fstab entry)"
+  mount:
+    path: /mnt/backup_pool
+    src: "{{ backup_branches }}"
+    fstype: fuse.mergerfs
+    opts: >-
+      defaults,allow_other,use_ino,category.create=mfs,minfreespace=20G,moveonenospc=1,fsname=mergerfs-backup
+    state: mounted
+
+- name: "[pool] Verify backup_pool is mounted"
+  command: "df -h /mnt/backup_pool"
+  changed_when: false
+  register: pool_df
+
+- name: "[pool] Show backup_pool capacity"
+  debug:
+    msg: "{{ pool_df.stdout_lines }}"

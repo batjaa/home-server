@@ -1,0 +1,106 @@
+---
+# Phase 3d — health & observability.
+# - smartd: daily short test 03:00, weekly long test Sunday 04:00, email on alert
+# - btrfs scrub timers: monthly on each btrfs mountpoint
+# - storage-failures.log: aggregate OnFailure= log target
+
+- name: "[health] Install smartmontools"
+  package:
+    name: smartmontools
+    state: present
+
+- name: "[health] Configure smartd.conf"
+  template:
+    src: smartd.conf.j2
+    dest: /etc/smartd.conf
+    mode: '0644'
+    backup: yes
+  register: smartd_conf
+
+- name: "[health] Enable + restart smartd"
+  systemd:
+    name: smartd
+    enabled: yes
+    state: "{{ 'restarted' if smartd_conf.changed else 'started' }}"
+
+# ── btrfs scrub timers (one per btrfs mountpoint) ──────────────────────────
+- name: "[health] Build btrfs mountpoint list"
+  set_fact:
+    btrfs_mountpoints: >-
+      {{ [primary.mount]
+         + (storage_drives
+            | selectattr('role', 'equalto', 'backup')
+            | map(attribute='mount')
+            | list) }}
+  vars:
+    primary: "{{ storage_drives | selectattr('name', 'equalto', 'primary') | first }}"
+
+- name: "[health] Install btrfs-scrub@.service template"
+  template:
+    src: btrfs-scrub.service.j2
+    dest: /etc/systemd/system/btrfs-scrub@.service
+    mode: '0644'
+  register: scrub_service
+
+- name: "[health] Install btrfs-scrub@.timer template"
+  template:
+    src: btrfs-scrub.timer.j2
+    dest: /etc/systemd/system/btrfs-scrub@.timer
+    mode: '0644'
+  register: scrub_timer
+
+- name: "[health] Reload systemd if scrub units changed"
+  systemd:
+    daemon_reload: yes
+  when: scrub_service.changed or scrub_timer.changed
+
+- name: "[health] Enable + start scrub timers per mountpoint"
+  systemd:
+    name: "btrfs-scrub@{{ item | regex_replace('^/mnt/', '') }}.timer"
+    enabled: yes
+    state: started
+  loop: "{{ btrfs_mountpoints }}"
+
+# ── Centralised failure log via systemd OnFailure= helper ──────────────────
+- name: "[health] Install storage-failure-log helper"
+  copy:
+    dest: /usr/local/sbin/storage-failure-log
+    mode: '0755'
+    content: |
+      #!/bin/sh
+      # Called by systemd OnFailure= for storage units.
+      # Writes a one-liner per failure; tail -f /var/log/storage-failures.log
+      printf '%s %s failed (exit=%s)\n' "$(date '+%F %T')" "${1:-unknown}" "${2:-?}" >> /var/log/storage-failures.log
+
+- name: "[health] Touch failures log"
+  file:
+    path: /var/log/storage-failures.log
+    state: touch
+    owner: root
+    group: root
+    mode: '0644'
+    modification_time: preserve
+    access_time: preserve
+
+- name: "[health] Logrotate for storage-failures.log"
+  copy:
+    dest: /etc/logrotate.d/storage-failures
+    mode: '0644'
+    content: |
+      /var/log/storage-failures.log {
+          weekly
+          rotate 8
+          compress
+          missingok
+          notifempty
+          create 0644 root root
+      }
+
+- name: "[health] Show scrub timer schedule"
+  command: "systemctl list-timers 'btrfs-scrub@*' --no-pager"
+  changed_when: false
+  register: scrub_timers_list
+
+- name: "[health] Display scrub schedule"
+  debug:
+    msg: "{{ scrub_timers_list.stdout_lines }}"

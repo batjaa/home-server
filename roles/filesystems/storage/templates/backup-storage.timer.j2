@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily backup of /mnt/storage to /mnt/backup_pool
+
+[Timer]
+OnCalendar=*-*-* {{ backup_schedule | default('03:00') }}:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

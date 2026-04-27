@@ -1,13 +1,17 @@
 ---
 # Storage role — controlled by storage_phase variable.
 #
-#   storage_phase=data       (default, safe) — Phase 2a only
-#   storage_phase=backups    — Phase 2b only (DESTRUCTIVE)
-#   storage_phase=all        — both
+#   storage_phase=data       (default, safe) — Phase 2a: sda + mergerfs cache
+#   storage_phase=backups    — Phase 2b: format backup drives (DESTRUCTIVE)
+#   storage_phase=pool       — Phase 3a: mergerfs backup_pool union
+#   storage_phase=mover      — Phase 3b: cache mover service + timer
+#   storage_phase=backup     — Phase 3c: daily backup + btrfs snapshots
+#   storage_phase=health     — Phase 3d: smartd + btrfs scrub timers
+#   storage_phase=all        — every phase (after backup drives exist)
 #
 # Usage:
 #   ansible-playbook main.yml -l homeserver --tags="storage"
-#   ansible-playbook main.yml -l homeserver --tags="storage" -e storage_phase=backups
+#   ansible-playbook main.yml -l homeserver --tags="storage" -e storage_phase=pool
 
 - name: Install storage packages
   package:
@@ -28,5 +32,21 @@
 # ── Phase 2b ──────────────────────────────────────────────────────────────
 - import_tasks: backups.yml
   when: storage_phase | default('data') in ['backups', 'all']
+
+# ── Phase 3a ──────────────────────────────────────────────────────────────
+- import_tasks: pool.yml
+  when: storage_phase | default('data') in ['pool', 'all']
+
+# ── Phase 3b ──────────────────────────────────────────────────────────────
+- import_tasks: mover.yml
+  when: storage_phase | default('data') in ['mover', 'all']
+
+# ── Phase 3c ──────────────────────────────────────────────────────────────
+- import_tasks: backup.yml
+  when: storage_phase | default('data') in ['backup', 'all']
+
+# ── Phase 3d ──────────────────────────────────────────────────────────────
+- import_tasks: health.yml
+  when: storage_phase | default('data') in ['health', 'all']
 
 - import_tasks: state.yml

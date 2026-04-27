@@ -1,0 +1,16 @@
+[Unit]
+Description=Daily backup of /mnt/storage to /mnt/backup_pool with btrfs snapshots
+After=local-fs.target
+RequiresMountsFor=/mnt/storage /mnt/backup_pool {{ storage_drives | selectattr('role','equalto','backup') | map(attribute='mount') | join(' ') }}
+
+[Service]
+Type=oneshot
+Environment=SNAPSHOT_RETAIN_DAYS={{ snapshot_retain_days | default(14) }}
+Environment=BACKUP_CHOWN={{ backup_chown | default('1001:1001') }}
+Environment="RSYNC_EXTRA_OPTS={{ rsync_extra_opts | default('') }}"
+Environment="BACKUP_DRIVES={{ storage_drives | selectattr('role','equalto','backup') | map(attribute='mount') | zip(storage_drives | selectattr('role','equalto','backup') | map(attribute='expected_uuid')) | map('join', ':') | join(' ') }}"
+ExecStart=/usr/local/sbin/backup-storage
+StandardOutput=journal
+StandardError=journal
+Nice=10
+IOSchedulingClass=idle

@@ -11,3 +11,16 @@ storage_cache_dir: /mnt/storage_cache
 
 # Safety: wipes refuse to run unless explicitly confirmed
 confirm_storage_wipe: false
+
+# Cache mover (Phase 3b)
+cache_age_days: 7
+mover_schedule: "02:00"
+
+# Backup (Phase 3c)
+backup_schedule: "03:00"
+snapshot_retain_days: 14
+backup_chown: "1001:1001"
+rsync_extra_opts: ""
+
+# Health (Phase 3d)
+scrub_schedule: monthly

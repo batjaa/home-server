@@ -1,0 +1,12 @@
+[Unit]
+Description=btrfs scrub on %I
+ConditionPathIsMountPoint=/mnt/%i
+RequiresMountsFor=/mnt/%i
+
+[Service]
+Type=oneshot
+Nice=19
+IOSchedulingClass=idle
+ExecStart=/usr/bin/btrfs scrub start -B /mnt/%i
+StandardOutput=journal
+StandardError=journal

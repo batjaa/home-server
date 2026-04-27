@@ -1,0 +1,70 @@
+---
+# Phase 3c — daily backup of /mnt/storage to /mnt/backup_pool with
+# per-drive btrfs read-only snapshots. Runs after the cache mover.
+# Idempotent. Triggered by systemd timer.
+
+- name: "[backup] Install backup-storage script"
+  copy:
+    src: backup-storage.sh
+    dest: /usr/local/sbin/backup-storage
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "[backup] Install backup-storage.service"
+  template:
+    src: backup-storage.service.j2
+    dest: /etc/systemd/system/backup-storage.service
+    mode: '0644'
+  register: backup_service
+
+- name: "[backup] Install backup-storage.timer"
+  template:
+    src: backup-storage.timer.j2
+    dest: /etc/systemd/system/backup-storage.timer
+    mode: '0644'
+  register: backup_timer
+
+- name: "[backup] Install logrotate config"
+  copy:
+    dest: /etc/logrotate.d/backup-storage
+    mode: '0644'
+    content: |
+      /var/log/backup-storage.log {
+          weekly
+          rotate 8
+          compress
+          missingok
+          notifempty
+          create 0644 root root
+      }
+
+- name: "[backup] Touch log file"
+  file:
+    path: /var/log/backup-storage.log
+    state: touch
+    owner: root
+    group: root
+    mode: '0644'
+    modification_time: preserve
+    access_time: preserve
+
+- name: "[backup] Reload systemd if unit files changed"
+  systemd:
+    daemon_reload: yes
+  when: backup_service.changed or backup_timer.changed
+
+- name: "[backup] Enable and start backup-storage.timer"
+  systemd:
+    name: backup-storage.timer
+    enabled: yes
+    state: started
+
+- name: "[backup] Show next scheduled run"
+  command: "systemctl list-timers backup-storage.timer --no-pager"
+  changed_when: false
+  register: backup_timer_info
+
+- name: "[backup] Display timer status"
+  debug:
+    msg: "{{ backup_timer_info.stdout_lines }}"

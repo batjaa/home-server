@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily cache mover
+
+[Timer]
+OnCalendar=*-*-* {{ mover_schedule | default('02:00') }}:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
