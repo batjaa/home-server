@@ -1,0 +1,23 @@
+# Reverse proxy: home.{{ host }} → host:{{ homepage_port | default(3010) }}
+# Internal-only — admin landing page, no Cloudflare CNAME.
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+
+    server_name home.{{ host }};
+
+    include /config/nginx/ssl.conf;
+
+    client_max_body_size 0;
+
+    location / {
+        include /config/nginx/proxy.conf;
+        include /config/nginx/resolver.conf;
+        set $upstream_app 127.0.0.1;
+        set $upstream_port {{ homepage_port | default(3010) }};
+        set $upstream_proto http;
+        proxy_pass $upstream_proto://$upstream_app:$upstream_port;
+    }
+}

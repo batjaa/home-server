@@ -1,0 +1,7 @@
+---
+container_name: homepage
+homepage_port: 3010
+
+# When true, mounts /var/run/docker.sock so the Docker integration
+# can read container state.
+homepage_docker_integration: true

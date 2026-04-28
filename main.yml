@@ -276,6 +276,12 @@
             - containers
         when: enable_nextcloud | default(false) | bool
 
+      - role: containers/services/homepage
+        tags:
+            - homepage
+            - containers
+        when: enable_homepage | default(false) | bool
+
       # - role: containers/homeautomation/mqtt
       #   become: no
       #   tags:

@@ -1,0 +1,39 @@
+---
+- name: Ensure Homepage config dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Render Homepage config files
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ docker_dir }}/{{ container_name }}/{{ item }}"
+    mode: '0644'
+  loop:
+    - settings.yaml
+    - services.yaml
+    - widgets.yaml
+    - bookmarks.yaml
+    - docker.yaml
+  notify: restart homepage
+
+- name: Make sure the Homepage container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "ghcr.io/gethomepage/homepage:latest"
+    pull: yes
+    state: started
+    network_mode: host
+    env:
+      PUID: "{{ guid }}"
+      PGID: "{{ guid }}"
+      TZ: "{{ timezone }}"
+      HOMEPAGE_ALLOWED_HOSTS: "home.{{ host }},home.home.local,127.0.0.1:{{ homepage_port }}"
+      PORT: "{{ homepage_port | string }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/app/config"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    restart_policy: unless-stopped

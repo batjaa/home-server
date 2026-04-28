@@ -1,0 +1,111 @@
+# Service tiles — grouped per layout section in settings.yaml.
+# Pings are local container ports so widgets stay green even if SWAG is down.
+
+- Media:
+    - Plex:
+        icon: plex.png
+        href: https://plex.batjaa.site
+        description: movies, TV, music
+        siteMonitor: http://127.0.0.1:32400/identity
+    - Jellyfin:
+        icon: jellyfin.png
+        href: https://jellyfin.batjaa.site
+        description: open-source video alternative
+        siteMonitor: http://127.0.0.1:8096/health
+    - Navidrome:
+        icon: navidrome.png
+        href: https://music.batjaa.site
+        description: music streaming
+        siteMonitor: http://127.0.0.1:4533/ping
+    - Tautulli:
+        icon: tautulli.png
+        href: https://tautulli.batjaa.site
+        description: Plex stats
+        siteMonitor: http://127.0.0.1:8181/
+
+- Files & Photos:
+    - Immich:
+        icon: immich.png
+        href: https://photos.batjaa.site
+        description: photos + memories
+        siteMonitor: http://127.0.0.1:2283/api/server/ping
+    - Nextcloud:
+        icon: nextcloud.png
+        href: https://nextcloud.batjaa.site
+        description: files, calendar, contacts
+        siteMonitor: http://127.0.0.1:8081/status.php
+
+- Automation:
+    - Seerr:
+        icon: jellyseerr.png
+        href: https://request.batjaa.site
+        description: friend request UI
+        siteMonitor: http://127.0.0.1:5055/
+    - Sonarr:
+        icon: sonarr.png
+        href: https://sonarr.batjaa.site
+        description: TV automation
+        siteMonitor: http://127.0.0.1:8989/
+    - Radarr:
+        icon: radarr.png
+        href: https://radarr.batjaa.site
+        description: movie automation
+        siteMonitor: http://127.0.0.1:7878/
+    - Prowlarr:
+        icon: prowlarr.png
+        href: https://prowlarr.batjaa.site
+        description: indexer manager
+        siteMonitor: http://127.0.0.1:9696/
+    - SABnzbd:
+        icon: sabnzbd.png
+        href: https://sabnzbd.batjaa.site
+        description: usenet client
+        siteMonitor: http://127.0.0.1:8082/
+    - Bazarr:
+        icon: bazarr.png
+        href: https://bazarr.batjaa.site
+        description: subtitles
+        siteMonitor: http://127.0.0.1:6767/
+    - Beets:
+        icon: beets.png
+        href: https://beets.batjaa.site
+        description: music tagger
+        siteMonitor: http://127.0.0.1:8337/
+
+- Monitoring:
+    - Grafana:
+        icon: grafana.png
+        href: https://grafana.batjaa.site
+        description: dashboards
+        siteMonitor: http://127.0.0.1:3000/api/health
+    - Prometheus:
+        icon: prometheus.png
+        href: http://127.0.0.1:9090
+        description: metrics TSDB
+        siteMonitor: http://127.0.0.1:9090/-/healthy
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: https://status.batjaa.site
+        description: status page + alerts
+        siteMonitor: http://127.0.0.1:3001/
+    - cAdvisor:
+        icon: cadvisor.png
+        href: http://127.0.0.1:8080
+        description: container metrics
+        siteMonitor: http://127.0.0.1:8080/healthz
+
+- Infrastructure:
+    - Pi-hole:
+        icon: pi-hole.png
+        href: http://192.168.50.10/admin
+        description: DNS + ad blocking (tentomon)
+        siteMonitor: http://192.168.50.10/admin/
+    - PiKVM:
+        icon: pikvm.png
+        href: https://kvm.home.local
+        description: out-of-band recovery
+    - SWAG:
+        icon: swag.png
+        href: https://{{ host }}
+        description: reverse proxy + SSL
+        siteMonitor: http://127.0.0.1:80/

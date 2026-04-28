@@ -1,0 +1,6 @@
+---
+- name: restart homepage
+  docker_container:
+    name: homepage
+    state: started
+    restart: yes
