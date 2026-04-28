@@ -39,3 +39,37 @@
       - "{{ docker_dir }}/{{ container_name }}:/data"
       - "{{ mergerfs_root }}/Media/Music:/music:ro"
     restart_policy: unless-stopped
+
+- name: Wait for Navidrome HTTP to be ready
+  uri:
+    url: "http://127.0.0.1:{{ navidrome_port }}/ping"
+    status_code: [200, 401]
+  register: nd_ping
+  retries: 30
+  delay: 2
+  until: nd_ping.status in [200, 401]
+
+- name: Check Navidrome user count
+  uri:
+    url: "http://127.0.0.1:{{ navidrome_port }}/auth/login"
+    method: POST
+    body_format: json
+    body:
+      username: "{{ navidrome_admin_user | default('batjaa') }}"
+      password: "{{ navidrome_admin_password }}"
+    status_code: [200, 401, 403, 500]
+  register: nd_login
+  no_log: true
+
+- name: Create Navidrome admin (first-run only)
+  uri:
+    url: "http://127.0.0.1:{{ navidrome_port }}/auth/createAdmin"
+    method: POST
+    body_format: json
+    body:
+      username: "{{ navidrome_admin_user | default('batjaa') }}"
+      password: "{{ navidrome_admin_password }}"
+      name: "{{ navidrome_admin_user | default('batjaa') }}"
+    status_code: [200]
+  no_log: true
+  when: nd_login.status != 200
