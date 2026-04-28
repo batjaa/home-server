@@ -146,6 +146,62 @@
     state: started
   changed_when: false
 
+# ── Intel GPU metrics (only on hosts with /dev/dri) ────────────────────────
+- name: "[health] Detect Intel iGPU"
+  stat:
+    path: /dev/dri/renderD128
+  register: igpu
+
+- name: "[health] Install intel-gpu-tools (provides intel_gpu_top)"
+  package:
+    name: intel-gpu-tools
+    state: present
+  when: igpu.stat.exists
+
+- name: "[health] Install intel-gpu-textfile script"
+  copy:
+    src: intel-gpu-textfile.sh
+    dest: /usr/local/sbin/intel-gpu-textfile
+    owner: root
+    group: root
+    mode: '0755'
+  when: igpu.stat.exists
+
+- name: "[health] Install intel-gpu-textfile.service"
+  template:
+    src: intel-gpu-textfile.service.j2
+    dest: /etc/systemd/system/intel-gpu-textfile.service
+    mode: '0644'
+  when: igpu.stat.exists
+  register: igpu_service
+
+- name: "[health] Install intel-gpu-textfile.timer"
+  template:
+    src: intel-gpu-textfile.timer.j2
+    dest: /etc/systemd/system/intel-gpu-textfile.timer
+    mode: '0644'
+  when: igpu.stat.exists
+  register: igpu_timer
+
+- name: "[health] Reload systemd if intel-gpu units changed"
+  systemd:
+    daemon_reload: yes
+  when: igpu.stat.exists and (igpu_service.changed or igpu_timer.changed)
+
+- name: "[health] Enable intel-gpu-textfile.timer"
+  systemd:
+    name: intel-gpu-textfile.timer
+    enabled: yes
+    state: started
+  when: igpu.stat.exists
+
+- name: "[health] Seed intel-gpu metrics once"
+  systemd:
+    name: intel-gpu-textfile.service
+    state: started
+  changed_when: false
+  when: igpu.stat.exists
+
 - name: "[health] Show scrub + textfile timers"
   command: "systemctl list-timers 'btrfs-scrub@*' 'storage-textfile.timer' --no-pager"
   changed_when: false

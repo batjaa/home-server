@@ -1,0 +1,10 @@
+[Unit]
+Description=Sample Intel iGPU stats for Prometheus textfile collector
+After=local-fs.target
+ConditionPathExists=/dev/dri/renderD128
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/intel-gpu-textfile
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,109 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Engines",
+      "id": 100,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 15, "gradientMode": "opacity" },
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 1 },
+      "id": 1,
+      "options": { "legend": { "showLegend": true, "displayMode": "table", "placement": "right", "calcs": [ "mean", "max", "lastNotNull" ] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "intel_gpu_engine_busy_percent", "legendFormat": "{{engine}}", "refId": "A" }
+      ],
+      "title": "GPU engine utilization",
+      "type": "timeseries"
+    },
+    {
+      "type": "row",
+      "title": "Frequency, power, memory bandwidth",
+      "id": 101,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 10 },
+      "collapsed": false
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10 },
+          "unit": "MHz"
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 11 },
+      "id": 2,
+      "options": { "legend": { "showLegend": true, "calcs": [ "mean", "max" ] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "intel_gpu_freq_mhz", "legendFormat": "{{kind}}", "refId": "A" }
+      ],
+      "title": "GPU frequency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10 },
+          "unit": "watt"
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 11 },
+      "id": 3,
+      "options": { "legend": { "showLegend": true, "calcs": [ "mean", "max" ] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "intel_gpu_power_watts", "legendFormat": "{{rail}}", "refId": "A" }
+      ],
+      "title": "GPU power draw",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10 },
+          "unit": "Bps"
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 11 },
+      "id": 4,
+      "options": { "legend": { "showLegend": true, "calcs": [ "mean", "max" ] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "intel_gpu_imc_bytes_per_sec", "legendFormat": "{{direction}}", "refId": "A" }
+      ],
+      "title": "Memory controller bandwidth",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "tags": [ "gpu", "intel" ],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "title": "Intel GPU",
+  "uid": "intel-gpu",
+  "version": 1,
+  "weekStart": ""
+}
