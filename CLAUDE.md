@@ -29,12 +29,22 @@ Inventory groups: `[pi]` and `[homeservers]`. Each play targets one.
 
 ## House rules (preferences)
 
-1. **Config-file / env-var > UI click-through.** Default to setting things via Ansible variables, env vars on containers, or rendered config templates. When the UI is the only option, hit the app's REST API from a task (see `roles/containers/monitoring/grafana/tasks/main.yml` setting the org's home dashboard, or `roles/containers/media/navidrome/tasks/main.yml` calling `/auth/createAdmin`). Manual UI clicks are a last resort.
+1. **Config-first or it didn't happen.** Every change goes into a role/template/var first, then is applied via the playbook. If you're tempted to `ssh` in and run a one-off, stop:
+   - Capture the change in the role
+   - Run the playbook with the right tag
+   - Verify it's idempotent (run twice, second run is a no-op)
+   - Then commit
+   The bar: a fresh disaster-recovery rebuild from `_docker_data` + `ansible-playbook main.yml` should reach the same state as the live system. If a setting is only "in the running container's memory" or "saved by clicking Save in a UI", it doesn't survive recovery and isn't real.
+   Exceptions: read-only debugging, and the small list of UI-only steps documented in `docs/services.md` (Plex first claim, Bazarr provider auth, etc.). When the UI is the only option, hit the app's REST API from a task (see `roles/containers/monitoring/grafana/tasks/main.yml` setting the org's home dashboard, or `roles/containers/media/navidrome/tasks/main.yml` calling `/auth/createAdmin`).
 2. **Bridge networking, never macvlan.** All containers publish to `127.0.0.1:<port>` on the host; SWAG terminates SSL on `:443` and proxies in. Macvlan is dead — every old role using it has been rewritten.
 3. **Hardlinks must work across services.** Bind-mount `/mnt/storage` as `/storage` (or `/media`) inside containers — never individual sub-paths. Radarr, Sonarr, SABnzbd, Plex, Jellyfin, Navidrome all see the same root.
 4. **All persistent state goes to `/opt/docker/data/<service>/`.** Media files live under `/mnt/storage/Media/`. Both are backed up.
 5. **Secrets in vault, never inline.** `host_vars/<host>/secret.yml` is encrypted; the vault password lives in macOS Keychain via `pass.sh`. To peek: `ansible -m debug -a "var=<key>" <host>`.
 6. **Idempotency required.** Re-running any tag is a no-op when state matches.
+7. **Hardware acceleration via `/dev/dri` + render/video groups.** When a container needs the iGPU (transcoding, ML), the role should:
+   - mount `devices: ["/dev/dri:/dev/dri"]`
+   - add the host's `render` (gid 109) + `video` (gid 44) groups via `groups:` or the linuxserver `GIDLIST` env var
+   The `gpu_render_gid` and `gpu_video_gid` group_vars are the source of truth — override per host only if the OS uses different gids.
 
 ## Adding a new service — minimal checklist
 

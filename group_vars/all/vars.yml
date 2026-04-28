@@ -81,6 +81,13 @@ security_autoupdate_mail_on_error: false
 docker_dir: /opt/docker/data
 
 #
+# GPU passthrough (Intel Quick Sync, /dev/dri/renderD128)
+# Hosts use these gids to grant containers access to the iGPU.
+#
+gpu_render_gid: '109'
+gpu_video_gid: '44'
+
+#
 # MSMTP
 #
 msmtp_accounts:

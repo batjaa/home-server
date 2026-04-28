@@ -14,6 +14,11 @@
     pull: yes
     state: started
     network_mode: host
+    devices:
+      - "/dev/dri:/dev/dri"
+    groups:
+      - "{{ gpu_render_gid }}"
+      - "{{ gpu_video_gid }}"
     env:
       PUID: "{{ guid }}"
       PGID: "{{ guid }}"
@@ -23,3 +28,39 @@
       - "{{ docker_dir }}/{{ container_name }}:/config"
       - "{{ mergerfs_root }}/Media:/media:ro"
     restart_policy: unless-stopped
+
+# After deploy: enable QSV in Jellyfin via API so the dashboard toggle
+# isn't needed. Idempotent — re-applies on every run.
+- name: Wait for Jellyfin API to be ready
+  uri:
+    url: "http://127.0.0.1:8096/health"
+    status_code: [200, 401]
+  register: jf_health
+  retries: 30
+  delay: 2
+  until: jf_health.status in [200, 401]
+
+- name: Enable Intel QuickSync hardware transcoding (POST /System/Configuration/encoding)
+  uri:
+    url: "http://127.0.0.1:8096/System/Configuration/encoding"
+    method: POST
+    headers:
+      X-Emby-Token: "{{ jellyfin_api_key | default('') }}"
+    body_format: json
+    body:
+      HardwareAccelerationType: "qsv"
+      EnableHardwareEncoding: true
+      AllowHevcEncoding: true
+      AllowAv1Encoding: true
+      EnableTonemapping: true
+      EnableVppTonemapping: true
+      VaapiDevice: "/dev/dri/renderD128"
+      QsvDevice: ""
+      EnableIntelLowPowerH264HwEncoder: true
+      EnableIntelLowPowerHevcHwEncoder: true
+      HardwareDecodingCodecs: ["h264", "hevc", "mpeg2video", "vc1", "av1"]
+      EnableDecodingColorDepth10Hevc: true
+      EnableDecodingColorDepth10Vp9: true
+    status_code: [204]
+  when: jellyfin_api_key is defined
+  changed_when: false

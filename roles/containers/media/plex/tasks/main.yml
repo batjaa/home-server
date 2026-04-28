@@ -21,6 +21,11 @@
     pull: yes
     state: started
     network_mode: host
+    devices:
+      - "/dev/dri:/dev/dri"
+    groups:
+      - "{{ gpu_render_gid }}"
+      - "{{ gpu_video_gid }}"
     env:
       PUID: "{{ guid }}"
       PGID: "{{ guid }}"
