@@ -1,0 +1,5 @@
+---
+container_name: beets
+beets_port: 8337
+beets_import_dir: "{{ mergerfs_root }}/Media/MusicImport"
+beets_library_dir: "{{ mergerfs_root }}/Media/Music"

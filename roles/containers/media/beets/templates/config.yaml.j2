@@ -1,0 +1,87 @@
+# Managed by Ansible — do not edit by hand.
+#
+# Beets imports staged files from /staging, retags via MusicBrainz, and
+# moves them into /music in canonical $albumartist/$album/$track structure.
+
+directory: /music
+library: /config/library.db
+
+# Import behaviour
+import:
+  move: yes
+  write: yes
+  copy: no
+  resume: ask
+  incremental: no
+  log: /config/import.log
+  # quiet=yes auto-accepts strong matches; medium/low matches need a human.
+  # We keep this 'no' so the first pass through messy data is interactive.
+  quiet: no
+
+# File naming + folder layout
+paths:
+  default: "%lower{$albumartist}/$album%aunique{}/$track $title"
+  singleton: "%lower{$artist}/Singles/$title"
+  comp: "Compilations/$album%aunique{}/$track $title"
+
+# Replace special chars in filenames so Plex/Jellyfin/Navidrome don't choke
+replace:
+  '[\\/]': _
+  '^\.': _
+  '[\x00-\x1f]': _
+  '[<>:"\?\*\|]': _
+  '\.$': _
+  '\s+$': ''
+  '^\s+': ''
+  '^-': _
+
+plugins:
+  - fetchart       # download cover art
+  - embedart       # embed cover art into the audio file
+  - lastgenre      # genre from last.fm
+  - replaygain     # normalize volume across tracks
+  - lyrics         # lyrics in tags
+  - scrub          # strip extraneous tags
+  - missing        # report missing tracks
+  - web            # local web UI on :8337
+  - chroma         # acoustic fingerprinting (catches mis-tagged files)
+  - duplicates     # find duplicate albums/tracks
+
+fetchart:
+  auto: yes
+  cautious: yes
+  cover_names:
+    - cover
+    - front
+    - art
+    - album
+    - folder
+  sources:
+    - filesystem
+    - coverart
+    - itunes
+    - amazon
+    - albumart
+
+embedart:
+  auto: yes
+  remove_art_file: no
+
+lastgenre:
+  auto: yes
+  source: album
+  fallback: ''
+
+replaygain:
+  auto: yes
+  backend: ffmpeg
+
+scrub:
+  auto: no   # keep MusicBrainz IDs; only scrub if explicitly invoked
+
+web:
+  host: 0.0.0.0
+  port: 8337
+  cors: '*'
+  # Optional: protect the UI behind a token. The web plugin doesn't enforce
+  # auth, so SWAG keeps this internal-only.

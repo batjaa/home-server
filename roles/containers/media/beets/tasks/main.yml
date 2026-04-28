@@ -1,0 +1,38 @@
+---
+- name: Ensure Beets directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+  loop:
+    - "{{ docker_dir }}/{{ container_name }}"
+    - "{{ beets_import_dir }}"
+
+- name: Render beets config.yaml
+  template:
+    src: config.yaml.j2
+    dest: "{{ docker_dir }}/{{ container_name }}/config.yaml"
+    owner: "{{ username }}"
+    group: users
+    mode: '0644'
+  notify: restart beets
+
+- name: Make sure the Beets container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "lscr.io/linuxserver/beets:latest"
+    pull: yes
+    state: started
+    published_ports:
+      - "127.0.0.1:{{ beets_port }}:8337"
+    env:
+      PUID: "{{ guid }}"
+      PGID: "{{ guid }}"
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/config"
+      - "{{ beets_library_dir }}:/music"
+      - "{{ beets_import_dir }}:/staging"
+    restart_policy: unless-stopped

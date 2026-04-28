@@ -346,6 +346,12 @@
             - containers
         when: enable_navidrome | default(false) | bool
 
+      - role: containers/media/beets
+        tags:
+            - beets
+            - containers
+        when: enable_beets | default(false) | bool
+
       #
       # *arr stack — movie automation
       #

@@ -1,0 +1,6 @@
+---
+- name: restart beets
+  docker_container:
+    name: beets
+    state: started
+    restart: yes
