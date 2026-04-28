@@ -88,6 +88,13 @@ gpu_render_gid: '109'
 gpu_video_gid: '44'
 
 #
+# Swap (off by default; opt-in per host via enable_swap)
+#
+enable_swap: false
+swap_file_path: /swapfile
+swap_size_gb: 32
+
+#
 # MSMTP
 #
 msmtp_accounts:

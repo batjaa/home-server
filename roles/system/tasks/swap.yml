@@ -1,0 +1,50 @@
+---
+# Swap file on the root NVMe. Sized as overflow for memory spikes
+# (PhotoPrism/Immich indexing, transcode queues, occasional container OOM).
+# `vm.swappiness=10` keeps swap idle until RAM is genuinely tight, which
+# minimises NVMe wear from steady-state paging.
+
+- name: Stat swap file
+  stat:
+    path: "{{ swap_file_path }}"
+  register: swap_file_stat
+
+- name: Allocate swap file
+  command: "fallocate -l {{ swap_size_gb }}G {{ swap_file_path }}"
+  args:
+    creates: "{{ swap_file_path }}"
+  when: not swap_file_stat.stat.exists
+
+- name: Lock down swap file permissions
+  file:
+    path: "{{ swap_file_path }}"
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Format swap file
+  command: "mkswap {{ swap_file_path }}"
+  when: not swap_file_stat.stat.exists
+  register: mkswap_result
+
+- name: Enable swap now
+  command: "swapon {{ swap_file_path }}"
+  when: mkswap_result is changed
+
+- name: Persist swap in /etc/fstab
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    regexp: "^{{ swap_file_path | regex_escape }}\\s"
+    line: "{{ swap_file_path }} none swap sw 0 0"
+    state: present
+
+- name: Tune swappiness + cache pressure
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.d/99-swap.conf
+    reload: yes
+  loop:
+    - { name: vm.swappiness,        value: '10' }
+    - { name: vm.vfs_cache_pressure, value: '50' }

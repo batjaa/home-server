@@ -1,3 +1,9 @@
 ---
 - include_tasks: essential.yml
 - include_tasks: user.yml
+- include_tasks:
+    file: swap.yml
+    apply:
+      tags: [swap]
+  when: enable_swap | default(false) | bool
+  tags: [swap]
