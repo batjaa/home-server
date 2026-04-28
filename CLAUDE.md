@@ -47,6 +47,18 @@ Inventory groups: `[pi]` and `[homeservers]`. Each play targets one.
 7. **Always:** add to `pihole_split_dns:` in `host_vars/tentomon/vars.yml` for internal resolution
 8. Bootstrap any admin user via API call (see Navidrome) or env vars (see Nextcloud, Grafana) — not the wizard
 9. Document in `docs/services.md`
+10. **Add a tile to Homepage** — new entry in `roles/containers/services/homepage/templates/services.yaml.j2` (icon, href, `siteMonitor` on `127.0.0.1:<port>`, optional `widget:` block if Homepage supports the service)
+11. **Add a Kuma monitor** at `https://status.batjaa.site` — HTTP check on the SWAG URL with a known-healthy endpoint (`/api/server/ping`, `/health`, `/status.php`, `/`, etc.) and subscribe it to the Postmark notification so failures email out
+
+## Removing a service — reverse checklist
+
+1. Stop + remove the container (preserve `/opt/docker/data/<name>/` for rollback unless cleanup is explicit)
+2. Set `enable_<name>: false` in host_vars; if retirement is permanent, also delete the role + proxy-conf template
+3. Drop its entry from `cloudflare_records:` and `pihole_split_dns:` in `host_vars/tentomon/vars.yml`
+4. Remove its `*.subdomain.conf` from `/opt/docker/data/swag/nginx/proxy-confs/` on the homeserver (Ansible doesn't auto-prune)
+5. Remove the Homepage tile from `services.yaml.j2`
+6. Pause or delete the Kuma monitor (delete unless you want history)
+7. Update `docs/services.md`
 
 Subdomain conventions favour short names: `music` not `navidrome`, `request` not `seerr`, `photos` not `photoprism`, `kvm` not `pikvm`.
 
