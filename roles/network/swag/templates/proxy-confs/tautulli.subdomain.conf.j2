@@ -1,0 +1,23 @@
+# Reverse proxy: tautulli.{{ host }} → host:{{ tautulli_port | default(8181) }}
+# Internal-only — admin tool, no Cloudflare CNAME.
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+
+    server_name tautulli.{{ host }};
+
+    include /config/nginx/ssl.conf;
+
+    client_max_body_size 0;
+
+    location / {
+        include /config/nginx/proxy.conf;
+        include /config/nginx/resolver.conf;
+        set $upstream_app 127.0.0.1;
+        set $upstream_port {{ tautulli_port | default(8181) }};
+        set $upstream_proto http;
+        proxy_pass $upstream_proto://$upstream_app:$upstream_port;
+    }
+}

@@ -1,0 +1,3 @@
+---
+container_name: tautulli
+tautulli_port: 8181

@@ -1,0 +1,24 @@
+---
+- name: Ensure Tautulli config dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Make sure the Tautulli container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "lscr.io/linuxserver/tautulli:latest"
+    pull: yes
+    state: started
+    published_ports:
+      - "127.0.0.1:{{ tautulli_port }}:8181"
+    env:
+      PUID: "{{ guid }}"
+      PGID: "{{ guid }}"
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/config"
+    restart_policy: unless-stopped
