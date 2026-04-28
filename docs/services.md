@@ -318,6 +318,32 @@ re-run `--tags=grafana`.
 
 ---
 
+## PiKVM — `https://kvm.home.local` (internal only, self-signed cert)
+
+Out-of-band recovery for the homeserver — useful when the homeserver has
+no network or won't boot.
+
+**Auth:** username/password set during PiKVM image flashing (separate
+device, not Ansible-managed). Defaults to `admin/admin` if untouched.
+
+**Cert:** the device serves its own self-signed cert; browser warns on
+first visit. Accept and save the exception.
+
+**Hardware setup:**
+- HDMI from homeserver → PiKVM HDMI in
+- USB from PiKVM → homeserver USB (acts as keyboard + storage emulation)
+- Ethernet on the LAN
+
+**Use cases:**
+- BIOS / boot menu access from a browser
+- Console attach if SSH is dead
+- Emulate a USB drive to install OS without physical access
+- Power button via the optional ATX board
+
+The PiKVM stays on its own factory image — we don't manage it via Ansible.
+Backups: any custom config you do via the web UI lives on the SD card and
+is not backed up here.
+
 ## Manual config NOT in Ansible (recovery checklist)
 
 If you're rebuilding and `_docker_data` is also gone, these are the
