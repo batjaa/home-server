@@ -1,0 +1,41 @@
+---
+- name: Ensure Navidrome data dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Make sure the Navidrome container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "deluan/navidrome:latest"
+    pull: yes
+    state: started
+    user: "{{ guid }}:{{ guid }}"
+    published_ports:
+      - "127.0.0.1:{{ navidrome_port }}:4533"
+    env:
+      ND_LOGLEVEL: info
+      ND_DATAFOLDER: /data
+      ND_MUSICFOLDER: /music
+      # Auto-create admin on first start (skips the first-run wizard).
+      # After first start these are ignored — the user lives in the DB.
+      ND_DEFAULTADMINUSER: "{{ navidrome_admin_user | default('batjaa') }}"
+      ND_DEFAULTADMINPASSWORD: "{{ navidrome_admin_password }}"
+      # Behind a reverse proxy on a custom subdomain
+      ND_BASEURL: "/"
+      ND_REVERSEPROXYUSERHEADER: ""
+      # Auto-import playlists dropped into the music folder
+      ND_AUTOIMPORTPLAYLISTS: "true"
+      # Re-scan filesystem every 1m (default); set to 0s to use the inotify
+      # watcher only (cheaper, faster pickup of new files)
+      ND_SCANNER_SCHEDULE: "1h"
+      # ListenBrainz scrobbling enabled at the protocol level — users
+      # opt in via their profile in the UI
+      ND_LISTENBRAINZ_ENABLED: "true"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/data"
+      - "{{ mergerfs_root }}/Media/Music:/music:ro"
+    restart_policy: unless-stopped

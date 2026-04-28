@@ -1,0 +1,3 @@
+---
+container_name: navidrome
+navidrome_port: 4533

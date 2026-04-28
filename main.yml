@@ -340,6 +340,12 @@
             - containers
         when: enable_jellyfin | default(false) | bool
 
+      - role: containers/media/navidrome
+        tags:
+            - navidrome
+            - containers
+        when: enable_navidrome | default(false) | bool
+
       #
       # *arr stack — movie automation
       #
