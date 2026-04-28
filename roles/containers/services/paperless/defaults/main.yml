@@ -1,0 +1,18 @@
+---
+container_name: paperless
+paperless_db_container: paperless-db
+paperless_redis_container: paperless-redis
+paperless_network: paperless-net
+
+paperless_port: 8083
+
+# Documents live on mergerfs (large, backed up); config + DB on plain ext4
+paperless_media_dir: "{{ mergerfs_root }}/Paperless/media"
+paperless_consume_dir: "{{ mergerfs_root }}/Paperless/consume"
+paperless_export_dir: "{{ mergerfs_root }}/Paperless/export"
+
+paperless_db_name: paperless
+paperless_db_user: paperless
+paperless_admin_user: batjaa
+paperless_default_language: eng
+paperless_ocr_languages: eng

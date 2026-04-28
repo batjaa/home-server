@@ -1,0 +1,86 @@
+---
+- name: Ensure Paperless directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ guid }}"
+    group: "{{ guid }}"
+    mode: '0775'
+  loop:
+    - "{{ docker_dir }}/{{ container_name }}"
+    - "{{ docker_dir }}/{{ paperless_db_container }}"
+    - "{{ paperless_media_dir }}"
+    - "{{ paperless_consume_dir }}"
+    - "{{ paperless_export_dir }}"
+
+- name: Create Paperless Docker network
+  docker_network:
+    name: "{{ paperless_network }}"
+    state: present
+
+- name: Make sure the Paperless DB container is running
+  docker_container:
+    name: "{{ paperless_db_container }}"
+    image: "docker.io/library/postgres:16"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ paperless_network }}"
+    networks_cli_compatible: yes
+    env:
+      POSTGRES_USER: "{{ paperless_db_user }}"
+      POSTGRES_PASSWORD: "{{ paperless_db_password }}"
+      POSTGRES_DB: "{{ paperless_db_name }}"
+    volumes:
+      - "{{ docker_dir }}/{{ paperless_db_container }}:/var/lib/postgresql/data"
+    restart_policy: unless-stopped
+
+- name: Make sure the Paperless Redis container is running
+  docker_container:
+    name: "{{ paperless_redis_container }}"
+    image: "docker.io/library/redis:7-alpine"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ paperless_network }}"
+    networks_cli_compatible: yes
+    restart_policy: unless-stopped
+
+- name: Make sure the Paperless container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "ghcr.io/paperless-ngx/paperless-ngx:latest"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ paperless_network }}"
+    networks_cli_compatible: yes
+    published_ports:
+      - "127.0.0.1:{{ paperless_port }}:8000"
+    env:
+      USERMAP_UID: "{{ guid }}"
+      USERMAP_GID: "{{ guid }}"
+      TZ: "{{ timezone }}"
+      PAPERLESS_REDIS: "redis://{{ paperless_redis_container }}:6379"
+      PAPERLESS_DBHOST: "{{ paperless_db_container }}"
+      PAPERLESS_DBNAME: "{{ paperless_db_name }}"
+      PAPERLESS_DBUSER: "{{ paperless_db_user }}"
+      PAPERLESS_DBPASS: "{{ paperless_db_password }}"
+      PAPERLESS_SECRET_KEY: "{{ paperless_secret_key }}"
+      PAPERLESS_URL: "https://paperless.{{ host }}"
+      PAPERLESS_ALLOWED_HOSTS: "paperless.{{ host }},paperless.home.local,localhost,127.0.0.1"
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: "https://paperless.{{ host }}"
+      PAPERLESS_OCR_LANGUAGE: "{{ paperless_ocr_languages }}"
+      PAPERLESS_DEFAULT_LANGUAGE: "{{ paperless_default_language }}"
+      PAPERLESS_TIME_ZONE: "{{ timezone }}"
+      PAPERLESS_ADMIN_USER: "{{ paperless_admin_user }}"
+      PAPERLESS_ADMIN_PASSWORD: "{{ paperless_admin_password }}"
+      PAPERLESS_CONSUMER_POLLING: "60"
+      PAPERLESS_CONSUMER_RECURSIVE: "true"
+      PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "true"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/usr/src/paperless/data"
+      - "{{ paperless_media_dir }}:/usr/src/paperless/media"
+      - "{{ paperless_consume_dir }}:/usr/src/paperless/consume"
+      - "{{ paperless_export_dir }}:/usr/src/paperless/export"
+    restart_policy: unless-stopped

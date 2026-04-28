@@ -282,6 +282,12 @@
             - containers
         when: enable_homepage | default(false) | bool
 
+      - role: containers/services/paperless
+        tags:
+            - paperless
+            - containers
+        when: enable_paperless | default(false) | bool
+
       # - role: containers/homeautomation/mqtt
       #   become: no
       #   tags:
