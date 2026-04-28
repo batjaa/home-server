@@ -44,8 +44,11 @@ lan_network: '192.168.50.0/24'
 # Email credentials (for SMART and Snapraid error reporting)
 #
 
-# Sender (verified in Postmark) and where alerts get delivered
+# Where alerts get delivered (recipient)
 email: batjaa0615@gmail.com
+
+# Sender (verified domain in Postmark)
+email_from: alerts@batjaa.site
 
 # Postmark SMTP — username and password are both the Server API Token
 email_login: '{{ email_postmark_token }}'
@@ -85,7 +88,7 @@ msmtp_accounts:
       host: '{{ email_smtp_host }}'
       port: '{{ email_smtp_port_startls }}'
       auth: 'on'
-      from: '{{ email }}'
+      from: '{{ email_from }}'
       user: '{{ email_postmark_token }}'
       password: '{{ email_postmark_token }}'
 
