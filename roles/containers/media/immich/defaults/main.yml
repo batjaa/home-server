@@ -1,0 +1,23 @@
+---
+container_name: immich-server
+immich_db_container: immich-db
+immich_redis_container: immich-redis
+immich_ml_container: immich-machine-learning
+immich_network: immich-net
+
+# Host port that SWAG proxies to (bound to 127.0.0.1)
+immich_port: 2283
+
+# Where Immich stores all photos (its own DB-managed structure on mergerfs).
+# After bulk-import, this is the single source of truth — no external library.
+immich_upload_dir: "{{ mergerfs_root }}/Immich"
+
+# Image pins (track release on the immich server, sync ML to match)
+immich_server_image: "ghcr.io/immich-app/immich-server:release"
+immich_ml_image: "ghcr.io/immich-app/immich-machine-learning:release"
+immich_db_image: "ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0"
+immich_redis_image: "docker.io/redis:6.2-alpine"
+
+# DB defaults (override secrets in host_vars/secret.yml)
+immich_db_name: immich
+immich_db_user: postgres

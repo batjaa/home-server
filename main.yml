@@ -334,6 +334,12 @@
             - containers
         when: enable_photoprism | default(false) | bool
 
+      - role: containers/media/immich
+        tags:
+            - immich
+            - containers
+        when: enable_immich | default(false) | bool
+
       - role: containers/media/jellyfin
         tags:
             - jellyfin

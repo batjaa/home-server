@@ -1,0 +1,135 @@
+---
+- name: Ensure Immich directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+  loop:
+    - "{{ immich_upload_dir }}"
+    - "{{ docker_dir }}/{{ immich_db_container }}"
+    - "{{ docker_dir }}/{{ immich_ml_container }}"
+
+- name: Create Immich Docker network
+  docker_network:
+    name: "{{ immich_network }}"
+    state: present
+
+# ── Postgres (with pgvector / vectorchord extension) ──────────────────────
+- name: Make sure the Immich Postgres container is running
+  docker_container:
+    name: "{{ immich_db_container }}"
+    image: "{{ immich_db_image }}"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ immich_network }}"
+    networks_cli_compatible: yes
+    env:
+      POSTGRES_USER: "{{ immich_db_user }}"
+      POSTGRES_PASSWORD: "{{ immich_db_password }}"
+      POSTGRES_DB: "{{ immich_db_name }}"
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+      DB_STORAGE_TYPE: "HDD"
+    volumes:
+      - "{{ docker_dir }}/{{ immich_db_container }}:/var/lib/postgresql/data"
+    shm_size: "128MB"
+    restart_policy: unless-stopped
+
+# ── Redis ──────────────────────────────────────────────────────────────────
+- name: Make sure the Immich Redis container is running
+  docker_container:
+    name: "{{ immich_redis_container }}"
+    image: "{{ immich_redis_image }}"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ immich_network }}"
+    networks_cli_compatible: yes
+    restart_policy: unless-stopped
+
+# ── Machine Learning (CLIP + face recognition) ─────────────────────────────
+- name: Make sure the Immich ML container is running
+  docker_container:
+    name: "{{ immich_ml_container }}"
+    image: "{{ immich_ml_image }}"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ immich_network }}"
+    networks_cli_compatible: yes
+    env:
+      TRANSFORMERS_CACHE: "/cache"
+    volumes:
+      - "{{ docker_dir }}/{{ immich_ml_container }}:/cache"
+    restart_policy: unless-stopped
+
+# ── Immich Server (web UI + API) ───────────────────────────────────────────
+- name: Make sure the Immich server container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "{{ immich_server_image }}"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ immich_network }}"
+    networks_cli_compatible: yes
+    published_ports:
+      - "127.0.0.1:{{ immich_port }}:2283"
+    env:
+      TZ: "{{ timezone }}"
+      DB_HOSTNAME: "{{ immich_db_container }}"
+      DB_USERNAME: "{{ immich_db_user }}"
+      DB_PASSWORD: "{{ immich_db_password }}"
+      DB_DATABASE_NAME: "{{ immich_db_name }}"
+      REDIS_HOSTNAME: "{{ immich_redis_container }}"
+      IMMICH_MACHINE_LEARNING_URL: "http://{{ immich_ml_container }}:3003"
+      UPLOAD_LOCATION: "/usr/src/app/upload"
+    volumes:
+      - "{{ immich_upload_dir }}:/usr/src/app/upload"
+      - "/etc/localtime:/etc/localtime:ro"
+    restart_policy: unless-stopped
+
+- name: Wait for Immich API to be ready
+  uri:
+    url: "http://127.0.0.1:{{ immich_port }}/api/server/ping"
+    status_code: 200
+  register: immich_ping
+  retries: 60
+  delay: 3
+  until: immich_ping.status == 200
+
+- name: Check Immich initial setup state
+  uri:
+    url: "http://127.0.0.1:{{ immich_port }}/api/server/config"
+    method: GET
+    status_code: 200
+  register: immich_config
+  no_log: true
+
+- name: Try to log in (admin already exists?)
+  uri:
+    url: "http://127.0.0.1:{{ immich_port }}/api/auth/login"
+    method: POST
+    body_format: json
+    body:
+      email: "{{ immich_admin_email }}"
+      password: "{{ immich_admin_password }}"
+    status_code: [200, 401, 403, 404, 500]
+  register: immich_login
+  no_log: true
+
+- name: Bootstrap Immich admin user (first run only)
+  uri:
+    url: "http://127.0.0.1:{{ immich_port }}/api/auth/admin-sign-up"
+    method: POST
+    body_format: json
+    body:
+      email: "{{ immich_admin_email }}"
+      password: "{{ immich_admin_password }}"
+      name: "{{ immich_admin_name | default('Batjaa') }}"
+    status_code: [201, 400, 403]
+  register: immich_signup
+  no_log: true
+  when: immich_login.status != 200
