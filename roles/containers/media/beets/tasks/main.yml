@@ -10,7 +10,7 @@
     - "{{ docker_dir }}/{{ container_name }}"
     - "{{ beets_import_dir }}"
 
-- name: Render beets config.yaml
+- name: Render beets config.yaml (default — moves files into /music layout)
   template:
     src: config.yaml.j2
     dest: "{{ docker_dir }}/{{ container_name }}/config.yaml"
@@ -18,6 +18,14 @@
     group: users
     mode: '0644'
   notify: restart beets
+
+- name: Render beets inplace.yaml (retag without moving — safer for existing library)
+  template:
+    src: inplace.yaml.j2
+    dest: "{{ docker_dir }}/{{ container_name }}/inplace.yaml"
+    owner: "{{ username }}"
+    group: users
+    mode: '0644'
 
 - name: Make sure the Beets container is running
   docker_container:

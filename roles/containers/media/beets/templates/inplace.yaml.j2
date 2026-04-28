@@ -1,0 +1,46 @@
+# Managed by Ansible — do not edit by hand.
+#
+# Beets config for retag-in-place mode. Same plugins as the main config,
+# but disables move/copy so files stay where they are. Use when you want
+# to fix tags on existing music without restructuring folders:
+#
+#   beet -c /config/inplace.yaml import '/music/<some folder>'
+
+directory: /music
+library: /config/library.db
+
+import:
+  move: no
+  copy: no
+  write: yes
+  resume: ask
+  log: /config/import-inplace.log
+  quiet: no
+
+plugins:
+  - fetchart
+  - embedart
+  - lastgenre
+  - replaygain
+  - lyrics
+  - missing
+  - chroma
+
+fetchart:
+  auto: yes
+  cautious: yes
+
+embedart:
+  auto: yes
+  remove_art_file: no
+
+lastgenre:
+  auto: yes
+  source: album
+
+replaygain:
+  auto: yes
+  backend: ffmpeg
+
+scrub:
+  auto: no
