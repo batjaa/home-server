@@ -1,0 +1,22 @@
+---
+- name: Ensure Uptime Kuma data dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Make sure the Uptime Kuma container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "louislam/uptime-kuma:1"
+    pull: yes
+    state: started
+    published_ports:
+      - "127.0.0.1:{{ uptime_kuma_port }}:3001"
+    env:
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/app/data"
+    restart_policy: unless-stopped

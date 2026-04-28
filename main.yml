@@ -235,6 +235,13 @@
             - containers
         when: enable_cadvisor | default(false) | bool
 
+      - role: containers/monitoring/uptime-kuma
+        tags:
+            - uptime-kuma
+            - monitoring
+            - containers
+        when: enable_uptime_kuma | default(false) | bool
+
       - role: geerlingguy.node_exporter
         tags:
             - node_exporter
