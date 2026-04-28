@@ -11,15 +11,16 @@
     - "{{ docker_dir }}/{{ container_name }}/html"
     - "{{ docker_dir }}/{{ nextcloud_db_container }}"
 
-- name: Ensure Nextcloud data directory exists with world-writable mode
-  # Mergerfs squashes uid → 1000, but Nextcloud container runs as www-data (33).
-  # Mode 0777 lets the container write regardless of ownership view.
+- name: Ensure Nextcloud data directory exists, owned by www-data
+  # Container runs as www-data (uid 33). Nextcloud's setup check refuses
+  # to run if the data dir is world-readable, so 0770 with www-data:www-data
+  # ownership is required.
   file:
     path: "{{ nextcloud_data_dir }}"
     state: directory
-    owner: "{{ username }}"
-    group: users
-    mode: '0777'
+    owner: '33'
+    group: '33'
+    mode: '0770'
 
 - name: Create Nextcloud Docker network
   docker_network:
