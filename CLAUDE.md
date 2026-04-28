@@ -48,7 +48,7 @@ Inventory groups: `[pi]` and `[homeservers]`. Each play targets one.
 8. Bootstrap any admin user via API call (see Navidrome) or env vars (see Nextcloud, Grafana) — not the wizard
 9. Document in `docs/services.md`
 
-Subdomain conventions favour short names: `music` not `navidrome`, `request` not `overseerr`, `photos` not `photoprism`, `kvm` not `pikvm`.
+Subdomain conventions favour short names: `music` not `navidrome`, `request` not `seerr`, `photos` not `photoprism`, `kvm` not `pikvm`.
 
 ## Storage role is phased
 
@@ -81,6 +81,7 @@ Drive identity is **pinned by serial** in `host_vars/homeserver/vars.yml` under 
 - **Mergerfs mount option changes** require `umount + mount`, not just a remount.
 - **`guid` is per-host:** `1001` on homeserver (batjaa), `1000` on tentomon (tentomon). Default `1000` in group_vars is for tentomon. Container PUID/PGID picks it up via `{{ guid }}`.
 - **Tailscale split DNS** must be configured for both `home.local` AND `batjaa.site` → Pi-hole at `192.168.50.10`. Without this, browsers can't resolve internal-only subdomains like `grafana.batjaa.site`.
+- **Seerr image** (`ghcr.io/seerr-team/seerr:latest`) runs as the `node` user (uid 1000) and ignores PUID/PGID — chown the config dir to `1000:1000` explicitly. Also requires `init: yes` in the docker_container task because the image dropped its init shim.
 
 ## Useful commands
 

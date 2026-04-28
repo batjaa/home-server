@@ -1,28 +1,32 @@
 ---
-- name: Ensure Overseerr config dir exists
+- name: Ensure Seerr config dir exists, owned by node (uid 1000)
+  # Seerr's image runs as the `node` user (uid 1000) and won't honour
+  # PUID/PGID — we explicitly chown the bind-mounted config dir.
   file:
     path: "{{ docker_dir }}/{{ container_name }}"
     state: directory
-    owner: "{{ username }}"
-    group: users
+    owner: '1000'
+    group: '1000'
     mode: '0775'
+    recurse: yes
 
 - name: Ensure arr Docker network
   docker_network:
     name: "{{ arr_network }}"
     state: present
 
-- name: Make sure the Overseerr container is running
+- name: Make sure the Seerr container is running
   docker_container:
     name: "{{ container_name }}"
-    image: "sctx/overseerr:latest"
+    image: "ghcr.io/seerr-team/seerr:latest"
     pull: yes
     state: started
+    init: yes
     networks:
       - name: "{{ arr_network }}"
     networks_cli_compatible: yes
     published_ports:
-      - "127.0.0.1:{{ overseerr_port }}:5055"
+      - "127.0.0.1:{{ seerr_port }}:5055"
     env:
       LOG_LEVEL: "info"
       TZ: "{{ timezone }}"

@@ -375,6 +375,6 @@
         tags: [bazarr, arr, containers]
         when: enable_bazarr | default(false) | bool
 
-      - role: containers/media/overseerr
-        tags: [overseerr, arr, containers]
-        when: enable_overseerr | default(false) | bool
+      - role: containers/media/seerr
+        tags: [seerr, arr, containers]
+        when: enable_seerr | default(false) | bool

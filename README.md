@@ -8,7 +8,7 @@ Credits: [notthebee](https://github.com/notthebee) & [geerlingguy](https://githu
 
 | Host | Hardware | IP | What runs here |
 |------|----------|----|----|
-| `homeserver` | x86_64 (Ubuntu 22.04) | `192.168.50.20` | SWAG, Plex, Jellyfin, Nextcloud, PhotoPrism, *arr stack (Prowlarr/Radarr/Sonarr/SABnzbd/Bazarr/Overseerr), monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage role |
+| `homeserver` | x86_64 (Ubuntu 22.04) | `192.168.50.20` | SWAG, Plex, Jellyfin, Nextcloud, PhotoPrism, *arr stack (Prowlarr/Radarr/Sonarr/SABnzbd/Bazarr/Seerr), monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage role |
 | `tentomon` | Raspberry Pi 4 4GB (Flirc case) | `192.168.50.10` | Pi-hole DNS, Cloudflare DDNS, Cloudflare DNS records, node_exporter |
 | `pikvm` | PiKVM | `192.168.50.156` | Remote KVM (out-of-band recovery) |
 

@@ -1,4 +1,4 @@
-# Reverse proxy: request.{{ host }} -> host:{{ overseerr_port | default(5055) }}
+# Reverse proxy: request.{{ host }} -> host:{{ seerr_port | default(5055) }}
 
 server {
     listen 443 ssl;
@@ -15,7 +15,7 @@ server {
         include /config/nginx/proxy.conf;
         include /config/nginx/resolver.conf;
         set $upstream_app 127.0.0.1;
-        set $upstream_port {{ overseerr_port | default(5055) }};
+        set $upstream_port {{ seerr_port | default(5055) }};
         set $upstream_proto http;
         proxy_pass $upstream_proto://$upstream_app:$upstream_port;
     }

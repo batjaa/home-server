@@ -30,7 +30,7 @@ ansible -m debug -a "var=<key>" <host>
 | `jellyfin.batjaa.site` | Jellyfin |
 | `nextcloud.batjaa.site` | Nextcloud |
 | `photos.batjaa.site` | PhotoPrism |
-| `request.batjaa.site` | Overseerr (friend-facing request UI) |
+| `request.batjaa.site` | Seerr (friend-facing request UI; successor to Overseerr/Jellyseerr) |
 
 ### Internal-only (Pi-hole local DNS, no Cloudflare CNAME)
 
@@ -271,10 +271,14 @@ Same shape as Radarr but for TV.
 - Settings → Providers → add OpenSubtitles.com (free signup) and any
   others you want
 
-### Overseerr — `https://request.batjaa.site` (public)
+### Seerr — `https://request.batjaa.site` (public)
+
+Successor to Overseerr + Jellyseerr (unified). Image:
+`ghcr.io/seerr-team/seerr:latest`. Auto-migrates from an existing
+Overseerr config dir on first start.
 
 **Manual setup if `_docker_data` was lost:**
-- Sign in with your Plex account → it auto-discovers your server
+- Sign in with your Plex (and/or Jellyfin) account → it auto-discovers
 - Pick libraries to expose (Movies + TV)
 - Settings → Services → Radarr: host `radarr`, port `7878`, API key,
   quality profile, root folder `/storage/Media/Movies`, external URL

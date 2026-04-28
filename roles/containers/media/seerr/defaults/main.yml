@@ -1,0 +1,4 @@
+---
+container_name: seerr
+seerr_port: 5055
+arr_network: arr-net
