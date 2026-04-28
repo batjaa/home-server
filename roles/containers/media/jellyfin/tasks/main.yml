@@ -40,7 +40,10 @@
   delay: 2
   until: jf_health.status in [200, 401]
 
-- name: Enable Intel QuickSync hardware transcoding (POST /System/Configuration/encoding)
+- name: Configure QSV hardware transcoding via /System/Configuration/encoding
+  # Requires `jellyfin_api_key` in host_vars/<host>/secret.yml. Generate one at
+  #   Dashboard → Administration → API Keys → "+ New API Key"
+  # Without it this task skips and you can flip the dashboard toggles by hand.
   uri:
     url: "http://127.0.0.1:8096/System/Configuration/encoding"
     method: POST
@@ -51,14 +54,23 @@
       HardwareAccelerationType: "qsv"
       EnableHardwareEncoding: true
       AllowHevcEncoding: true
-      AllowAv1Encoding: true
+      # UHD 750 (Gen 12) does NOT support AV1 *encode* — only decode. Leaving
+      # this true makes Jellyfin silently fall back to (slow) software AV1.
+      AllowAv1Encoding: false
       EnableTonemapping: true
       EnableVppTonemapping: true
       VaapiDevice: "/dev/dri/renderD128"
       QsvDevice: ""
       EnableIntelLowPowerH264HwEncoder: true
       EnableIntelLowPowerHevcHwEncoder: true
-      HardwareDecodingCodecs: ["h264", "hevc", "mpeg2video", "vc1", "av1"]
+      # Decode is broader than encode on Intel iGPU — VP9 + AV1 are decode-only
+      HardwareDecodingCodecs:
+        - h264
+        - hevc
+        - mpeg2video
+        - vc1
+        - vp9
+        - av1
       EnableDecodingColorDepth10Hevc: true
       EnableDecodingColorDepth10Vp9: true
     status_code: [204]
