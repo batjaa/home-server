@@ -7,7 +7,8 @@
   "links": [
     { "title": "Node Exporter Full", "type": "link", "url": "/d/node-exporter-full" },
     { "title": "Cadvisor exporter",  "type": "link", "url": "/d/cadvisor-exporter" },
-    { "title": "Storage Health",     "type": "link", "url": "/d/storage-health" }
+    { "title": "Storage Health",     "type": "link", "url": "/d/storage-health" },
+    { "title": "Intel GPU",          "type": "link", "url": "/d/intel-gpu" }
   ],
   "liveNow": false,
   "panels": [
@@ -237,6 +238,51 @@
         { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (name) (container_memory_working_set_bytes{name!=\"\"})", "legendFormat": "{{name}}", "refId": "A" }
       ],
       "title": "Container memory",
+      "type": "timeseries"
+    },
+    {
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 20 },
+      "id": 103,
+      "title": "Intel GPU",
+      "collapsed": false
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
+      "id": 10,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 15, "gradientMode": "opacity" },
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        }
+      },
+      "options": { "legend": { "showLegend": true, "displayMode": "table", "placement": "right", "calcs": [ "mean", "max" ] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "intel_gpu_engine_busy_percent", "legendFormat": "{{engine}}", "refId": "A" }
+      ],
+      "title": "GPU engine utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 21 },
+      "id": 11,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10 },
+          "unit": "MHz"
+        }
+      },
+      "options": { "legend": { "showLegend": true, "calcs": [ "mean", "max" ] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "intel_gpu_freq_mhz", "legendFormat": "{{kind}}", "refId": "A" }
+      ],
+      "title": "GPU frequency",
       "type": "timeseries"
     }
   ],
