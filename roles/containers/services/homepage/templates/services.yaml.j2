@@ -181,7 +181,8 @@
         description: hourly Ookla CLI sample
         widget:
           type: customapi
-          url: http://prometheus:9090/api/v1/query?query=speedtest_download_bytes_per_second
+          # PromQL converts bytes/s to Mbps so the tile matches what Ziply quotes.
+          url: http://prometheus:9090/api/v1/query?query=speedtest_download_bytes_per_second*8/1000000
           display: list
           mappings:
             - field:
@@ -190,7 +191,7 @@
                     0:
                       value:
                         1: ""
-              label: down (Bps)
+              label: down Mbps
               format: number
 
 - Infrastructure:

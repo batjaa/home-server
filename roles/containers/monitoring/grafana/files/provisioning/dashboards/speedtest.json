@@ -21,8 +21,8 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "red" }, { "color": "yellow", "value": 50000000 }, { "color": "green", "value": 200000000 } ] },
-          "unit": "Bps"
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "red" }, { "color": "yellow", "value": 400000000 }, { "color": "green", "value": 800000000 } ] },
+          "unit": "bps"
         }
       },
       "options": {
@@ -32,7 +32,7 @@
         "textMode": "value"
       },
       "targets": [
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "speedtest_download_bytes_per_second", "refId": "A" }
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "speedtest_download_bytes_per_second * 8", "refId": "A" }
       ],
       "title": "Download",
       "type": "stat"
@@ -44,8 +44,8 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "red" }, { "color": "yellow", "value": 5000000 }, { "color": "green", "value": 25000000 } ] },
-          "unit": "Bps"
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "red" }, { "color": "yellow", "value": 400000000 }, { "color": "green", "value": 800000000 } ] },
+          "unit": "bps"
         }
       },
       "options": {
@@ -55,7 +55,7 @@
         "textMode": "value"
       },
       "targets": [
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "speedtest_upload_bytes_per_second", "refId": "A" }
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "speedtest_upload_bytes_per_second * 8", "refId": "A" }
       ],
       "title": "Upload",
       "type": "stat"
@@ -123,13 +123,13 @@
         "defaults": {
           "color": { "mode": "palette-classic" },
           "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 15, "gradientMode": "opacity" },
-          "unit": "Bps"
+          "unit": "bps"
         }
       },
       "options": { "legend": { "showLegend": true, "displayMode": "table", "placement": "bottom", "calcs": [ "mean", "max", "min", "lastNotNull" ] }, "tooltip": { "mode": "multi" } },
       "targets": [
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "speedtest_download_bytes_per_second", "legendFormat": "down", "refId": "A" },
-        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "speedtest_upload_bytes_per_second",   "legendFormat": "up",   "refId": "B" }
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "speedtest_download_bytes_per_second * 8", "legendFormat": "down", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "speedtest_upload_bytes_per_second * 8",   "legendFormat": "up",   "refId": "B" }
       ],
       "title": "Throughput",
       "type": "timeseries"
