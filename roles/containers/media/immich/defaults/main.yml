@@ -21,3 +21,16 @@ immich_redis_image: "docker.io/redis:6.2-alpine"
 # DB defaults (override secrets in host_vars/secret.yml)
 immich_db_name: immich
 immich_db_user: postgres
+
+# Postgres tuning (data dir lives on NVMe). Sized for a 16 GiB host
+# that shares RAM with many other containers — kept deliberately modest
+# so Postgres doesn't starve Plex/Jellyfin/Immich-server of page cache.
+# Vector index reindexing benefits most from maintenance_work_mem.
+immich_db_shared_buffers: 1GB
+immich_db_effective_cache_size: 4GB
+immich_db_work_mem: 16MB
+immich_db_maintenance_work_mem: 512MB
+immich_db_wal_buffers: 16MB
+immich_db_random_page_cost: '1.1'
+immich_db_effective_io_concurrency: '200'
+immich_db_shm_size: 1GB

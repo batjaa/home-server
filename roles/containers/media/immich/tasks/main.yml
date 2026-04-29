@@ -31,10 +31,26 @@
       POSTGRES_PASSWORD: "{{ immich_db_password }}"
       POSTGRES_DB: "{{ immich_db_name }}"
       POSTGRES_INITDB_ARGS: "--data-checksums"
-      DB_STORAGE_TYPE: "HDD"
+      DB_STORAGE_TYPE: "SSD"
     volumes:
       - "{{ docker_dir }}/{{ immich_db_container }}:/var/lib/postgresql/data"
-    shm_size: "128MB"
+    shm_size: "{{ immich_db_shm_size }}"
+    command:
+      - postgres
+      - -c
+      - "shared_buffers={{ immich_db_shared_buffers }}"
+      - -c
+      - "effective_cache_size={{ immich_db_effective_cache_size }}"
+      - -c
+      - "work_mem={{ immich_db_work_mem }}"
+      - -c
+      - "maintenance_work_mem={{ immich_db_maintenance_work_mem }}"
+      - -c
+      - "wal_buffers={{ immich_db_wal_buffers }}"
+      - -c
+      - "random_page_cost={{ immich_db_random_page_cost }}"
+      - -c
+      - "effective_io_concurrency={{ immich_db_effective_io_concurrency }}"
     restart_policy: unless-stopped
 
 # ── Redis ──────────────────────────────────────────────────────────────────
@@ -116,7 +132,7 @@
     body:
       email: "{{ immich_admin_email }}"
       password: "{{ immich_admin_password }}"
-    status_code: [200, 401, 403, 404, 500]
+    status_code: [200, 201, 401, 403, 404, 500]
   register: immich_login
   no_log: true
 
@@ -132,4 +148,4 @@
     status_code: [201, 400, 403]
   register: immich_signup
   no_log: true
-  when: immich_login.status != 200
+  when: immich_login.status not in [200, 201]
