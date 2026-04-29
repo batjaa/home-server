@@ -46,6 +46,13 @@
             - monitoring
         when: enable_node_exporter | default(false)
 
+      - role: containers/monitoring/uptime-kuma
+        tags:
+            - uptime-kuma
+            - monitoring
+            - containers
+        when: enable_uptime_kuma | default(false) | bool
+
 #
 # Home server
 #

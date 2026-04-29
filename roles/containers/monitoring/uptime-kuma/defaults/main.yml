@@ -1,3 +1,9 @@
 ---
 container_name: uptime-kuma
 uptime_kuma_port: 3001
+
+# Bind address for the published port. Defaults to localhost (suits a
+# single-host SWAG-on-the-same-box layout). Override to 0.0.0.0 when the
+# reverse proxy lives on a different host on the LAN (e.g. SWAG on
+# homeserver proxying to Kuma on tentomon).
+uptime_kuma_bind: "127.0.0.1"

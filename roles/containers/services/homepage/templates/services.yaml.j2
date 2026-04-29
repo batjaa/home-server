@@ -168,8 +168,8 @@
     - Uptime Kuma:
         icon: uptime-kuma.png
         href: https://status.batjaa.site
-        description: status page + alerts
-        siteMonitor: http://127.0.0.1:3001/
+        description: status page + alerts (tentomon)
+        siteMonitor: http://{{ hostvars['tentomon']['ansible_host'] }}:3001/
     - cAdvisor:
         icon: cadvisor.png
         href: http://127.0.0.1:8080
