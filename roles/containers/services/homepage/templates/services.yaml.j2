@@ -175,6 +175,23 @@
         href: http://127.0.0.1:8080
         description: container metrics
         siteMonitor: http://127.0.0.1:8080/healthz
+    - Speedtest:
+        icon: si-speedtest
+        href: https://grafana.batjaa.site/d/speedtest
+        description: hourly Ookla CLI sample
+        widget:
+          type: customapi
+          url: http://prometheus:9090/api/v1/query?query=speedtest_download_bytes_per_second
+          display: list
+          mappings:
+            - field:
+                data:
+                  result:
+                    0:
+                      value:
+                        1: ""
+              label: down (Bps)
+              format: number
 
 - Infrastructure:
     - Pi-hole:

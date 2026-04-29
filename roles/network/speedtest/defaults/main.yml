@@ -1,0 +1,16 @@
+---
+# Hourly is a reasonable default — each run downloads ~100-500 MB and
+# saturates the link for ~30 s. Bump to "30min" if you want finer
+# resolution and don't mind the bandwidth.
+speedtest_interval: 1h
+
+# Pin to 1.2.0 (current stable as of 2025-2026). Bump as new releases
+# come out — the URL format is stable.
+speedtest_cli_version: "1.2.0"
+
+# Where node_exporter's textfile collector reads from.
+speedtest_textfile_dir: /var/lib/node_exporter/textfile_collector
+
+# Optional: pin to a specific Ookla server id (run `speedtest -L` to list).
+# Empty = let Ookla auto-pick the closest server.
+speedtest_server_id: ""

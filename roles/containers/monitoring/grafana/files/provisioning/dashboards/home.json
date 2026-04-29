@@ -8,7 +8,8 @@
     { "title": "Node Exporter Full", "type": "link", "url": "/d/node-exporter-full" },
     { "title": "Cadvisor exporter",  "type": "link", "url": "/d/cadvisor-exporter" },
     { "title": "Storage Health",     "type": "link", "url": "/d/storage-health" },
-    { "title": "Intel GPU",          "type": "link", "url": "/d/intel-gpu" }
+    { "title": "Intel GPU",          "type": "link", "url": "/d/intel-gpu" },
+    { "title": "Speedtest",          "type": "link", "url": "/d/speedtest" }
   ],
   "liveNow": false,
   "panels": [

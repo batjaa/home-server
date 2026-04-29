@@ -164,6 +164,12 @@
             - containers
         when: enable_cloudflare_ddns | default(false)
 
+      - role: network/speedtest
+        tags:
+            - speedtest
+            - monitoring
+        when: enable_speedtest | default(false) | bool
+
       # - role: network/adguard
       #   become: no
       #   tags:

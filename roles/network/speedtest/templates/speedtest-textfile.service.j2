@@ -1,0 +1,13 @@
+[Unit]
+Description=Sample internet speed via Ookla CLI for Prometheus textfile collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+{% if speedtest_server_id %}
+Environment=SPEEDTEST_SERVER_ID={{ speedtest_server_id }}
+{% endif %}
+ExecStart=/usr/local/sbin/speedtest-textfile
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Ookla speedtest every {{ speedtest_interval }}
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec={{ speedtest_interval }}
+AccuracySec=1min
+RandomizedDelaySec=2min
+
+[Install]
+WantedBy=timers.target

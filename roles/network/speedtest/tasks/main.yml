@@ -1,0 +1,91 @@
+---
+# Ookla speedtest CLI from official tarball — single static binary, no
+# third-party apt repo. Output goes to node_exporter's textfile collector.
+
+- name: Map Ansible architecture to Ookla download arch
+  set_fact:
+    speedtest_arch: >-
+      {{ {
+        'x86_64': 'x86_64',
+        'aarch64': 'aarch64',
+        'armv7l':  'armhf',
+        'armv6l':  'armel'
+      }[ansible_architecture] }}
+
+- name: Check installed speedtest version
+  command: /usr/local/bin/speedtest --version
+  register: speedtest_installed
+  changed_when: false
+  failed_when: false
+
+- name: Download Ookla speedtest tarball
+  get_url:
+    url: "https://install.speedtest.net/app/cli/ookla-speedtest-{{ speedtest_cli_version }}-linux-{{ speedtest_arch }}.tgz"
+    dest: "/tmp/ookla-speedtest-{{ speedtest_cli_version }}.tgz"
+    mode: '0644'
+  when: >
+    speedtest_installed.rc != 0 or
+    speedtest_cli_version not in (speedtest_installed.stdout | default(''))
+
+- name: Extract speedtest binary
+  unarchive:
+    src: "/tmp/ookla-speedtest-{{ speedtest_cli_version }}.tgz"
+    dest: /usr/local/bin/
+    remote_src: yes
+    extra_opts: ['speedtest']
+    owner: root
+    group: root
+    mode: '0755'
+  when: >
+    speedtest_installed.rc != 0 or
+    speedtest_cli_version not in (speedtest_installed.stdout | default(''))
+
+- name: Ensure textfile_collector dir exists
+  file:
+    path: "{{ speedtest_textfile_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install speedtest-textfile script
+  copy:
+    src: speedtest-textfile.sh
+    dest: /usr/local/sbin/speedtest-textfile
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install speedtest-textfile.service
+  template:
+    src: speedtest-textfile.service.j2
+    dest: /etc/systemd/system/speedtest-textfile.service
+    owner: root
+    group: root
+    mode: '0644'
+  register: speedtest_service
+
+- name: Install speedtest-textfile.timer
+  template:
+    src: speedtest-textfile.timer.j2
+    dest: /etc/systemd/system/speedtest-textfile.timer
+    owner: root
+    group: root
+    mode: '0644'
+  register: speedtest_timer
+
+- name: Reload systemd if speedtest units changed
+  systemd:
+    daemon_reload: yes
+  when: speedtest_service.changed or speedtest_timer.changed
+
+- name: Enable and start speedtest-textfile.timer
+  systemd:
+    name: speedtest-textfile.timer
+    enabled: yes
+    state: started
+
+- name: Seed speedtest metrics once on first install
+  command: /usr/local/sbin/speedtest-textfile
+  args:
+    creates: "{{ speedtest_textfile_dir }}/speedtest.prom"
