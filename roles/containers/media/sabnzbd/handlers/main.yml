@@ -1,0 +1,7 @@
+---
+# Plain `docker restart` — calling the docker_container module here
+# would treat the existing volume/network/device config as drift
+# (since it's not in this stub spec) and recreate the container without them.
+- name: restart sabnzbd
+  command: docker restart {{ container_name }}
+  changed_when: true

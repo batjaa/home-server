@@ -51,11 +51,41 @@
     value: "sabnzbd.{{ host }}, sabnzbd.home.local, sabnzbd, localhost"
     no_extra_spaces: yes
     mode: '0644'
-  register: sab_ini
+  notify: restart sabnzbd
 
-- name: Restart SABnzbd if config changed
-  docker_container:
-    name: "{{ container_name }}"
-    state: started
-    restart: yes
-  when: sab_ini.changed
+# News servers: vault-managed list, spliced into sabnzbd.ini's [servers]
+# block. Multi-provider for resilience — when the primary can't complete
+# a download (article missing/aged out), SAB falls back to the next
+# priority server before giving up and marking the NZB failed.
+- name: Render usenet [servers] fragment
+  template:
+    src: sabnzbd-servers.j2
+    dest: "{{ docker_dir }}/{{ container_name }}/.sabnzbd-servers.fragment"
+    mode: '0600'
+  no_log: true
+  when: usenet_servers is defined
+
+- name: Install merge-servers script
+  copy:
+    src: merge-servers.py
+    dest: /usr/local/sbin/sabnzbd-merge-servers
+    owner: root
+    group: root
+    mode: '0755'
+  when: usenet_servers is defined
+
+- name: Splice [servers] block into sabnzbd.ini
+  command: >-
+    /usr/local/sbin/sabnzbd-merge-servers
+    {{ docker_dir }}/{{ container_name }}/sabnzbd.ini
+    {{ docker_dir }}/{{ container_name }}/.sabnzbd-servers.fragment
+  register: sab_servers_merge
+  changed_when: "'changed' in sab_servers_merge.stdout"
+  notify: restart sabnzbd
+  when: usenet_servers is defined
+
+- name: Drop the rendered fragment (keys are sensitive)
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}/.sabnzbd-servers.fragment"
+    state: absent
+  when: usenet_servers is defined
