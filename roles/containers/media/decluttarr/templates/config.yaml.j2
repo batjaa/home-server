@@ -1,0 +1,31 @@
+# Decluttarr config — rendered by Ansible from group_vars + vault.
+# Edit roles/containers/media/decluttarr/defaults/main.yml to tune.
+
+general:
+  log_level: {{ decluttarr_log_level }}
+  test_run: {{ decluttarr_test_run | bool | lower }}
+  timer: {{ decluttarr_scan_interval }}
+  ssl_verification: false
+
+job_defaults:
+  max_strikes: {{ decluttarr_permitted_attempts }}
+
+jobs:
+  remove_failed_downloads: {{ decluttarr_remove_failed | bool | lower }}
+  remove_failed_imports: {{ decluttarr_remove_failed_imports | bool | lower }}
+  remove_metadata_missing: {{ decluttarr_remove_metadata_missing | bool | lower }}
+  remove_missing_files: {{ decluttarr_remove_missing_files | bool | lower }}
+  remove_orphans: {{ decluttarr_remove_orphans | bool | lower }}
+  remove_slow: {{ decluttarr_remove_slow | bool | lower }}
+  remove_stalled: {{ decluttarr_remove_stalled | bool | lower }}
+  remove_unmonitored: {{ decluttarr_remove_unmonitored | bool | lower }}
+
+instances:
+  sonarr:
+    - name: sonarr
+      base_url: {{ decluttarr_apps.sonarr.url }}
+      api_key: {{ decluttarr_apps.sonarr.api_key }}
+  radarr:
+    - name: radarr
+      base_url: {{ decluttarr_apps.radarr.url }}
+      api_key: {{ decluttarr_apps.radarr.api_key }}

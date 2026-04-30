@@ -428,3 +428,7 @@
       - role: containers/media/seerr
         tags: [seerr, arr, containers]
         when: enable_seerr | default(false) | bool
+
+      - role: containers/media/decluttarr
+        tags: [decluttarr, arr, containers]
+        when: enable_decluttarr | default(false) | bool

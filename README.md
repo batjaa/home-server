@@ -615,6 +615,7 @@ What each thing in the stack is for. Per-service runbooks (config steps not yet 
 | **Prowlarr** | `prowlarr.batjaa.site` | Single indexer manager. Currently feeds NZBgeek + NZBFinder to Sonarr/Radarr; both vault-managed via `prowlarr_indexers`. |
 | **SABnzbd** | `sabnzbd.batjaa.site` | Usenet download client. Pulls articles from Newshosting (priority 0) + UsenetExpress (priority 1, fill-in for missing articles); both vault-managed via `usenet_servers`. |
 | **Beets** | `beets.batjaa.site` | Music tagger / library organizer. Used out-of-band when adding music. |
+| **Decluttarr** | (no UI) | Daemon that watches Sonarr/Radarr queues every 10 min and removes stuck items (failed imports, stalled downloads, missing files, orphans) after 3 strikes. The cleanup we keep doing by hand. |
 
 ### Monitoring
 

@@ -1,0 +1,34 @@
+---
+container_name: decluttarr
+decluttarr_image: "ghcr.io/manimatter/decluttarr:latest"
+
+decluttarr_log_level: INFO
+decluttarr_test_run: false
+
+# How often to scan *arr queues (minutes).
+decluttarr_scan_interval: 10
+
+# Strikes before an item is removed. 3 means: stuck on 3 consecutive
+# scans (~30 min default).
+decluttarr_permitted_attempts: 3
+
+# Cleanup toggles. Defaults are conservative — only the things we've
+# actually been bitten by. Bump on as confidence grows.
+decluttarr_remove_failed: true              # SAB-aborted downloads
+decluttarr_remove_failed_imports: true       # the "completed/warning" cascade we keep hitting
+decluttarr_remove_metadata_missing: true     # *arr can't match TVDB/TMDB
+decluttarr_remove_missing_files: true        # file vanished from disk
+decluttarr_remove_orphans: true              # download client has it but *arr doesn't know about it
+decluttarr_remove_slow: false                # off — legit slow downloads happen
+decluttarr_remove_stalled: true              # download stuck below typical speed
+decluttarr_remove_unmonitored: false         # off — manual unmonitor + pending download is intentional
+
+# Apps Decluttarr cleans. Joins arr-net so it can resolve container
+# names directly (no host loopback).
+decluttarr_apps:
+  sonarr:
+    url: "http://sonarr:8989"
+    api_key: "{{ sonarr_api_key }}"
+  radarr:
+    url: "http://radarr:7878"
+    api_key: "{{ radarr_api_key }}"

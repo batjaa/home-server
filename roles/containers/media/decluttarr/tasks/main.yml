@@ -1,0 +1,46 @@
+---
+- name: Ensure decluttarr config dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Render Decluttarr config.yaml
+  template:
+    src: config.yaml.j2
+    dest: "{{ docker_dir }}/{{ container_name }}/config.yaml"
+    owner: "{{ username }}"
+    group: users
+    mode: '0600'
+  no_log: true
+  register: decluttarr_config
+
+- name: Ensure arr Docker network
+  docker_network:
+    name: "{{ arr_network }}"
+    state: present
+
+# No UI / no published ports — Decluttarr is a daemon polling *arr APIs
+# over arr-net so it can resolve `sonarr` / `radarr` by container name.
+- name: Make sure the Decluttarr container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "{{ decluttarr_image }}"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ arr_network }}"
+    networks_cli_compatible: yes
+    env:
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}/config.yaml:/app/config/config.yaml:ro"
+    restart_policy: unless-stopped
+  register: decluttarr_container
+
+- name: Restart Decluttarr if config changed
+  command: docker restart {{ container_name }}
+  when: decluttarr_config.changed and not decluttarr_container.changed
+  changed_when: true
