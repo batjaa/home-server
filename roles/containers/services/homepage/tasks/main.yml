@@ -35,5 +35,9 @@
       PORT: "{{ homepage_port | string }}"
     volumes:
       - "{{ docker_dir }}/{{ container_name }}:/app/config"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      # Bind the underlying filesystems (not the mergerfs fuse unions —
+      # fuse mounts don't propagate through Docker bind mounts).
+      # The widget reads statvfs(); these are the source-of-truth backing FS.
+      - "/mnt/sda1:/mnt/sda1:ro"
+      - "/mnt/backup1:/mnt/backup1:ro"
     restart_policy: unless-stopped

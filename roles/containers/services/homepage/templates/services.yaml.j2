@@ -46,10 +46,25 @@
         href: https://photos.batjaa.site
         description: photos + memories
         siteMonitor: http://127.0.0.1:2283/api/server/ping
+        # Built-in `type: immich` calls /api/server-info/* which Immich 2.x
+        # removed (404). Use customapi against the current /api/server/* paths.
         widget:
-          type: immich
-          url: http://127.0.0.1:2283
-          key: {{ immich_api_key }}
+          type: customapi
+          url: http://127.0.0.1:2283/api/server/statistics
+          method: GET
+          headers:
+            x-api-key: {{ immich_api_key }}
+          display: list
+          mappings:
+            - field: photos
+              label: photos
+              format: number
+            - field: videos
+              label: videos
+              format: number
+            - field: usage
+              label: usage
+              format: bytes
     - Nextcloud:
         icon: nextcloud.png
         href: https://nextcloud.batjaa.site
@@ -182,7 +197,9 @@
         widget:
           type: customapi
           # PromQL converts bytes/s to Mbps so the tile matches what Ziply quotes.
-          url: http://prometheus:9090/api/v1/query?query=speedtest_download_bytes_per_second*8/1000000
+          # Homepage runs network_mode=host, so it can't resolve container DNS
+          # ("prometheus") — hit Prometheus on its localhost-published port.
+          url: http://127.0.0.1:9090/api/v1/query?query=speedtest_download_bytes_per_second*8/1000000
           display: list
           mappings:
             - field:
@@ -199,7 +216,9 @@
         icon: pi-hole.png
         href: http://192.168.50.10/admin
         description: DNS + ad blocking (tentomon)
-        siteMonitor: http://192.168.50.10/admin/
+        # No siteMonitor: Pi-hole v6's embedded HTTP server emits a
+        # malformed "Connection: close" framing that Node.js refuses to
+        # parse. The widget below reports liveness implicitly.
         widget:
           type: pihole
           url: http://192.168.50.10
@@ -213,4 +232,5 @@
         icon: swag.png
         href: https://{{ host }}
         description: reverse proxy + SSL
-        siteMonitor: http://127.0.0.1:80/
+        # No siteMonitor: SWAG redirects http://127.0.0.1/ to https, which
+        # Homepage's HTTP probe refuses to follow (cross-protocol upgrade).

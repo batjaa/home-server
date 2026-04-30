@@ -1,3 +1,6 @@
-# Docker integration — lets per-service tiles show container state
-my-docker:
-  socket: /var/run/docker.sock
+# Docker integration disabled. The default Homepage entrypoint switches
+# to PUID 1001 with su-exec, which drops supplementary groups — so even
+# with `--group-add 119` the node process can't read /var/run/docker.sock.
+# No service tile actually uses container state, so the integration is
+# net cost (EACCES log spam) without benefit. Re-enable by populating
+# `my-docker:` here AND running the container as root (PUID=0/PGID=0).

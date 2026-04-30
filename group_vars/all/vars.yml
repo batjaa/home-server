@@ -87,6 +87,10 @@ docker_dir: /opt/docker/data
 gpu_render_gid: '109'
 gpu_video_gid: '44'
 
+# Host's docker group — supplementary group for containers that need to
+# read /var/run/docker.sock (Homepage, Watchtower, etc).
+docker_gid: '119'
+
 #
 # Swap (off by default; opt-in per host via enable_swap)
 #
