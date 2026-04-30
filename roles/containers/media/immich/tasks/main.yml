@@ -35,8 +35,13 @@
     volumes:
       - "{{ docker_dir }}/{{ immich_db_container }}:/var/lib/postgresql/data"
     shm_size: "{{ immich_db_shm_size }}"
+    # NOTE: vchord (vectorchord) MUST be in shared_preload_libraries — the
+    # extension refuses to load otherwise and immich-server crash-loops on
+    # any vector query. This line is non-negotiable; do not remove it.
     command:
       - postgres
+      - -c
+      - "shared_preload_libraries=vchord.so"
       - -c
       - "shared_buffers={{ immich_db_shared_buffers }}"
       - -c
@@ -52,6 +57,22 @@
       - -c
       - "effective_io_concurrency={{ immich_db_effective_io_concurrency }}"
     restart_policy: unless-stopped
+
+# Guard: if the Postgres command ever drops shared_preload_libraries again,
+# fail loudly here rather than letting immich-server crash-loop in production.
+- name: Verify vchord is in Postgres shared_preload_libraries
+  command: >-
+    docker exec {{ immich_db_container }}
+    psql -U {{ immich_db_user }} -d {{ immich_db_name }} -tAc
+    "SHOW shared_preload_libraries"
+  register: immich_db_preload
+  changed_when: false
+  retries: 10
+  delay: 3
+  until: immich_db_preload.rc == 0
+  failed_when: >
+    immich_db_preload.rc != 0 or
+    'vchord' not in (immich_db_preload.stdout | default(''))
 
 # ── Redis ──────────────────────────────────────────────────────────────────
 - name: Make sure the Immich Redis container is running
