@@ -177,6 +177,12 @@
             - monitoring
         when: enable_speedtest | default(false) | bool
 
+      - role: monitoring/arr
+        tags:
+            - arr-monitor
+            - monitoring
+        when: enable_arr_monitor | default(false) | bool
+
       # - role: network/adguard
       #   become: no
       #   tags:

@@ -1,0 +1,11 @@
+[Unit]
+Description=Sample *arr app health/queue for Prometheus textfile collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/arr-textfile.env
+ExecStart=/usr/local/sbin/arr-textfile
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,15 @@
+---
+# Sample Sonarr + Radarr APIs every 5 min and emit Prometheus metrics
+# via the node_exporter textfile collector.
+
+arr_monitor_interval: 5min
+arr_monitor_textfile_dir: /var/lib/node_exporter/textfile_collector
+
+# API endpoints reachable from the host (containers publish on 127.0.0.1).
+arr_apps:
+  - name: sonarr
+    url: "http://127.0.0.1:8989"
+    api_key: "{{ sonarr_api_key }}"
+  - name: radarr
+    url: "http://127.0.0.1:7878"
+    api_key: "{{ radarr_api_key }}"

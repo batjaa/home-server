@@ -1,0 +1,10 @@
+[Unit]
+Description=Run arr-textfile every {{ arr_monitor_interval }}
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec={{ arr_monitor_interval }}
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target

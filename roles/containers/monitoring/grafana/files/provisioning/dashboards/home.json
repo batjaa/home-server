@@ -9,7 +9,8 @@
     { "title": "Cadvisor exporter",  "type": "link", "url": "/d/cadvisor-exporter" },
     { "title": "Storage Health",     "type": "link", "url": "/d/storage-health" },
     { "title": "Intel GPU",          "type": "link", "url": "/d/intel-gpu" },
-    { "title": "Speedtest",          "type": "link", "url": "/d/speedtest" }
+    { "title": "Speedtest",          "type": "link", "url": "/d/speedtest" },
+    { "title": "*arr health",        "type": "link", "url": "/d/arr" }
   ],
   "liveNow": false,
   "panels": [
