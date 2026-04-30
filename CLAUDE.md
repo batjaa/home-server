@@ -104,6 +104,7 @@ Drive identity is **pinned by serial** in `host_vars/homeserver/vars.yml` under 
 - **`guid` is per-host:** `1001` on homeserver (batjaa), `1000` on tentomon (tentomon). Default `1000` in group_vars is for tentomon. Container PUID/PGID picks it up via `{{ guid }}`.
 - **Tailscale split DNS** must be configured for both `home.local` AND `batjaa.site` → Pi-hole at `192.168.50.10`. Without this, browsers can't resolve internal-only subdomains like `grafana.batjaa.site`.
 - **Seerr image** (`ghcr.io/seerr-team/seerr:latest`) runs as the `node` user (uid 1000) and ignores PUID/PGID — chown the config dir to `1000:1000` explicitly. Also requires `init: yes` in the docker_container task because the image dropped its init shim.
+- **Immich Postgres `command:` overrides** must keep `-c shared_preload_libraries=vchord.so`. The vectorchord extension refuses to load otherwise and immich-server crash-loops on any vector query (SmartSearch, OCR, face detection). The role has a post-deploy guard that fails the play if it drops out — don't disable it.
 
 ## Useful commands
 
