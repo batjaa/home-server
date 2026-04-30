@@ -30,3 +30,38 @@
     volumes:
       - "{{ docker_dir }}/{{ container_name }}:/config"
     restart_policy: unless-stopped
+
+# Indexers: vault-managed list converged via Prowlarr API. Non-destructive —
+# UI-added indexers absent from the list are left alone, so this is safe to
+# adopt incrementally.
+- name: Wait for Prowlarr API to be ready
+  uri:
+    url: "http://127.0.0.1:{{ prowlarr_port }}/api/v1/system/status"
+    headers:
+      X-Api-Key: "{{ prowlarr_api_key }}"
+    status_code: 200
+  register: prowlarr_ready
+  retries: 30
+  delay: 2
+  until: prowlarr_ready.status == 200
+  when: prowlarr_indexers is defined
+
+- name: Install manage-indexers script
+  copy:
+    src: manage-indexers.py
+    dest: /usr/local/sbin/prowlarr-manage-indexers
+    owner: root
+    group: root
+    mode: '0755'
+  when: prowlarr_indexers is defined
+
+- name: Converge Prowlarr indexers
+  command: /usr/local/sbin/prowlarr-manage-indexers
+  environment:
+    PROWLARR_URL: "http://127.0.0.1:{{ prowlarr_port }}"
+    PROWLARR_API_KEY: "{{ prowlarr_api_key }}"
+    PROWLARR_INDEXERS: "{{ prowlarr_indexers | to_json }}"
+  register: prowlarr_indexers_run
+  changed_when: "'changed' in prowlarr_indexers_run.stdout"
+  no_log: true
+  when: prowlarr_indexers is defined
