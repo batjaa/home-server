@@ -59,6 +59,7 @@ Inventory groups: `[pi]` and `[homeservers]`. Each play targets one.
 9. Document in `docs/services.md`
 10. **Add a tile to Homepage** — new entry in `roles/containers/services/homepage/templates/services.yaml.j2` (icon, href, `siteMonitor` on `127.0.0.1:<port>`, optional `widget:` block if Homepage supports the service)
 11. **Add a Kuma monitor** at `https://status.batjaa.site` — HTTP check on the SWAG URL with a known-healthy endpoint (`/api/server/ping`, `/health`, `/status.php`, `/`, etc.) and subscribe it to the Postmark notification so failures email out
+12. **Add a row to README.md "Services" table** — single line under the right category (Media playback / Photos & files / *arr stack / Monitoring / Network / Storage). The README inventory is the at-a-glance "what does this do" reference; if it's not in the table, future-you will forget the service exists.
 
 ## Removing a service — reverse checklist
 
@@ -69,6 +70,7 @@ Inventory groups: `[pi]` and `[homeservers]`. Each play targets one.
 5. Remove the Homepage tile from `services.yaml.j2`
 6. Pause or delete the Kuma monitor (delete unless you want history)
 7. Update `docs/services.md`
+8. **Remove the row from README.md "Services" table** — keep the inventory honest
 
 Subdomain conventions favour short names: `music` not `navidrome`, `request` not `seerr`, `photos` not `photoprism`, `kvm` not `pikvm`.
 

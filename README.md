@@ -585,7 +585,81 @@ Containers come up reading their original config — API keys, library DBs, Plex
 
 ## Services
 
-Per-service runbooks (config steps that aren't yet automated, where credentials live, what manual setup is needed) are in [`docs/services.md`](docs/services.md).
+What each thing in the stack is for. Per-service runbooks (config steps not yet automated, where credentials live, what manual setup is needed) are in [`docs/services.md`](docs/services.md). **Keep this table in sync when adding/removing/repurposing a service.**
+
+### Media playback
+
+| Service | Subdomain | What it does |
+|---|---|---|
+| **Plex** | `plex.batjaa.site` | Primary movie/TV streaming. Hardware transcoding via Intel UHD 750 (`/dev/dri`). |
+| **Jellyfin** | `jellyfin.batjaa.site` | Open-source backup to Plex. Same library, QSV transcode configured via API. |
+| **Navidrome** | `music.batjaa.site` | Music streaming (Subsonic API). Phone clients hit this. |
+| **Tautulli** | `tautulli.batjaa.site` | Plex history + live stream count + transcode visibility. Drives the Homepage "GPU & Transcoding" tile. |
+
+### Photos & files
+
+| Service | Subdomain | What it does |
+|---|---|---|
+| **Immich** | `photos.batjaa.site` | Photo library + ML face/object recognition. Postgres + Redis + ML service. Replaced PhotoPrism. |
+| **Nextcloud** | `nextcloud.batjaa.site` | Files, calendar, contacts. MariaDB-backed. Phone CalDAV/CardDAV target. |
+| **Paperless** | `paperless.batjaa.site` | Document OCR + archive. Postgres + Redis. |
+
+### Movie/TV automation (*arr stack)
+
+| Service | Subdomain | What it does |
+|---|---|---|
+| **Seerr** | `request.batjaa.site` | Friend-facing request UI. Hands titles to Sonarr/Radarr. |
+| **Sonarr** | `sonarr.batjaa.site` | TV show automation — searches indexers, hands NZBs to SABnzbd, imports completed downloads to `/mnt/storage/Media/TV`. |
+| **Radarr** | `radarr.batjaa.site` | Movie automation — same pattern as Sonarr but for movies. |
+| **Bazarr** | `bazarr.batjaa.site` | Subtitle automation — fetches missing subtitles for everything Sonarr/Radarr have. |
+| **Prowlarr** | `prowlarr.batjaa.site` | Single indexer manager. Currently feeds NZBgeek + NZBFinder to Sonarr/Radarr; both vault-managed via `prowlarr_indexers`. |
+| **SABnzbd** | `sabnzbd.batjaa.site` | Usenet download client. Pulls articles from Newshosting (priority 0) + UsenetExpress (priority 1, fill-in for missing articles); both vault-managed via `usenet_servers`. |
+| **Beets** | `beets.batjaa.site` | Music tagger / library organizer. Used out-of-band when adding music. |
+
+### Monitoring
+
+| Service | Subdomain | What it does |
+|---|---|---|
+| **Grafana** | `grafana.batjaa.site` | Dashboards. Home dashboard rolls up host/storage/containers/Intel GPU/speedtest. |
+| **Prometheus** | (internal) | Metrics TSDB. Scrapes node_exporter, cAdvisor, Grafana, and the textfile collectors below. |
+| **cAdvisor** | (internal) | Per-container CPU/RAM/IO metrics into Prometheus. |
+| **node_exporter** | (internal) | Host-level metrics on both `homeserver` and `tentomon`. Reads `/var/lib/node_exporter/textfile_collector/*.prom` for the custom collectors below. |
+| **Uptime Kuma** | `status.batjaa.site` | Status page + endpoint probing. Lives on `tentomon` so it survives a homeserver outage. |
+| **Homepage** | `home.batjaa.site` | Landing page with per-service health, GPU/transcode counts, disk widgets, search. |
+
+### Custom textfile collectors (homeserver)
+
+These are systemd timers that periodically write `*.prom` files into the textfile collector dir; node_exporter scrapes them.
+
+| Collector | Cadence | What it emits |
+|---|---|---|
+| `intel-gpu-textfile.timer` | 30 s | `intel_gpu_engine_busy_percent`, `intel_gpu_freq_mhz`, `intel_gpu_imc_bytes_per_sec` (from `intel_gpu_top`) |
+| `speedtest-textfile.timer` | 1 h | `speedtest_download_bytes_per_second`, `_upload_`, `_ping_seconds`, `_packet_loss_ratio` (Ookla CLI) |
+| `arr-textfile.timer` | 5 min | `arr_app_up`, `arr_health_issues`, `arr_queue_warning/failed/pending`, `arr_root_free_bytes` for Sonarr + Radarr |
+| `storage-textfile.timer` | hourly | `smart_*`, `btrfs_*`, `storage_backup_last_run_*` |
+
+### Network / Infrastructure
+
+| Service | Where | What it does |
+|---|---|---|
+| **SWAG** | homeserver | Reverse proxy (nginx) + Let's Encrypt wildcard cert via Cloudflare DNS-01. Terminates `*.batjaa.site` on `:443`, routes by subdomain. |
+| **Pi-hole** | tentomon | DNS resolver + ad blocking. Local records for `*.home.local`, split DNS for `*.batjaa.site` so internal clients skip hairpin NAT. Router DHCP points at it. |
+| **Cloudflare DDNS** | tentomon | Keeps the apex `batjaa.site` A record pointed at the home public IP. |
+| **Cloudflare DNS records** | tentomon | Manages public subdomain CNAMEs from `host_vars/tentomon/vars.yml`. |
+| **PiKVM** | (out of band) | Remote KVM at `kvm.home.local`. Factory image, not Ansible-managed — the rescue line. |
+| **msmtp** | homeserver | SMTP relay through Postmark. SMART, btrfs scrub, and (eventually) Alertmanager email out via `alerts@batjaa.site`. |
+| **endlessh** | homeserver | (toggle off by default) SSH tarpit on :22 once SSH itself moves to :100. |
+
+### Storage (not containers — host-level)
+
+| Layer | Mount | What it is |
+|---|---|---|
+| Primary array | `/mnt/storage` | mergerfs union of NVMe cache + sda1 (24 TB primary HDD). All media + Immich + Nextcloud data lives here. |
+| Backup pool | `/mnt/backup_pool` | mergerfs union of `/mnt/backup{1,2,3}` (3× 4 TB btrfs). Nightly rsync target with btrfs snapshots, 14-day retention. |
+| Cache mover | `cache-mover.timer` (daily 02:00) | Promotes cold files (atime > 7d) from NVMe cache → sda1. |
+| Backup | `backup-storage.timer` (daily 03:00) | rsync `/mnt/storage` + `/opt/docker/data` → `/mnt/backup_pool/_docker_data/` + take btrfs snapshot. |
+| Health | `smartd` + `btrfs-scrub@*.timer` | SMART monitoring, weekly scrubs per drive, results into Prometheus via textfile collector. |
+| Swap | `/swapfile` (32 GiB) | Overflow only; `vm.swappiness=10` keeps it idle unless RAM is tight. |
 
 ## Day-to-day Usage
 
