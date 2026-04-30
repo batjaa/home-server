@@ -93,7 +93,8 @@ Drive identity is **pinned by serial** in `host_vars/homeserver/vars.yml` under 
 ## Disaster recovery
 
 - **Service config restore is fast:** the nightly backup includes `/opt/docker/data/`, written to `/mnt/backup_pool/_docker_data/`. On rebuild: rsync that back + re-run the playbook → containers come up with their existing API keys, libraries, and quality profiles. No wizard click-through.
-- **What's *not* automated:** Cloudflare API token, Postmark Server API Token, Plex claim token, NZBGeek/Newshosting credentials, friend invites, ZenWifi DHCP/port-forward, Tailscale split-DNS. See `docs/services.md` recovery checklist.
+- **What's *not* automated:** Cloudflare API token, Postmark Server API Token, Plex claim token, friend invites, ZenWifi DHCP/port-forward, Tailscale split-DNS. See `docs/services.md` recovery checklist.
+- **What *is* now vault-automated** (was manual at some point): Newshosting + UsenetExpress (`usenet_servers` -> `roles/containers/media/sabnzbd`), NZBgeek + NZBFinder (`prowlarr_indexers` -> `roles/containers/media/prowlarr`).
 
 ## Common gotchas
 
