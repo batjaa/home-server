@@ -202,12 +202,10 @@
           url: http://127.0.0.1:9090/api/v1/query?query=speedtest_download_bytes_per_second*8/1000000
           display: list
           mappings:
-            - field:
-                data:
-                  result:
-                    0:
-                      value:
-                        1: ""
+            # Dot-notation path through Prometheus's instant-query response:
+            # data.result is an array; [0].value is [<timestamp>, "<value-as-string>"];
+            # [1] is the value. Homepage parses "494.806" via format:number.
+            - field: data.result.0.value.1
               label: down Mbps
               format: number
 
