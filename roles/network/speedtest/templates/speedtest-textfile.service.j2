@@ -5,6 +5,11 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
+# Ookla speedtest CLI crashes with `basic_string null not valid` when TERM
+# is unset, which is the default under systemd. HOME is needed for the
+# EULA-acceptance cache (~/.config/Ookla/speedtest-cli/).
+Environment=TERM=dumb
+Environment=HOME=/root
 {% if speedtest_server_id %}
 Environment=SPEEDTEST_SERVER_ID={{ speedtest_server_id }}
 {% endif %}
