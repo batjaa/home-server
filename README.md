@@ -8,17 +8,22 @@ Credits: [notthebee](https://github.com/notthebee) & [geerlingguy](https://githu
 
 | Host | Hardware | IP | What runs here |
 |------|----------|----|----|
-| `andromon` | x86_64 (Ubuntu 22.04) | `192.168.50.20` | SWAG, Plex, Jellyfin, Nextcloud, PhotoPrism, *arr stack (Prowlarr/Radarr/Sonarr/SABnzbd/Bazarr/Seerr), monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage role |
-| `tentomon` | Raspberry Pi 4 4GB (Flirc case) | `192.168.50.10` | Pi-hole DNS, Cloudflare DDNS, Cloudflare DNS records, node_exporter |
-| `pikvm` | PiKVM | `192.168.50.21` | Remote KVM (out-of-band recovery) |
+| `andromon` | x86_64 i5-11600K (Ubuntu 22.04) | `192.168.50.20` | SWAG, Plex, Jellyfin, Immich, Nextcloud, *arr stack (Prowlarr/Radarr/Sonarr/SABnzbd/Bazarr/Seerr/Decluttarr), Paperless, monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage |
+| `tentomon` | Raspberry Pi 4 4GB (Flirc case) | `192.168.50.10` | Pi-hole DNS, Cloudflare DDNS, Cloudflare DNS records, Uptime Kuma, node_exporter |
+| `greymon` | x86_64 ASUS (Windows) | `192.168.50.30` | LLM inference, image/video generation pipeline, gaming. Not Ansible-managed. |
+| `wormmon` | x86_64 ASUS AMD *(planned)* | `192.168.50.40` | Web app hosting (Coolify) for side projects. Not built yet — IP reserved. |
+| `kvm.andromon` | PiKVM | `192.168.50.21` | Out-of-band recovery for `andromon` |
+| `kvm.greymon` | PiKVM | `192.168.50.31` | Out-of-band recovery for `greymon` |
 
 ### MAC Addresses
 
 | Host | MAC |
 |------|-----|
-| `tentomon` | `dc:a6:32:8f:50:fc` |
-| `pikvm` | `e4:5f:01:e4:5a:66` |
 | `andromon` | `a8:a1:59:a2:a7:c5` |
+| `tentomon` | `dc:a6:32:8f:50:fc` |
+| `greymon` | `a0:ad:9f:30:67:73` |
+| `kvm.andromon` | `e4:5f:01:e4:5a:66` |
+| `kvm.greymon` | `e4:5f:01:e1:51:f3` |
 
 ## Network
 
@@ -29,14 +34,19 @@ Asus ZenWifi ← router, NAT, DHCP, WiFi, port forward 80/443 → andromon
     │ (LAN)                DNS server → tentomon (192.168.50.10)
     │
 MikroTik CRS326-24G-2S+RM ← managed switch
-    ├── andromon (192.168.50.20)
-    │     ├── SWAG (reverse proxy + SSL)
-    │     ├── Plex, Grafana, Home Assistant, etc.
-    │     └── all services share this IP, SWAG routes by subdomain
-    ├── tentomon   (192.168.50.10)
+    ├── tentomon       (192.168.50.10)  Raspberry Pi 4
     │     ├── Pi-hole (DNS + ad blocking)
-    │     └── Cloudflare DDNS
-    ├── pikvm      (192.168.50.21)
+    │     ├── Cloudflare DDNS
+    │     └── Uptime Kuma (status.batjaa.site)
+    ├── andromon       (192.168.50.20)  i5-11600K — the everything box
+    │     ├── SWAG (reverse proxy + Let's Encrypt wildcard)
+    │     ├── Plex / Jellyfin / Navidrome / Immich / Nextcloud / Paperless
+    │     ├── *arr stack (Prowlarr / Radarr / Sonarr / SABnzbd / Bazarr / Seerr / Decluttarr)
+    │     └── Prometheus / Grafana / cAdvisor + storage (mergerfs + btrfs)
+    ├── kvm.andromon   (192.168.50.21)  PiKVM — andromon OOB
+    ├── greymon        (192.168.50.30)  ASUS Windows — LLM / image-video / gaming
+    ├── kvm.greymon    (192.168.50.31)  PiKVM — greymon OOB
+    ├── wormmon        (192.168.50.40)  ASUS AMD — web hosting (planned)
     └── other devices
 ```
 
