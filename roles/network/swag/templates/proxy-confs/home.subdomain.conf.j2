@@ -9,6 +9,7 @@ server {
     server_name home.{{ host }};
 
     include /config/nginx/ssl.conf;
+    include /config/nginx/internal-only.conf;
 
     client_max_body_size 0;
 

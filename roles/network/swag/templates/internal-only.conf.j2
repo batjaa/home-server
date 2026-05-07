@@ -1,0 +1,5 @@
+# Shared allowlist for SWAG vhosts that should stay off the public internet.
+{% for cidr in swag_internal_allow_cidrs %}
+allow {{ cidr }};
+{% endfor %}
+deny all;

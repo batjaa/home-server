@@ -18,6 +18,13 @@
     - "{{ docker_dir }}/swag/dns-conf"
     - "{{ docker_dir }}/swag/letsencrypt"
 
+- name: Install shared internal-only access snippet
+  template:
+    src: internal-only.conf.j2
+    dest: "{{ docker_dir }}/swag/nginx/internal-only.conf"
+    mode: '0644'
+  notify: restart swag
+
 - name: Install Cloudflare DNS-01 credentials
   template:
     src: dns-conf/cloudflare.ini.j2
