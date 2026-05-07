@@ -17,7 +17,7 @@ server {
         include /config/nginx/resolver.conf;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        # Kuma now lives on tentomon — survives a homeserver outage.
+        # Kuma now lives on tentomon — survives an andromon outage.
         set $upstream_app {{ hostvars['tentomon']['ansible_host'] }};
         set $upstream_port {{ uptime_kuma_port | default(3001) }};
         set $upstream_proto http;

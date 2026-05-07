@@ -4,7 +4,7 @@ prometheus_network: monitoring-net
 prometheus_port: 9090
 prometheus_retention: 90d
 
-# Targets to scrape — override in host_vars/homeserver/vars.yml
+# Targets to scrape — override in host_vars/andromon/vars.yml
 prometheus_scrape_jobs:
   - job_name: prometheus
     static_configs:

@@ -15,7 +15,7 @@ YELLOW=$'\033[1;33m'
 BLUE=$'\033[0;34m'
 NC=$'\033[0m'
 
-# ─── Drive inventory (keep in sync with host_vars/homeserver/vars.yml) ──────
+# ─── Drive inventory (keep in sync with host_vars/andromon/vars.yml) ──────
 declare -A BYID MODEL SIZE_GB UUID
 
 BYID[primary]="ata-ST24000NM000H-3KS103_ZYD0F3TM"

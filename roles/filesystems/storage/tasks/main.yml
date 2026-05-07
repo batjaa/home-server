@@ -10,8 +10,8 @@
 #   storage_phase=all        — every phase (after backup drives exist)
 #
 # Usage:
-#   ansible-playbook main.yml -l homeserver --tags="storage"
-#   ansible-playbook main.yml -l homeserver --tags="storage" -e storage_phase=pool
+#   ansible-playbook main.yml -l andromon --tags="storage"
+#   ansible-playbook main.yml -l andromon --tags="storage" -e storage_phase=pool
 
 - name: Install storage packages
   package:

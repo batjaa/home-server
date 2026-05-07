@@ -15,14 +15,14 @@ Ansible-based home lab. **Two hosts**, multi-tenant *arr stack + media servers +
                                                   │   │   └─ Pi-hole, DDNS,│
                                                   │   │     cloudflare-dns,│
                                                   │   │     node_exporter   │
-                                                  │   ├── homeserver (.20) │
+                                                  │   ├── andromon (.20)   │
                                                   │   │   └─ everything    │
-                                                  │   └── pikvm (.156)      │
+                                                  │   └── pikvm (.21)       │
                                                   └────────────────────────┘
 ```
 
-- **homeserver**: x86_64 Ubuntu 22.04, runs every container (SWAG, *arr stack, Plex/Jellyfin/Navidrome/PhotoPrism/Nextcloud, monitoring, storage role)
-- **tentomon**: Pi 4 arm64, runs network-critical infra (Pi-hole, DDNS) — *not* media. Survives if homeserver dies.
+- **andromon**: x86_64 Ubuntu 22.04, runs every container (SWAG, *arr stack, Plex/Jellyfin/Navidrome/PhotoPrism/Nextcloud, monitoring, storage role)
+- **tentomon**: Pi 4 arm64, runs network-critical infra (Pi-hole, DDNS) — *not* media. Survives if andromon dies.
 - **pikvm**: factory image (not Ansible-managed). Out-of-band recovery.
 
 Inventory groups: `[pi]` and `[homeservers]`. Each play targets one.
@@ -66,7 +66,7 @@ Inventory groups: `[pi]` and `[homeservers]`. Each play targets one.
 1. Stop + remove the container (preserve `/opt/docker/data/<name>/` for rollback unless cleanup is explicit)
 2. Set `enable_<name>: false` in host_vars; if retirement is permanent, also delete the role + proxy-conf template
 3. Drop its entry from `cloudflare_records:` and `pihole_split_dns:` in `host_vars/tentomon/vars.yml`
-4. Remove its `*.subdomain.conf` from `/opt/docker/data/swag/nginx/proxy-confs/` on the homeserver (Ansible doesn't auto-prune)
+4. Remove its `*.subdomain.conf` from `/opt/docker/data/swag/nginx/proxy-confs/` on the andromon (Ansible doesn't auto-prune)
 5. Remove the Homepage tile from `services.yaml.j2`
 6. Pause or delete the Kuma monitor (delete unless you want history)
 7. Update `docs/services.md`
@@ -90,7 +90,7 @@ all                           every phase
 
 Pre-flight: `roles/filesystems/storage/files/verify-readiness.sh` (run by hand before any destructive op).
 
-Drive identity is **pinned by serial** in `host_vars/homeserver/vars.yml` under `storage_drives`. UUIDs are also pinned and survive reformatting via `mkfs.btrfs -U`. Never address drives by `/dev/sdX`.
+Drive identity is **pinned by serial** in `host_vars/andromon/vars.yml` under `storage_drives`. UUIDs are also pinned and survive reformatting via `mkfs.btrfs -U`. Never address drives by `/dev/sdX`.
 
 ## Disaster recovery
 
@@ -104,7 +104,7 @@ Drive identity is **pinned by serial** in `host_vars/homeserver/vars.yml` under 
 - **Cloudflare proxied=true on Plex/Jellyfin/PhotoPrism** breaks streaming. Always `proxied: false` on `cloudflare_records:` for media services.
 - **SABnzbd hostname check** rejects requests if `Host:` doesn't match its whitelist. Role writes `host_whitelist` to `sabnzbd.ini` automatically.
 - **Mergerfs mount option changes** require `umount + mount`, not just a remount.
-- **`guid` is per-host:** `1001` on homeserver (batjaa), `1000` on tentomon (tentomon). Default `1000` in group_vars is for tentomon. Container PUID/PGID picks it up via `{{ guid }}`.
+- **`guid` is per-host:** `1001` on andromon (batjaa), `1000` on tentomon (tentomon). Default `1000` in group_vars is for tentomon. Container PUID/PGID picks it up via `{{ guid }}`.
 - **Tailscale split DNS** must be configured for both `home.local` AND `batjaa.site` → Pi-hole at `192.168.50.10`. Without this, browsers can't resolve internal-only subdomains like `grafana.batjaa.site`.
 - **Seerr image** (`ghcr.io/seerr-team/seerr:latest`) runs as the `node` user (uid 1000) and ignores PUID/PGID — chown the config dir to `1000:1000` explicitly. Also requires `init: yes` in the docker_container task because the image dropped its init shim.
 - **Immich Postgres `command:` overrides** must keep `-c shared_preload_libraries=vchord.so`. The vectorchord extension refuses to load otherwise and immich-server crash-loops on any vector query (SmartSearch, OCR, face detection). The role has a post-deploy guard that fails the play if it drops out — don't disable it.
@@ -113,19 +113,19 @@ Drive identity is **pinned by serial** in `host_vars/homeserver/vars.yml` under 
 
 ```bash
 # Run a tag on a host
-ansible-playbook main.yml -l homeserver --tags="grafana"
+ansible-playbook main.yml -l andromon --tags="grafana"
 
 # Run a phased role
-ansible-playbook main.yml -l homeserver --tags="storage" -e storage_phase=backup
+ansible-playbook main.yml -l andromon --tags="storage" -e storage_phase=backup
 
 # Peek a vault value
 ansible -m debug -a "var=cloudflare_dns_token" tentomon
 
 # Edit secrets
-ansible-vault edit host_vars/homeserver/secret.yml
+ansible-vault edit host_vars/andromon/secret.yml
 
 # SSH (custom port set by geerlingguy.security)
-ssh -p 100 batjaa@192.168.50.20      # homeserver
+ssh -p 100 batjaa@192.168.50.20      # andromon
 ssh tentomon@192.168.50.10            # tentomon (port 22)
 
 # Test SWAG routing without DNS (force resolve via curl)

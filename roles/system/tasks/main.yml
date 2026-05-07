@@ -1,6 +1,7 @@
 ---
-- include_tasks: essential.yml
-- include_tasks: user.yml
+- import_tasks: essential.yml
+- import_tasks: user.yml
+
 - include_tasks:
     file: swap.yml
     apply:

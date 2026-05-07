@@ -1,6 +1,6 @@
 # Service tiles — grouped per layout section in settings.yaml.
 # Pings are local container ports so widgets stay green even if SWAG is down.
-# Widget API keys come from host_vars/homeserver/secret.yml.
+# Widget API keys come from host_vars/andromon/secret.yml.
 
 - Media:
     - Plex:
@@ -222,10 +222,14 @@
           url: http://192.168.50.10
           version: 6
           key: {{ hostvars['tentomon']['pihole_password'] }}
-    - PiKVM:
+    - PiKVM (andromon):
         icon: pikvm.png
-        href: https://kvm.home.local
-        description: out-of-band recovery
+        href: https://kvm.andromon.home.local
+        description: out-of-band recovery — andromon
+    - PiKVM (greymon):
+        icon: pikvm.png
+        href: https://kvm.greymon.home.local
+        description: out-of-band recovery — greymon
     - SWAG:
         icon: swag.png
         href: https://{{ host }}

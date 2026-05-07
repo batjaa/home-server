@@ -8,9 +8,9 @@ Credits: [notthebee](https://github.com/notthebee) & [geerlingguy](https://githu
 
 | Host | Hardware | IP | What runs here |
 |------|----------|----|----|
-| `homeserver` | x86_64 (Ubuntu 22.04) | `192.168.50.20` | SWAG, Plex, Jellyfin, Nextcloud, PhotoPrism, *arr stack (Prowlarr/Radarr/Sonarr/SABnzbd/Bazarr/Seerr), monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage role |
+| `andromon` | x86_64 (Ubuntu 22.04) | `192.168.50.20` | SWAG, Plex, Jellyfin, Nextcloud, PhotoPrism, *arr stack (Prowlarr/Radarr/Sonarr/SABnzbd/Bazarr/Seerr), monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage role |
 | `tentomon` | Raspberry Pi 4 4GB (Flirc case) | `192.168.50.10` | Pi-hole DNS, Cloudflare DDNS, Cloudflare DNS records, node_exporter |
-| `pikvm` | PiKVM | `192.168.50.156` | Remote KVM (out-of-band recovery) |
+| `pikvm` | PiKVM | `192.168.50.21` | Remote KVM (out-of-band recovery) |
 
 ### MAC Addresses
 
@@ -18,25 +18,25 @@ Credits: [notthebee](https://github.com/notthebee) & [geerlingguy](https://githu
 |------|-----|
 | `tentomon` | `dc:a6:32:8f:50:fc` |
 | `pikvm` | `e4:5f:01:e4:5a:66` |
-| `homeserver` | `a8:a1:59:a2:a7:c5` |
+| `andromon` | `a8:a1:59:a2:a7:c5` |
 
 ## Network
 
 ```
 ISP Modem
     │ (WAN)
-Asus ZenWifi ← router, NAT, DHCP, WiFi, port forward 80/443 → homeserver
+Asus ZenWifi ← router, NAT, DHCP, WiFi, port forward 80/443 → andromon
     │ (LAN)                DNS server → tentomon (192.168.50.10)
     │
 MikroTik CRS326-24G-2S+RM ← managed switch
-    ├── homeserver (192.168.50.20)
+    ├── andromon (192.168.50.20)
     │     ├── SWAG (reverse proxy + SSL)
     │     ├── Plex, Grafana, Home Assistant, etc.
     │     └── all services share this IP, SWAG routes by subdomain
     ├── tentomon   (192.168.50.10)
     │     ├── Pi-hole (DNS + ad blocking)
     │     └── Cloudflare DDNS
-    ├── pikvm      (192.168.50.156)
+    ├── pikvm      (192.168.50.21)
     └── other devices
 ```
 
@@ -44,7 +44,7 @@ MikroTik CRS326-24G-2S+RM ← managed switch
 
 **From the internet** (`plex.batjaa.site`):
 ```
-User → Cloudflare DNS → your public IP → ZenWifi :443 → homeserver → SWAG → Plex
+User → Cloudflare DNS → your public IP → ZenWifi :443 → andromon → SWAG → Plex
 ```
 
 **From inside the network** (`plex.home.local` or `plex.batjaa.site`):
@@ -52,8 +52,8 @@ User → Cloudflare DNS → your public IP → ZenWifi :443 → homeserver → S
 Device → Pi-hole DNS → 192.168.50.20 → SWAG → Plex
 ```
 
-- External: `*.batjaa.site` — Cloudflare DNS + DDNS → SWAG reverse proxy on homeserver
-- Internal: `*.home.local` — Pi-hole local DNS → SWAG on homeserver
+- External: `*.batjaa.site` — Cloudflare DNS + DDNS → SWAG reverse proxy on andromon
+- Internal: `*.home.local` — Pi-hole local DNS → SWAG on andromon
 - Pi-hole also resolves `*.batjaa.site` to `192.168.50.20` directly (split DNS, avoids hairpin NAT)
 
 ## Prerequisites (macOS)
@@ -151,8 +151,8 @@ Edit `hosts` to include:
 [pi]
 tentomon ansible_host=192.168.50.10 ansible_user=tentomon ansible_connection=ssh ansible_ssh_private_key_file=~/.ssh/id_ed25519
 
-[homeserver]
-homeserver ansible_host=192.168.50.20 ansible_user=agumon ansible_connection=ssh ansible_ssh_private_key_file=~/.ssh/id_ed25519
+[homeservers]
+andromon ansible_host=192.168.50.20 ansible_user=agumon ansible_connection=ssh ansible_ssh_private_key_file=~/.ssh/id_ed25519
 ```
 
 ### 6. Set up Ansible Vault (first time only)
@@ -285,13 +285,13 @@ dig @192.168.50.10 plex.batjaa.site +short
 nslookup ads.google.com  # should return 0.0.0.0
 ```
 
-## Disaster Recovery — homeserver
+## Disaster Recovery — andromon
 
 ### 1. Install Ubuntu Server
 
-Boot the homeserver from a USB stick with **Ubuntu Server 24.04 LTS (amd64)** and complete the installer:
+Boot the andromon from a USB stick with **Ubuntu Server 24.04 LTS (amd64)** and complete the installer:
 
-- Hostname: `homeserver`
+- Hostname: `andromon`
 - Username: `batjaa`
 - Password: (something temporary — Ansible will set up key-based auth)
 - Install OpenSSH server: **yes**
@@ -308,7 +308,7 @@ ip a
 From your Mac:
 ```bash
 ping -c 1 192.168.50.255
-arp -a | grep "a8:a1:59:a2:a7:c5"   # homeserver MAC
+arp -a | grep "a8:a1:59:a2:a7:c5"   # andromon MAC
 ```
 
 Or check the ZenWifi DHCP lease list at `router.asus.com`.
@@ -318,7 +318,7 @@ Or check the ZenWifi DHCP lease list at `router.asus.com`.
 In the Asus ZenWifi admin panel:
 1. **LAN → DHCP Server → Manual Assignment**
 2. Bind MAC `a8:a1:59:a2:a7:c5` to `192.168.50.20`
-3. Reboot the homeserver to pick up the static lease
+3. Reboot the andromon to pick up the static lease
 
 ### 4. Set up SSH access
 
@@ -342,7 +342,7 @@ ssh -t batjaa@192.168.50.20 "echo 'batjaa ALL=(ALL) NOPASSWD: ALL' | sudo tee /e
 Make sure `hosts` includes:
 ```ini
 [homeservers]
-homeserver ansible_host=192.168.50.20 ansible_user=batjaa ansible_connection=ssh ansible_ssh_private_key_file=~/.ssh/id_ed25519
+andromon ansible_host=192.168.50.20 ansible_user=batjaa ansible_connection=ssh ansible_ssh_private_key_file=~/.ssh/id_ed25519
 ```
 
 > Note: After the first playbook run, the `geerlingguy.security` role will move SSH to port 100. Update the inventory line to add `ansible_port=100` after the first run.
@@ -350,12 +350,12 @@ homeserver ansible_host=192.168.50.20 ansible_user=batjaa ansible_connection=ssh
 ### 6. Set up host variables
 
 ```bash
-mkdir -p host_vars/homeserver
+mkdir -p host_vars/andromon
 ```
 
-Create `host_vars/homeserver/vars.yml`:
+Create `host_vars/andromon/vars.yml`:
 ```yaml
-# homeserver — main server (media, monitoring, home automation)
+# andromon — main server (media, monitoring, home automation)
 username: batjaa
 guid: '1000'
 host: 'batjaa.site'
@@ -415,11 +415,11 @@ storage_drives:
 confirm_storage_wipe: false
 ```
 
-This minimal config runs only **system setup, security hardening, and NTP** on the homeserver. After verifying the base is solid, flip flags to `true` one at a time and re-run the playbook to add each service.
+This minimal config runs only **system setup, security hardening, and NTP** on the andromon. After verifying the base is solid, flip flags to `true` one at a time and re-run the playbook to add each service.
 
 Create the encrypted secrets file:
 ```bash
-ansible-vault create host_vars/homeserver/secret.yml
+ansible-vault create host_vars/andromon/secret.yml
 ```
 
 Add your secrets:
@@ -436,12 +436,12 @@ First run uses port 22 (default). After the security role runs, SSH moves to 100
 
 ```bash
 # First run on port 22
-ansible-playbook main.yml -l homeserver
+ansible-playbook main.yml -l andromon
 
 # After SSH port changes to 100, update inventory:
-#   homeserver ansible_host=192.168.50.20 ansible_port=100 ...
+#   andromon ansible_host=192.168.50.20 ansible_port=100 ...
 # Then for subsequent runs:
-ansible-playbook main.yml -l homeserver
+ansible-playbook main.yml -l andromon
 ```
 
 ### 8. Configure port forwarding (manual — router admin)
@@ -468,7 +468,7 @@ open https://plex.batjaa.site
 open http://plex.home.local
 ```
 
-## Storage Setup (homeserver)
+## Storage Setup (andromon)
 
 The storage layout uses **mergerfs** to pool drives, with btrfs snapshots for backup integrity. Full design in [`docs/storage-ansible-requirements.md`](docs/storage-ansible-requirements.md).
 
@@ -482,7 +482,7 @@ The storage layout uses **mergerfs** to pool drives, with btrfs snapshots for ba
 The verify script reads drives by serial/by-id, checks sizes, models, UUIDs, SMART health, and that nothing is actively writing to `/mnt/storage`. **Read-only** — safe to run anytime.
 
 ```bash
-# Copy to homeserver and run
+# Copy to andromon and run
 scp -P 100 roles/filesystems/storage/files/verify-readiness.sh batjaa@192.168.50.20:/tmp/
 ssh -p 100 batjaa@192.168.50.20 "sudo bash /tmp/verify-readiness.sh"
 ```
@@ -496,17 +496,17 @@ If a drive's serial/UUID has drifted from the inventory in `verify-readiness.sh`
 
 ### 2. Add storage drives to host_vars
 
-Drive serials, sizes, and pinned UUIDs live in `host_vars/homeserver/vars.yml` under `storage_drives:` (see the example earlier in this README). The pinned UUIDs are committed and persistent — don't change them after the first format.
+Drive serials, sizes, and pinned UUIDs live in `host_vars/andromon/vars.yml` under `storage_drives:` (see the example earlier in this README). The pinned UUIDs are committed and persistent — don't change them after the first format.
 
 ### 3. Phase 2a — Data drive + cache (non-destructive)
 
 This remounts sda from `/mnt/storage` to `/mnt/sda1` and adds a mergerfs union with the NVMe cache. The 4T of data on sda is preserved.
 
 ```bash
-# Set in host_vars/homeserver/vars.yml:
+# Set in host_vars/andromon/vars.yml:
 #   enable_storage: true
 
-ansible-playbook main.yml -l homeserver --tags="storage"
+ansible-playbook main.yml -l andromon --tags="storage"
 # (storage_phase defaults to "data" — non-destructive)
 ```
 
@@ -532,10 +532,10 @@ df -h /mnt/storage
 This wipes and reformats backup1, backup2, backup3 with btrfs `@current` subvolume layout. **Existing data on backup1/backup2 is destroyed** (it's only a backup of sda, will be re-seeded by the first backup run).
 
 ```bash
-# Add to host_vars/homeserver/vars.yml:
+# Add to host_vars/andromon/vars.yml:
 #   confirm_storage_wipe: true
 
-ansible-playbook main.yml -l homeserver --tags="storage" -e storage_phase=backups
+ansible-playbook main.yml -l andromon --tags="storage" -e storage_phase=backups
 ```
 
 Verify:
@@ -566,7 +566,7 @@ All four are idempotent and non-destructive — safe to re-run.
 
 If `/opt/docker/data` is wiped (re-install, swapped server) but `/mnt/backup_pool/_docker_data/` is intact, you skip every service's first-run wizard:
 
-1. Boot homeserver, get through Phase 2a (sda mounted at `/mnt/sda1`, mergerfs at `/mnt/storage`)
+1. Boot andromon, get through Phase 2a (sda mounted at `/mnt/sda1`, mergerfs at `/mnt/storage`)
 2. Phase 3a (backup_pool) so `/mnt/backup_pool/_docker_data/` is reachable
 3. Stop any containers that auto-started:
    ```bash
@@ -578,7 +578,7 @@ If `/opt/docker/data` is wiped (re-install, swapped server) but `/mnt/backup_poo
    ```
 5. Re-run the playbook with all `enable_*` flags on:
    ```bash
-   ansible-playbook main.yml -l homeserver
+   ansible-playbook main.yml -l andromon
    ```
 
 Containers come up reading their original config — API keys, library DBs, Plex/Jellyfin libraries, *arr quality profiles, indexer credentials all preserved. **No wizard click-through.**
@@ -624,11 +624,11 @@ What each thing in the stack is for. Per-service runbooks (config steps not yet 
 | **Grafana** | `grafana.batjaa.site` | Dashboards. Home dashboard rolls up host/storage/containers/Intel GPU/speedtest. |
 | **Prometheus** | (internal) | Metrics TSDB. Scrapes node_exporter, cAdvisor, Grafana, and the textfile collectors below. |
 | **cAdvisor** | (internal) | Per-container CPU/RAM/IO metrics into Prometheus. |
-| **node_exporter** | (internal) | Host-level metrics on both `homeserver` and `tentomon`. Reads `/var/lib/node_exporter/textfile_collector/*.prom` for the custom collectors below. |
-| **Uptime Kuma** | `status.batjaa.site` | Status page + endpoint probing. Lives on `tentomon` so it survives a homeserver outage. |
+| **node_exporter** | (internal) | Host-level metrics on both `andromon` and `tentomon`. Reads `/var/lib/node_exporter/textfile_collector/*.prom` for the custom collectors below. |
+| **Uptime Kuma** | `status.batjaa.site` | Status page + endpoint probing. Lives on `tentomon` so it survives an andromon outage. |
 | **Homepage** | `home.batjaa.site` | Landing page with per-service health, GPU/transcode counts, disk widgets, search. |
 
-### Custom textfile collectors (homeserver)
+### Custom textfile collectors (andromon)
 
 These are systemd timers that periodically write `*.prom` files into the textfile collector dir; node_exporter scrapes them.
 
@@ -643,13 +643,13 @@ These are systemd timers that periodically write `*.prom` files into the textfil
 
 | Service | Where | What it does |
 |---|---|---|
-| **SWAG** | homeserver | Reverse proxy (nginx) + Let's Encrypt wildcard cert via Cloudflare DNS-01. Terminates `*.batjaa.site` on `:443`, routes by subdomain. |
+| **SWAG** | andromon | Reverse proxy (nginx) + Let's Encrypt wildcard cert via Cloudflare DNS-01. Terminates `*.batjaa.site` on `:443`, routes by subdomain. |
 | **Pi-hole** | tentomon | DNS resolver + ad blocking. Local records for `*.home.local`, split DNS for `*.batjaa.site` so internal clients skip hairpin NAT. Router DHCP points at it. |
 | **Cloudflare DDNS** | tentomon | Keeps the apex `batjaa.site` A record pointed at the home public IP. |
 | **Cloudflare DNS records** | tentomon | Manages public subdomain CNAMEs from `host_vars/tentomon/vars.yml`. |
-| **PiKVM** | (out of band) | Remote KVM at `kvm.home.local`. Factory image, not Ansible-managed — the rescue line. |
-| **msmtp** | homeserver | SMTP relay through Postmark. SMART, btrfs scrub, and (eventually) Alertmanager email out via `alerts@batjaa.site`. |
-| **endlessh** | homeserver | (toggle off by default) SSH tarpit on :22 once SSH itself moves to :100. |
+| **PiKVM** | (out of band) | Remote KVM per host: `kvm.andromon.home.local` (.21), `kvm.greymon.home.local` (.31). Factory image, not Ansible-managed — the rescue line. |
+| **msmtp** | andromon | SMTP relay through Postmark. SMART, btrfs scrub, and (eventually) Alertmanager email out via `alerts@batjaa.site`. |
+| **endlessh** | andromon | (toggle off by default) SSH tarpit on :22 once SSH itself moves to :100. |
 
 ### Storage (not containers — host-level)
 
@@ -672,17 +672,17 @@ ansible-playbook main.yml
 Target a specific host:
 ```bash
 ansible-playbook main.yml -l tentomon
-ansible-playbook main.yml -l homeserver
+ansible-playbook main.yml -l andromon
 ```
 
 Run specific roles:
 ```bash
 ansible-playbook main.yml -l tentomon --tags="cloudflare-ddns"
-ansible-playbook main.yml -l homeserver --tags="containers"
+ansible-playbook main.yml -l andromon --tags="containers"
 ```
 
 Edit secrets:
 ```bash
 ansible-vault edit host_vars/tentomon/secret.yml
-ansible-vault edit host_vars/homeserver/secret.yml
+ansible-vault edit host_vars/andromon/secret.yml
 ```

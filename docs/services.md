@@ -11,7 +11,7 @@ All secrets live in vault-encrypted files. Edit with:
 
 ```bash
 ansible-vault edit host_vars/tentomon/secret.yml
-ansible-vault edit host_vars/homeserver/secret.yml
+ansible-vault edit host_vars/andromon/secret.yml
 ```
 
 Pull a value out for one-off use:
@@ -56,7 +56,7 @@ ansible -m debug -a "var=<key>" <host>
 ## Order of operations on a fresh build
 
 1. Bootstrap tentomon (README §"Disaster Recovery — tentomon")
-2. Bootstrap homeserver (README §"Disaster Recovery — homeserver")
+2. Bootstrap andromon (README §"Disaster Recovery — andromon")
 3. Storage role: `data` → `backups` (with `confirm_storage_wipe: true`)
    → `pool` → `mover` → `backup` → `health`
 4. **If you have a `_docker_data` backup**, restore it now (see DR section
@@ -111,7 +111,7 @@ updates) the matching record. Subdomains all CNAME to `ddns.batjaa.site`,
 
 **Auth (cert renewal):** `cloudflare_dns_token` (same as DDNS) — used for
 DNS-01 wildcard cert challenge. Lives in
-`host_vars/homeserver/secret.yml`.
+`host_vars/andromon/secret.yml`.
 
 **Auto-configured:** wildcard cert for `*.batjaa.site`, all proxy-confs in
 `roles/network/swag/templates/proxy-confs/`.
@@ -120,7 +120,7 @@ DNS-01 wildcard cert challenge. Lives in
 
 ### Postmark (SMTP relay)
 
-**Auth:** `email_postmark_token` in `host_vars/homeserver/secret.yml`.
+**Auth:** `email_postmark_token` in `host_vars/andromon/secret.yml`.
 
 **Manual:**
 1. Sign up at https://postmarkapp.com (free tier 100 emails/month)
@@ -138,7 +138,7 @@ expiry notices.
 See `docs/storage-ansible-requirements.md` for the full design. Quick
 facts:
 
-- Drive identity is **pinned by serial** in `host_vars/homeserver/vars.yml`
+- Drive identity is **pinned by serial** in `host_vars/andromon/vars.yml`
   under `storage_drives`. UUIDs are also pinned and survive reformatting
   via `mkfs.btrfs -U`.
 - Pre-flight: `roles/filesystems/storage/files/verify-readiness.sh` reads
@@ -155,7 +155,7 @@ facts:
 ### Plex — `https://plex.batjaa.site`
 
 **Auth:** `plex_claim_token` (one-time, from https://www.plex.tv/claim/)
-in `host_vars/homeserver/secret.yml`. Gets the server registered to your
+in `host_vars/andromon/secret.yml`. Gets the server registered to your
 Plex account on first start; not needed afterward.
 
 **Manual setup if `_docker_data` was lost:**
@@ -292,16 +292,16 @@ Overseerr config dir on first start.
 
 ## Monitoring
 
-### Prometheus — `127.0.0.1:9090` (homeserver-internal only)
+### Prometheus — `127.0.0.1:9090` (andromon-internal only)
 
 Scrapes:
 - `localhost:9090` (self)
-- `192.168.50.20:9100` (homeserver node_exporter)
+- `192.168.50.20:9100` (andromon node_exporter)
 - `192.168.50.10:9100` (tentomon node_exporter)
 - `cadvisor:8080` (container metrics)
 - node_exporter textfile collector picks up `/var/lib/node_exporter/textfile_collector/storage.prom` (SMART, btrfs scrub, backup status)
 
-Edit scrape jobs in `host_vars/homeserver/vars.yml` →
+Edit scrape jobs in `host_vars/andromon/vars.yml` →
 `prometheus_scrape_jobs`.
 
 ### Grafana — `https://grafana.batjaa.site`
@@ -322,10 +322,15 @@ re-run `--tags=grafana`.
 
 ---
 
-## PiKVM — `https://kvm.home.local` (internal only, self-signed cert)
+## PiKVM — `kvm.<host>.home.local` (internal only, self-signed cert)
 
-Out-of-band recovery for the homeserver — useful when the homeserver has
-no network or won't boot.
+Out-of-band recovery for physical machines — useful when a host has no
+network or won't boot. One PiKVM per managed box, named after its target:
+
+| URL | IP | Attached to |
+|---|---|---|
+| `https://kvm.andromon.home.local` | `192.168.50.21` | `andromon` (media + *arr stack) |
+| `https://kvm.greymon.home.local` | `192.168.50.31` | `greymon` (LLM/gaming PC) |
 
 **Auth:** username/password set during PiKVM image flashing (separate
 device, not Ansible-managed). Defaults to `admin/admin` if untouched.
@@ -334,8 +339,8 @@ device, not Ansible-managed). Defaults to `admin/admin` if untouched.
 first visit. Accept and save the exception.
 
 **Hardware setup:**
-- HDMI from homeserver → PiKVM HDMI in
-- USB from PiKVM → homeserver USB (acts as keyboard + storage emulation)
+- HDMI from andromon → PiKVM HDMI in
+- USB from PiKVM → andromon USB (acts as keyboard + storage emulation)
 - Ethernet on the LAN
 
 **Use cases:**
@@ -354,7 +359,7 @@ If you're rebuilding and `_docker_data` is also gone, these are the
 human-only steps you'll have to redo:
 
 - [ ] Cloudflare API token (regenerate, paste into both vaults)
-- [ ] Postmark Server API Token (regenerate, paste into homeserver vault)
+- [ ] Postmark Server API Token (regenerate, paste into andromon vault)
 - [ ] Plex claim token (one-time, from plex.tv/claim)
 - [ ] NZBGeek API key (from your NZBGeek account → API Key)
 - [ ] Newshosting username + password
@@ -362,8 +367,8 @@ human-only steps you'll have to redo:
 - [ ] Plex friend invites (re-share library, re-invite emails)
 - [ ] Jellyfin friend accounts (recreate on Dashboard → Users)
 - [ ] ZenWifi router config:
-  - DHCP reservations for tentomon (`.10`), homeserver (`.20`),
-    pikvm (`.156`)
+  - DHCP reservations for tentomon (`.10`), andromon (`.20`),
+    pikvm (`.21`)
   - DNS server → `192.168.50.10`
   - Port forward `:443/tcp` → `192.168.50.20`
 - [ ] Tailscale split-DNS for `home.local` + `batjaa.site` →
