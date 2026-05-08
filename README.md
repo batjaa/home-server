@@ -14,6 +14,7 @@ Credits: [notthebee](https://github.com/notthebee) & [geerlingguy](https://githu
 | `wormmon` | x86_64 ASUS AMD *(planned)* | `192.168.50.40` | Web app hosting (Coolify) for side projects. Not built yet — IP reserved. |
 | `kvm.andromon` | PiKVM | `192.168.50.21` | Out-of-band recovery for `andromon` |
 | `kvm.greymon` | PiKVM | `192.168.50.31` | Out-of-band recovery for `greymon` |
+| `kvm.wormmon` | PiKVM (older Pi 4) | `192.168.50.41` | Out-of-band recovery for `wormmon` (planned) |
 
 ### MAC Addresses
 
@@ -24,6 +25,7 @@ Credits: [notthebee](https://github.com/notthebee) & [geerlingguy](https://githu
 | `greymon` | `a0:ad:9f:30:67:73` |
 | `kvm.andromon` | `e4:5f:01:e4:5a:66` |
 | `kvm.greymon` | `e4:5f:01:e1:51:f3` |
+| `kvm.wormmon` | `dc:a6:32:d8:e6:38` |
 
 ## Network
 
@@ -47,6 +49,7 @@ MikroTik CRS326-24G-2S+RM ← managed switch
     ├── greymon        (192.168.50.30)  ASUS Windows — LLM / image-video / gaming
     ├── kvm.greymon    (192.168.50.31)  PiKVM — greymon OOB
     ├── wormmon        (192.168.50.40)  ASUS AMD — web hosting (planned)
+    ├── kvm.wormmon    (192.168.50.41)  PiKVM — wormmon OOB (planned)
     └── other devices
 ```
 
@@ -657,7 +660,7 @@ These are systemd timers that periodically write `*.prom` files into the textfil
 | **Pi-hole** | tentomon | DNS resolver + ad blocking. Local records for `*.home.local`, split DNS for `*.batjaa.site` so internal clients skip hairpin NAT. Router DHCP points at it. |
 | **Cloudflare DDNS** | tentomon | Keeps the apex `batjaa.site` A record pointed at the home public IP. |
 | **Cloudflare DNS records** | tentomon | Manages public subdomain CNAMEs from `host_vars/tentomon/vars.yml`. |
-| **PiKVM** | (out of band) | Remote KVM per host: `kvm.andromon.home.local` (.21), `kvm.greymon.home.local` (.31). Factory image, not Ansible-managed — the rescue line. |
+| **PiKVM** | (out of band) | Remote KVM per host: `kvm.andromon.home.local` (.21), `kvm.greymon.home.local` (.31), `kvm.wormmon.home.local` (.41 — planned). Factory image, not Ansible-managed — the rescue line. |
 | **msmtp** | andromon | SMTP relay through Postmark. SMART, btrfs scrub, and (eventually) Alertmanager email out via `alerts@batjaa.site`. |
 | **endlessh** | andromon | (toggle off by default) SSH tarpit on :22 once SSH itself moves to :100. |
 

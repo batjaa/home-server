@@ -331,6 +331,7 @@ network or won't boot. One PiKVM per managed box, named after its target:
 |---|---|---|
 | `https://kvm.andromon.home.local` | `192.168.50.21` | `andromon` (media + *arr stack) |
 | `https://kvm.greymon.home.local` | `192.168.50.31` | `greymon` (LLM/gaming PC) |
+| `https://kvm.wormmon.home.local` | `192.168.50.41` | `wormmon` (planned web host) |
 
 **Auth:** username/password set during PiKVM image flashing (separate
 device, not Ansible-managed). Defaults to `admin/admin` if untouched.
