@@ -169,6 +169,21 @@
           enableNowPlaying: true
           enableBlocks: true
 
+- AI:
+    - Open WebUI:
+        icon: open-webui.png
+        href: https://chat.batjaa.site
+        description: chat UI for Ollama
+        siteMonitor: http://127.0.0.1:3014/health
+    - Ollama:
+        icon: ollama.png
+        href: https://ollama.batjaa.site
+        description: LLM inference (greymon)
+        siteMonitor: http://192.168.50.30:11434/
+        widget:
+          type: ollama
+          url: http://192.168.50.30:11434
+
 - Monitoring:
     - Grafana:
         icon: grafana.png

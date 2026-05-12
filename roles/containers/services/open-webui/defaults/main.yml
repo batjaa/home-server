@@ -1,0 +1,7 @@
+---
+container_name: open-webui
+open_webui_port: 3014
+open_webui_image: "ghcr.io/open-webui/open-webui:main"
+
+# Where Open WebUI talks to Ollama. Greymon (Windows) on the LAN.
+open_webui_ollama_url: "http://192.168.50.30:11434"

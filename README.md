@@ -630,12 +630,19 @@ What each thing in the stack is for. Per-service runbooks (config steps not yet 
 | **Beets** | `beets.batjaa.site` | Music tagger / library organizer. Used out-of-band when adding music. |
 | **Decluttarr** | (no UI) | Daemon that watches Sonarr/Radarr queues every 10 min and removes stuck items (failed imports, stalled downloads, missing files, orphans) after 3 strikes. The cleanup we keep doing by hand. |
 
+### AI / inference
+
+| Service | Subdomain | What it does |
+|---|---|---|
+| **Ollama** | `ollama.batjaa.site` | Local LLM inference (gemma, qwen). Runs on `greymon` (Windows), reached via SWAG → `192.168.50.30:11434`. Internal-only vhost. |
+| **Open WebUI** | `chat.batjaa.site` | ChatGPT-style frontend for Ollama. Runs on `andromon`, talks to greymon's Ollama. First user to sign up becomes admin. |
 
 ### App platform
 
 | Service | Subdomain | What it does |
 |---|---|---|
 | **Coolify** | `deploy.batjaa.site` | App platform on `wormmon` for side projects. SWAG on `andromon` stays the public edge and proxies the control plane to `wormmon`. Production apps use their own domains, previews use `*.preview.batjaa.site`. See `docs/wormmon-coolify.md`. |
+
 ### Monitoring
 
 | Service | Subdomain | What it does |

@@ -313,6 +313,12 @@
             - containers
         when: enable_chartdb | default(false) | bool
 
+      - role: containers/services/open-webui
+        tags:
+            - open_webui
+            - containers
+        when: enable_open_webui | default(false) | bool
+
       - role: containers/services/coolify
         tags:
             - coolify

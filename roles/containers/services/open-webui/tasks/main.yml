@@ -1,0 +1,25 @@
+---
+- name: Ensure Open WebUI config dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Make sure the Open WebUI container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "{{ open_webui_image }}"
+    pull: yes
+    state: started
+    published_ports:
+      - "127.0.0.1:{{ open_webui_port }}:8080"
+    env:
+      OLLAMA_BASE_URL: "{{ open_webui_ollama_url }}"
+      WEBUI_URL: "https://chat.{{ host }}"
+      WEBUI_NAME: "{{ host }} chat"
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/app/backend/data"
+    restart_policy: unless-stopped
