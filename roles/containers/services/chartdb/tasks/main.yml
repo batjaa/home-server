@@ -1,0 +1,21 @@
+---
+- name: Ensure ChartDB config dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Make sure the ChartDB container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "ghcr.io/chartdb/chartdb:latest"
+    pull: yes
+    state: started
+    published_ports:
+      - "127.0.0.1:{{ chartdb_port }}:80"
+    env:
+      DISABLE_ANALYTICS: "true"
+      TZ: "{{ timezone }}"
+    restart_policy: unless-stopped

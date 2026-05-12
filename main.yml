@@ -307,6 +307,12 @@
             - containers
         when: enable_paperless | default(false) | bool
 
+      - role: containers/services/chartdb
+        tags:
+            - chartdb
+            - containers
+        when: enable_chartdb | default(false) | bool
+
       - role: containers/services/coolify
         tags:
             - coolify

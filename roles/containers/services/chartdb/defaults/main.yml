@@ -1,0 +1,3 @@
+---
+container_name: chartdb
+chartdb_port: 3012
