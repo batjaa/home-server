@@ -1,2 +1,6 @@
-[your_hostname_group]
-your_hostname ansible_host=133.74.20.69 ansible_user=root ansible_connection=ssh ansible_ssh_private_key_file=/path/to/your/private/key
+[pi]
+tentomon ansible_host=192.168.50.10 ansible_user=tentomon ansible_connection=ssh ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+[homeservers]
+andromon ansible_host=192.168.50.20 ansible_user=batjaa ansible_connection=ssh ansible_ssh_private_key_file=~/.ssh/id_ed25519
+wormmon ansible_host=192.168.50.40 ansible_user=batjaa ansible_connection=ssh ansible_ssh_private_key_file=~/.ssh/id_ed25519

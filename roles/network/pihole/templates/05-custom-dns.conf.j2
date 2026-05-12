@@ -8,3 +8,8 @@ address=/{{ record.domain }}/{{ record.ip }}
 {% for record in pihole_split_dns %}
 address=/{{ record.domain }}/{{ record.ip }}
 {% endfor %}
+
+# Wildcard split DNS suffixes (*.preview.batjaa.site → wormmon on LAN)
+{% for record in pihole_wildcard_dns | default([]) %}
+address=/.{{ record.suffix }}/{{ record.ip }}
+{% endfor %}

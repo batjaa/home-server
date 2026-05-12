@@ -25,14 +25,28 @@
     enabled: no
   when: resolved_config.changed
 
-- name: Create Pi-hole config directory
+- name: Create Pi-hole config directories
   become: yes
   file:
-    path: "{{ docker_dir }}/{{ container_name }}"
+    path: "{{ item }}"
     state: directory
     owner: "{{ username }}"
     group: "users"
     mode: "0775"
+  loop:
+    - "{{ docker_dir }}/{{ container_name }}"
+    - "{{ docker_dir }}/{{ container_name }}/etc-pihole"
+    - "{{ docker_dir }}/{{ container_name }}/etc-dnsmasq.d"
+
+- name: Configure wildcard DNS records
+  become: yes
+  template:
+    src: 05-custom-dns.conf.j2
+    dest: "{{ docker_dir }}/{{ container_name }}/etc-dnsmasq.d/05-custom-dns.conf"
+    owner: "{{ username }}"
+    group: "users"
+    mode: "0644"
+  register: pihole_dnsmasq_config
 
 - name: Make sure the {{ container_name }} container is created and running
   docker_container:
@@ -70,3 +84,17 @@
 - name: Configure local DNS records (Pi-hole v6)
   command: "docker exec pihole pihole-FTL --config dns.hosts '{{ pihole_hosts | to_json }}'"
   changed_when: true
+
+- name: Enable custom dnsmasq.d imports for Pi-hole v6
+  command: docker exec pihole pihole-FTL --config misc.etc_dnsmasq_d true
+  changed_when: true
+
+- name: Restart Pi-hole to load wildcard dnsmasq rules
+  command: docker restart "{{ container_name }}"
+  when: pihole_dnsmasq_config.changed
+  changed_when: true
+
+- name: Wait for Pi-hole after wildcard DNS restart
+  pause:
+    seconds: 5
+  when: pihole_dnsmasq_config.changed

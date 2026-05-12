@@ -307,6 +307,12 @@
             - containers
         when: enable_paperless | default(false) | bool
 
+      - role: containers/services/coolify
+        tags:
+            - coolify
+            - containers
+        when: enable_coolify | default(false) | bool
+
       # - role: containers/homeautomation/mqtt
       #   become: no
       #   tags:

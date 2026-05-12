@@ -8,3 +8,5 @@ internal_macvlan_ip: '{{ swag_base }}.62/32'
 swag_internal_allow_cidrs:
   - "{{ lan_network }}"
   - "100.64.0.0/10"
+
+swag_extra_domains: ""

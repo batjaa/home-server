@@ -1,0 +1,89 @@
+---
+- name: Ensure Coolify host packages are installed
+  package:
+    name:
+      - curl
+      - openssh-server
+      - openssl
+    state: present
+
+- name: Ensure Coolify host directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ coolify_root_dir }}"
+    - "{{ coolify_source_dir }}"
+    - "{{ coolify_root_dir }}/ssh"
+    - "{{ coolify_root_dir }}/applications"
+    - "{{ coolify_root_dir }}/databases"
+    - "{{ coolify_root_dir }}/services"
+    - "{{ coolify_root_dir }}/backups"
+
+- name: Download Coolify installer
+  get_url:
+    url: "{{ coolify_install_script_url }}"
+    dest: /usr/local/sbin/coolify-install.sh
+    mode: "0755"
+
+- name: Check whether Coolify is already installed
+  stat:
+    path: "{{ coolify_env_file }}"
+  register: coolify_install_state
+
+- name: Install Coolify
+  command: /usr/local/sbin/coolify-install.sh
+  environment:
+    USER: "{{ username }}"
+    HOME: "/home/{{ username }}"
+    AUTOUPDATE: "{{ 'true' if coolify_auto_update else 'false' }}"
+    ROOT_USERNAME: "{{ coolify_root_username }}"
+    ROOT_USER_EMAIL: "{{ coolify_root_user_email }}"
+    ROOT_USER_PASSWORD: "{{ coolify_root_user_password }}"
+  when: not coolify_install_state.stat.exists
+  register: coolify_install
+  changed_when: true
+
+- name: Set Coolify app port
+  lineinfile:
+    path: "{{ coolify_env_file }}"
+    regexp: "^APP_PORT="
+    line: "APP_PORT={{ coolify_app_port }}"
+  register: coolify_app_port_config
+
+- name: Set Coolify realtime port
+  lineinfile:
+    path: "{{ coolify_env_file }}"
+    regexp: "^SOKETI_PORT="
+    line: "SOKETI_PORT={{ coolify_soketi_port }}"
+    insertafter: EOF
+  register: coolify_soketi_port_config
+
+- name: Restart Coolify after configuration changes
+  command:
+    argv:
+      - docker
+      - compose
+      - -f
+      - docker-compose.yml
+      - -f
+      - docker-compose.prod.yml
+      - up
+      - -d
+  args:
+    chdir: "{{ coolify_source_dir }}"
+  when: coolify_app_port_config.changed or coolify_soketi_port_config.changed
+  changed_when: true
+
+- name: Wait for Coolify API health endpoint
+  uri:
+    url: "http://127.0.0.1:{{ coolify_app_port }}/api/health"
+    method: GET
+    status_code: 200
+  register: coolify_health
+  retries: 30
+  delay: 10
+  until: coolify_health.status == 200

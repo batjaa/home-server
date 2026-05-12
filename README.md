@@ -11,7 +11,7 @@ Credits: [notthebee](https://github.com/notthebee) & [geerlingguy](https://githu
 | `andromon` | x86_64 i5-11600K (Ubuntu 22.04) | `192.168.50.20` | SWAG, Plex, Jellyfin, Immich, Nextcloud, *arr stack (Prowlarr/Radarr/Sonarr/SABnzbd/Bazarr/Seerr/Decluttarr), Paperless, monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage |
 | `tentomon` | Raspberry Pi 4 4GB (Flirc case) | `192.168.50.10` | Pi-hole DNS, Cloudflare DDNS, Cloudflare DNS records, Uptime Kuma, node_exporter |
 | `greymon` | x86_64 ASUS (Windows) | `192.168.50.30` | LLM inference, image/video generation pipeline, gaming. Not Ansible-managed. |
-| `wormmon` | x86_64 ASUS AMD *(planned)* | `192.168.50.40` | Web app hosting (Coolify) for side projects. Not built yet — IP reserved. |
+| `wormmon` | x86_64 ASUS AMD *(planned)* | `192.168.50.40` | Web app hosting (Coolify) for side projects. Admin at `deploy.batjaa.site` via SWAG on `andromon`, previews under `*.preview.batjaa.site`, SSH stays on `22` for Coolify localhost management. |
 | `kvm.andromon` | PiKVM | `192.168.50.21` | Out-of-band recovery for `andromon` |
 | `kvm.greymon` | PiKVM | `192.168.50.31` | Out-of-band recovery for `greymon` |
 | `kvm.wormmon` | PiKVM (older Pi 4) | `192.168.50.41` | Out-of-band recovery for `wormmon` (planned) |
@@ -630,6 +630,12 @@ What each thing in the stack is for. Per-service runbooks (config steps not yet 
 | **Beets** | `beets.batjaa.site` | Music tagger / library organizer. Used out-of-band when adding music. |
 | **Decluttarr** | (no UI) | Daemon that watches Sonarr/Radarr queues every 10 min and removes stuck items (failed imports, stalled downloads, missing files, orphans) after 3 strikes. The cleanup we keep doing by hand. |
 
+
+### App platform
+
+| Service | Subdomain | What it does |
+|---|---|---|
+| **Coolify** | `deploy.batjaa.site` | App platform on `wormmon` for side projects. SWAG on `andromon` stays the public edge and proxies the control plane to `wormmon`. Production apps use their own domains, previews use `*.preview.batjaa.site`. See `docs/wormmon-coolify.md`. |
 ### Monitoring
 
 | Service | Subdomain | What it does |
@@ -637,7 +643,7 @@ What each thing in the stack is for. Per-service runbooks (config steps not yet 
 | **Grafana** | `grafana.batjaa.site` | Dashboards. Home dashboard rolls up host/storage/containers/Intel GPU/speedtest. |
 | **Prometheus** | (internal) | Metrics TSDB. Scrapes node_exporter, cAdvisor, Grafana, and the textfile collectors below. |
 | **cAdvisor** | (internal) | Per-container CPU/RAM/IO metrics into Prometheus. |
-| **node_exporter** | (internal) | Host-level metrics on both `andromon` and `tentomon`. Reads `/var/lib/node_exporter/textfile_collector/*.prom` for the custom collectors below. |
+| **node_exporter** | (internal) | Host-level metrics on `andromon`, `tentomon`, and `wormmon`. Reads `/var/lib/node_exporter/textfile_collector/*.prom` for the custom collectors below. |
 | **Uptime Kuma** | `status.batjaa.site` | Status page + endpoint probing. Lives on `tentomon` so it survives an andromon outage. |
 | **Homepage** | `home.batjaa.site` | Landing page with per-service health, GPU/transcode counts, disk widgets, search. |
 
