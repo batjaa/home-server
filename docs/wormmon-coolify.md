@@ -168,12 +168,220 @@ Example preview app:
 
 ## Certificate notes
 
-`*.batjaa.site` does not cover `*.preview.batjaa.site`, because that is a
-second-level wildcard. SWAG therefore needs explicit additional certificate
-coverage for:
+`*.batjaa.site` does not cover `*.preview.batjaa.site` — wildcards only
+match one label deep (RFC 6125). SWAG needs explicit additional coverage
+for **`*.preview.batjaa.site` only**, not `preview.batjaa.site`, since
+that single-label name is already covered by `*.batjaa.site`. Let's
+Encrypt rejects requests that include both a single-label name and its
+parent wildcard ("redundant with a wildcard domain in the same request").
 
-- `preview.batjaa.site`
-- `*.preview.batjaa.site`
+The knob is `swag_extra_domains` in `host_vars/andromon/vars.yml`:
 
-For third-party app domains like `plotling.app`, add those domains to the SWAG
-certificate configuration before exposing them publicly.
+```yaml
+swag_extra_domains: "*.preview.{{ host }}"
+```
+
+For third-party app domains like `plotling.app`, add those domains to
+`swag_extra_domains` (comma-separated) before exposing them publicly.
+
+### Forcing a cert re-issue after changing `swag_extra_domains`
+
+SWAG only checks expiry on startup, not SAN drift. If you change
+`swag_extra_domains` while the existing cert is still valid, it won't
+be re-issued until overnight renewal. To force:
+
+```bash
+ssh -p 100 batjaa@192.168.50.20 'docker exec swag certbot certonly \
+  --config-dir /config/etc/letsencrypt \
+  --work-dir /config/var/lib/letsencrypt \
+  --logs-dir /config/var/log/letsencrypt \
+  --non-interactive --agree-tos --expand \
+  --authenticator dns-cloudflare \
+  --dns-cloudflare-credentials /config/dns-conf/cloudflare.ini \
+  --cert-name batjaa.site \
+  -d batjaa.site,*.batjaa.site,*.preview.batjaa.site \
+  --preferred-challenges dns-01'
+ssh -p 100 batjaa@192.168.50.20 'docker exec swag nginx -s reload'
+```
+
+The `--config-dir` flags are mandatory — inside this SWAG image
+`/etc/letsencrypt/` is a real directory, separate from the persistent
+`/config/etc/letsencrypt/`. Nginx reads from `/config/keys/cert.crt`
+(symlinks through `/config/etc/letsencrypt/`); without the explicit
+dirs, certbot writes to the ephemeral path and the cert is never served.
+
+---
+
+## Deploying a new preview app
+
+End-to-end happy path via [`batjaa/app-bootstrap`](https://github.com/batjaa/app-bootstrap):
+
+```bash
+new-app demo2 --yes
+```
+
+That chains five steps. To deploy `demo2` (or any name) manually, run
+them individually — useful when something errors mid-pipeline and you
+want to resume from where it broke:
+
+### 1. Scaffold Laravel
+
+```bash
+new-laravel demo2
+# Vue 3 SPA + Sanctum default. --frontend inertia|blade, --nova, --cashier,
+# --no-social to customize.
+```
+
+Creates `~/git/demo2`, installs Laravel, wires Vite + Pinia + vue-router,
+patches `bootstrap/app.php` with `trustProxies(at: "*")` so generated apps
+work behind SWAG → Traefik.
+
+### 2. Write the deployment manifest
+
+```bash
+new-app-config demo2
+# preview-only; add --domain plotling.app --www for production.
+```
+
+Drops `.batjaa/app.yml` (name, repo, framework, domains, db, deploy port).
+Consumed by `new-wormmon-app`.
+
+### 3. Generate Coolify-ready Docker files
+
+```bash
+new-laravel-deploy demo2
+```
+
+Writes `Dockerfile`, `compose.yml`, `.dockerignore` tuned for Coolify's
+docker-compose build path.
+
+### 4. Create the GitHub repo + first push
+
+```bash
+new-repo demo2
+# Private under batjaa/ by default; --public to flip.
+```
+
+Creates `batjaa/demo2`, sets `origin`, normalizes branch to `main`, first
+commit, push.
+
+### 5. Roll out the preview deployment on wormmon
+
+```bash
+new-wormmon-app demo2
+```
+
+Needs the `COOLIFY_*` env vars (see below). Creates:
+
+- Coolify project `demo2`
+- `production` environment under it
+- An ed25519 deploy key (`github-batjaa-demo2`) registered on both Coolify
+  (so it can pull the private repo) and GitHub (as a per-repo deploy key)
+- A Coolify application bound to `demo2.preview.batjaa.site`
+- Queues the first deployment
+
+It prints the deployment UUID. Poll status:
+
+```bash
+curl -s -H "Authorization: Bearer $COOLIFY_TOKEN" \
+  "$COOLIFY_URL/api/v1/deployments/<uuid>" | jq -r .status
+```
+
+Builds typically take ~2-3 min (Laravel + Composer + Vite). When status
+is `finished`, hit `https://demo2.preview.batjaa.site`.
+
+### Required environment
+
+Sourced from `~/.extra` (gitignored, `chmod 600`, loaded by `.bash_profile`):
+
+```bash
+export COOLIFY_URL="https://deploy.batjaa.site"
+export COOLIFY_TOKEN="..."           # Sanctum personal access token, ["*"] abilities
+export COOLIFY_SERVER_UUID="..."     # the localhost server in Coolify
+export COOLIFY_DESTINATION_UUID="..." # the localhost-default Docker destination
+```
+
+If `~/.extra` is wiped:
+
+- `COOLIFY_URL` — `https://deploy.batjaa.site`
+- `COOLIFY_SERVER_UUID` / `COOLIFY_DESTINATION_UUID` — query the API:
+  `GET /api/v1/servers` and `GET /api/v1/destinations` (or copy from the
+  Coolify UI's URL bar on the Server / Destination pages)
+- `COOLIFY_TOKEN` — **must be freshly minted** (Sanctum stores only the
+  hash). Coolify UI → top-right avatar → **Keys & Tokens** → New API
+  Token. If the UI is locked out, see "Recovering a token" below.
+
+---
+
+## Gaps and gotchas observed
+
+Caught while wiring up `demo` and `demo1`.
+
+1. **`COOLIFY_*` env vars not persisted on first setup.** They now live
+   in `~/.extra` (sourced by `.bash_profile`, `chmod 600`, gitignored).
+   Do NOT put them in `.exports` — that file is committed to
+   `batjaa/settings`.
+
+2. **`new-laravel` wrote `\\` instead of `\` in `bootstrap/app.php`.**
+   The `trustProxies` injection used `Illuminate\\\\Http\\\\Request` in
+   a PHP double-quoted source string, which becomes literal `\\Http\\`
+   on disk — invalid PHP outside a string. **Fixed in
+   `app-bootstrap@f293d0d`** (source reduced to `\\Http\\` → `\Http\`
+   on disk).
+
+3. **`new-wormmon-app` double-added the GitHub deploy key.** After the
+   first block called `gh repo deploy-key add`, `$github_deploy_key_id`
+   wasn't refreshed; the fallback block then re-added the same key and
+   hit GitHub's 422 "key is already in use". **Fixed in
+   `app-bootstrap@f293d0d`** (refresh the id right after the gh API
+   call).
+
+4. **Failure mid-pipeline leaves partial state in three places.** A
+   failed `new-wormmon-app` can leave behind a Coolify project, a
+   Coolify deploy key, *and* a GitHub deploy key. No rollback. Manual
+   cleanup before retrying:
+
+   ```bash
+   APP=demoN
+
+   # Coolify project
+   PROJ_UUID=$(curl -s -H "Authorization: Bearer $COOLIFY_TOKEN" "$COOLIFY_URL/api/v1/projects" \
+     | jq -r --arg n "$APP" '.[] | select(.name == $n) | .uuid')
+   [[ -n "$PROJ_UUID" ]] && curl -X DELETE -H "Authorization: Bearer $COOLIFY_TOKEN" \
+     "$COOLIFY_URL/api/v1/projects/$PROJ_UUID"
+
+   # Coolify deploy key
+   KEY_UUID=$(curl -s -H "Authorization: Bearer $COOLIFY_TOKEN" "$COOLIFY_URL/api/v1/security/keys" \
+     | jq -r --arg n "github-batjaa-$APP" '.[] | select(.name == $n) | .uuid')
+   [[ -n "$KEY_UUID" ]] && curl -X DELETE -H "Authorization: Bearer $COOLIFY_TOKEN" \
+     "$COOLIFY_URL/api/v1/security/keys/$KEY_UUID"
+
+   # GitHub deploy key
+   GH_KEY=$(gh api "repos/batjaa/$APP/keys" --jq --arg t "coolify-$APP" '.[] | select(.title == $t) | .id')
+   [[ -n "$GH_KEY" ]] && gh api -X DELETE "repos/batjaa/$APP/keys/$GH_KEY"
+   ```
+
+   Then re-run `new-wormmon-app $APP`. The Laravel project + GitHub repo
+   themselves can stay — `new-wormmon-app` is idempotent against them.
+
+### Recovering a token
+
+Sanctum stores only the hash, so a lost token can't be read back. If the
+Coolify UI is reachable, mint a fresh one there. If it's not, do it via
+artisan on the box. Note Coolify's `User::createToken()` override reads
+`session('currentTeam')` which is `null` under tinker, so you have to
+build the row directly:
+
+```bash
+ssh batjaa@wormmon.home.local 'sudo docker exec coolify php artisan tinker --execute="
+  \$plain=bin2hex(random_bytes(32));
+  \$row=new Laravel\\Sanctum\\PersonalAccessToken();
+  \$row->tokenable_type=\"App\\Models\\User\"; \$row->tokenable_id=0; \$row->team_id=0;
+  \$row->name=\"recovery\"; \$row->token=hash(\"sha256\", \$plain); \$row->abilities=[\"*\"];
+  \$row->save();
+  echo \$row->id.\"|\".\$plain.\"\\n\";
+"'
+```
+
+The Sanctum format is `<id>|<plaintext>` — that whole string is the
+`COOLIFY_TOKEN` value. Revoke from the UI once you regain access.
