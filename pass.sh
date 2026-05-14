@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
+# Ansible vault password — read from 1Password via the `op` CLI.
+# Falls back to macOS Keychain if `op` is unavailable, so a fresh shell
+# without 1Password installed can still operate in an emergency.
 
-# Keychain query fields.
-# LABEL is the value you put for "Keychain Item Name" in Keychain.app.
-LABEL="ansible-vault-password"
-ACCOUNT_NAME="batjaa"
+set -euo pipefail
 
-/usr/bin/security find-generic-password -w -a "$ACCOUNT_NAME" -l "$LABEL"
+if command -v op >/dev/null 2>&1; then
+  exec op read "op://Private/Homeserver Ansible Vault Key/password"
+fi
+
+exec /usr/bin/security find-generic-password -w -a "batjaa" -l "ansible-vault-password"

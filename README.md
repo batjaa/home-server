@@ -170,21 +170,29 @@ andromon ansible_host=192.168.50.20 ansible_user=agumon ansible_connection=ssh a
 
 ### 6. Set up Ansible Vault (first time only)
 
-The vault password is stored in your macOS Keychain. The `pass.sh` script reads it automatically whenever Ansible needs it.
+The vault password lives in 1Password (item "Homeserver Ansible Vault Key" in
+the Private vault). `pass.sh` reads it via the `op` CLI on every Ansible run,
+falling back to a Keychain entry if `op` is unavailable.
 
 ```bash
-security add-generic-password \
-    -a batjaa \
-    -s ansible-vault-password \
-    -w
+brew install --cask 1password 1password-cli
+# Then in the desktop app: Settings → Developer → Integrate with 1Password CLI
+op read "op://Private/Homeserver Ansible Vault Key/password" | wc -c   # expect 19
 ```
 
-It will prompt for a password — **remember this**, it encrypts/decrypts all your secrets.
-
-Verify it works:
+Optional belt-and-braces — also stash the same value in Keychain so a fresh
+shell without 1Password still works in emergencies:
 ```bash
-security find-generic-password -w -a batjaa -l ansible-vault-password
+security add-generic-password -a batjaa -s ansible-vault-password -w
 ```
+
+The encrypted `host_vars/<host>/secret.yml` files are gitignored (this repo
+is public), so they're also mirrored to 1Password as Document items. Use
+`./vault.sh edit <path>` to edit and auto-push, `./vault.sh pull` to
+restore on a fresh laptop, `./vault.sh status` to check drift.
+
+For losing-your-laptop scenarios, password rotation, and the worst-case
+"1Password account is also gone" path, see [`docs/disaster-recovery.md`](docs/disaster-recovery.md).
 
 ### 7. Set up host variables
 
