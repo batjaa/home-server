@@ -290,6 +290,57 @@ Overseerr config dir on first start.
 
 ---
 
+## AI / agents
+
+### Ollama — `https://ollama.batjaa.site`
+
+**Where it runs:** `greymon` (Windows, not Ansible-managed)
+
+**Manual requirements on greymon:**
+- Start Ollama bound to the LAN, not only localhost.
+- Ensure Windows Firewall allows `11434/tcp` from the local network.
+- Pull at least one coding-oriented model before testing Open WebUI.
+
+This repo assumes Ollama is reachable at `http://192.168.50.30:11434`.
+
+### Open WebUI — `https://chat.batjaa.site`
+
+**Where it runs:** `andromon`
+
+**Auto-configured by Ansible:**
+- Docker container on `127.0.0.1:3014`
+- SWAG reverse proxy for `chat.batjaa.site`
+- upstream Ollama URL set to `greymon`
+- shared `agents-net` Docker network for tool servers
+
+**Manual first-run:**
+- Visit `https://chat.batjaa.site`
+- Create the first account; it becomes admin
+- Confirm the Ollama connection works
+- Select a model and run a smoke test prompt
+
+**Important behavior:**
+- Tool registrations seeded by `TOOL_SERVER_CONNECTIONS` only reliably apply
+  on first boot with a fresh Open WebUI data dir
+- Later tool changes should be done via API/bootstrap automation or by
+  recreating the Open WebUI data volume
+
+### Tool agents
+
+The long-term pattern here is:
+
+- Open WebUI for chat and tool orchestration
+- one small container per service-domain integration
+
+Current scaffold:
+
+- `movie-agent` on the `agents-net` Docker network
+
+For the architecture and rollout strategy, see
+[`docs/agents.md`](/Users/batjaa/git/home-server/docs/agents.md).
+
+---
+
 ## Monitoring
 
 ### Prometheus — `127.0.0.1:9090` (andromon-internal only)

@@ -325,6 +325,13 @@
             - containers
         when: enable_coolify | default(false) | bool
 
+      #
+      # Agents (chat-callable tool servers)
+      #
+      - role: containers/agents/movie-agent
+        tags: [movie-agent, agents, containers]
+        when: enable_movie_agent | default(false) | bool
+
       # - role: containers/homeautomation/mqtt
       #   become: no
       #   tags:

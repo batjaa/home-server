@@ -10,6 +10,14 @@
     mode: '0775'
     recurse: yes
 
+- name: Ensure Seerr logs dir exists, owned by node (uid 1000)
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}/logs"
+    state: directory
+    owner: '1000'
+    group: '1000'
+    mode: '0775'
+
 - name: Ensure arr Docker network
   docker_network:
     name: "{{ arr_network }}"
@@ -33,3 +41,12 @@
     volumes:
       - "{{ docker_dir }}/{{ container_name }}:/app/config"
     restart_policy: unless-stopped
+
+- name: Wait for Seerr status endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/status"
+    status_code: 200
+  register: seerr_status
+  until: seerr_status.status == 200
+  retries: 30
+  delay: 2

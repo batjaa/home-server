@@ -1,0 +1,76 @@
+---
+- name: Ensure agents docker network exists
+  community.docker.docker_network:
+    name: agents-net
+    state: present
+
+- name: Ensure arr docker network exists
+  community.docker.docker_network:
+    name: arr-net
+    state: present
+
+- name: Ensure movie-agent build context dir exists
+  file:
+    path: "{{ movie_agent_build_dir }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0755'
+
+- name: Sync agents source to build context
+  become: no
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/agents/"
+    dest: "{{ movie_agent_build_dir }}/"
+    delete: yes
+    recursive: yes
+    rsync_opts:
+      - "--exclude=bin"
+      - "--exclude=*.test"
+      - "--exclude=*.out"
+  register: src_sync
+
+- name: Build movie-agent image
+  community.docker.docker_image:
+    name: "{{ movie_agent_image }}"
+    source: build
+    force_source: "{{ src_sync.changed }}"
+    state: present
+    build:
+      path: "{{ movie_agent_build_dir }}"
+      args:
+        TARGET: "movie-agent"
+      pull: no
+      rm: yes
+  register: image_build
+
+- name: Run movie-agent container
+  community.docker.docker_container:
+    name: "{{ container_name }}"
+    image: "{{ movie_agent_image }}"
+    state: started
+    pull: no
+    recreate: "{{ image_build.changed }}"
+    published_ports:
+      - "127.0.0.1:{{ movie_agent_port }}:8080"
+    networks:
+      - name: agents-net
+      - name: arr-net
+    networks_cli_compatible: yes
+    env:
+      MOVIE_AGENT_TOKEN: "{{ movie_agent_token }}"
+      MOVIE_AGENT_ADDR: ":8080"
+      MOVIE_AGENT_RADARR_URL: "{{ movie_agent_radarr_url }}"
+      MOVIE_AGENT_RADARR_API_KEY: "{{ radarr_api_key }}"
+      MOVIE_AGENT_SEERR_URL: "{{ movie_agent_seerr_url }}"
+      MOVIE_AGENT_SEERR_API_KEY: "{{ seerr_api_key }}"
+    restart_policy: unless-stopped
+
+- name: Wait for healthz
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ movie_agent_port }}/healthz"
+    status_code: 200
+  register: hz
+  until: hz.status == 200
+  retries: 15
+  delay: 1

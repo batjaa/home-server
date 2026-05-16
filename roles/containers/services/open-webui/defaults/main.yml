@@ -5,3 +5,18 @@ open_webui_image: "ghcr.io/open-webui/open-webui:main"
 
 # Where Open WebUI talks to Ollama. Greymon (Windows) on the LAN.
 open_webui_ollama_url: "http://192.168.50.30:11434"
+
+# Tool servers registered at startup (seeds Open WebUI's DB via TOOL_SERVER_CONNECTIONS env).
+# NOTE: this is PersistentConfig — env only wins on first deploy. For drift correction
+# we will add an API-bootstrap task in a follow-up (needs admin API key in vault).
+open_webui_tool_servers:
+  - url: "http://movie-agent:8080"
+    path: "openapi.json"
+    type: "openapi"
+    auth_type: "bearer"
+    key: "{{ movie_agent_token | default('dev-token-replace-me') }}"
+    config:
+      enable: true
+    info:
+      name: movie-agent
+      description: "Movie library queries via Radarr/Seerr."
