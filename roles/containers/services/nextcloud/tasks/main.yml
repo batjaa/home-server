@@ -11,10 +11,28 @@
     - "{{ docker_dir }}/{{ container_name }}/html"
     - "{{ docker_dir }}/{{ nextcloud_db_container }}"
 
-- name: Ensure Nextcloud data directory exists, owned by www-data
+- name: Ensure Nextcloud app files are owned by www-data
+  # The official Nextcloud image writes config.php and app files at runtime.
+  # Persisted bind mounts must stay writable by the container's www-data user.
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}/html"
+    state: directory
+    owner: '33'
+    group: '33'
+    recurse: yes
+
+- name: Ensure Nextcloud data files are owned by www-data
   # Container runs as www-data (uid 33). Nextcloud's setup check refuses
   # to run if the data dir is world-readable, so 0770 with www-data:www-data
   # ownership is required.
+  file:
+    path: "{{ nextcloud_data_dir }}"
+    state: directory
+    owner: '33'
+    group: '33'
+    recurse: yes
+
+- name: Ensure Nextcloud data directory is private
   file:
     path: "{{ nextcloud_data_dir }}"
     state: directory

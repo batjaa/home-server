@@ -11,6 +11,14 @@
     - "{{ docker_dir }}/{{ container_name }}/etc"
     - "{{ docker_dir }}/{{ container_name }}/data"
 
+- name: Ensure Prometheus data ownership is correct
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}/data"
+    state: directory
+    owner: '65534'
+    group: '65534'
+    recurse: yes
+
 - name: Create monitoring Docker network
   docker_network:
     name: "{{ prometheus_network }}"
