@@ -2,3 +2,5 @@
 container_name: radarr
 radarr_port: 7878
 arr_network: arr-net
+# LAN address Plex (host-network) is reachable on from arr-net containers.
+plex_notification_host: "{{ ansible_default_ipv4.address | default('192.168.50.20') }}"

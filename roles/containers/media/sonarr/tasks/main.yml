@@ -47,3 +47,57 @@
       - "{{ docker_dir }}/{{ container_name }}:/config"
       - "{{ mergerfs_root }}:/storage"
     restart_policy: unless-stopped
+
+- name: Wait for Sonarr API to be ready
+  uri:
+    url: "http://127.0.0.1:{{ sonarr_port }}/ping"
+    status_code: 200
+  register: sonarr_ping
+  retries: 30
+  delay: 2
+  until: sonarr_ping.status == 200
+
+- name: Check existing Sonarr notifications
+  uri:
+    url: "http://127.0.0.1:{{ sonarr_port }}/api/v3/notification"
+    headers:
+      X-Api-Key: "{{ sonarr_api_key }}"
+  register: sonarr_notifications
+  no_log: true
+
+# Plex can't see imports on its own: inotify doesn't propagate through the
+# mergerfs union, so this connect notification is what flips requests to
+# "available" minutes after import instead of never. mapFrom/mapTo translate
+# Sonarr's container path to Plex's so the partial scan targets the right
+# folder.
+- name: Add Plex connect notification (update library on import)
+  uri:
+    url: "http://127.0.0.1:{{ sonarr_port }}/api/v3/notification"
+    method: POST
+    headers:
+      X-Api-Key: "{{ sonarr_api_key }}"
+    body_format: json
+    body:
+      name: "Plex (Ansible)"
+      implementation: PlexServer
+      configContract: PlexServerSettings
+      onGrab: false
+      onDownload: true
+      onUpgrade: true
+      onRename: true
+      onSeriesDelete: true
+      onEpisodeFileDelete: true
+      onEpisodeFileDeleteForUpgrade: true
+      tags: []
+      fields:
+        - { name: host, value: "{{ plex_notification_host }}" }
+        - { name: port, value: 32400 }
+        - { name: useSsl, value: false }
+        - { name: authToken, value: "{{ plex_token }}" }
+        - { name: updateLibrary, value: true }
+        - { name: mapFrom, value: "/storage/Media/TV" }
+        - { name: mapTo, value: "/tv" }
+    status_code: 201
+  no_log: true
+  changed_when: true
+  when: sonarr_notifications.json | selectattr('name', 'equalto', 'Plex (Ansible)') | list | length == 0
