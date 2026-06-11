@@ -277,9 +277,24 @@ Successor to Overseerr + Jellyseerr (unified). Image:
 `ghcr.io/seerr-team/seerr:latest`. Auto-migrates from an existing
 Overseerr config dir on first start.
 
+**Auto-configured by Ansible (role API tasks, need `seerr_api_key` in vault):**
+- Plex libraries enabled (Movies + TV Shows) — required or availability-sync
+  has nothing to scan and every request stays "processing" forever
+- Radarr/Sonarr availability scans (`syncEnabled`)
+- `applicationUrl`, `trustProxy`, `csrfProtection`
+- Email notifications via Postmark from `alerts@batjaa.site`
+
+Role gotchas (cost a debugging session, don't rediscover):
+- `GET /settings/plex/library?sync=true` rediscovers libraries but **resets
+  their enabled flags** — only call it when the library list is empty
+- `PUT /settings/{radarr,sonarr}/:id` rejects bodies containing the
+  read-only `id` field (400)
+- `seerr_api_key` in the vault must match `main.apiKey` in
+  `/opt/docker/data/seerr/settings.json` — Seerr regenerates it on
+  migrations; a stale key 403s every role task
+
 **Manual setup if `_docker_data` was lost:**
 - Sign in with your Plex (and/or Jellyfin) account → it auto-discovers
-- Pick libraries to expose (Movies + TV)
 - Settings → Services → Radarr: host `radarr`, port `7878`, API key,
   quality profile, root folder `/storage/Media/Movies`, external URL
   `https://radarr.batjaa.site`
@@ -287,6 +302,25 @@ Overseerr config dir on first start.
   root folder `/storage/Media/TV`
 - Settings → Users → Default Permissions: tick "Auto-Approve" if you
   want friends' requests to skip your inbox
+- Copy the regenerated API key into the vault (`seerr_api_key`), then
+  re-run `--tags seerr` to apply everything in the auto-configured list
+
+### arr-search (timer, no UI)
+
+`arr-missing-search.timer` on andromon, nightly 04:00: triggers
+`MissingMoviesSearch` in Radarr, then `MissingEpisodeSearch` in Sonarr
+30 minutes later. Exists because RSS sync only grabs releases posted
+*after* the initial search — without it, a request whose first search
+found nothing is never retried. Logs: `journalctl -u arr-missing-search`.
+
+### Plex ↔ *arr library updates
+
+inotify does not propagate through the mergerfs union, so Plex can never
+see new files on its own. Two config-managed mechanisms cover it:
+- Radarr/Sonarr "Plex (Ansible)" connect notification → partial scan of
+  the imported path within seconds (mapFrom/mapTo translate
+  `/storage/Media/*` to Plex's `/movies` + `/tv` mounts)
+- Plex hourly scheduled scan (`/:/prefs` set by the plex role) as backstop
 
 ---
 
