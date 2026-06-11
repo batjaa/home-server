@@ -2,3 +2,10 @@
 container_name: seerr
 seerr_port: 5055
 arr_network: arr-net
+
+# Plex libraries Seerr exposes for requests / availability tracking.
+seerr_enabled_libraries: ["Movies", "TV Shows"]
+
+# Used in notification links; also enables proper IPs in logs via trustProxy.
+seerr_application_url: "https://request.{{ host }}"
+seerr_csrf_protection: true
