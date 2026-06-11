@@ -457,3 +457,7 @@
       - role: containers/media/decluttarr
         tags: [decluttarr, arr, containers]
         when: enable_decluttarr | default(false) | bool
+
+      - role: containers/media/arr-search
+        tags: [arr-search, arr, containers]
+        when: enable_arr_search | default(false) | bool

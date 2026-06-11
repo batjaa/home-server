@@ -1,0 +1,9 @@
+[Unit]
+Description=Nightly *arr missing-media backlog search
+
+[Timer]
+OnCalendar=*-*-* {{ arr_search_schedule }}:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

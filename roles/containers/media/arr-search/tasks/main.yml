@@ -1,0 +1,35 @@
+---
+# Nightly systemd timer that re-searches the monitored-but-missing backlog
+# in Radarr and Sonarr. Contains API keys, hence root-only script.
+
+- name: Install arr-missing-search script
+  template:
+    src: arr-missing-search.sh.j2
+    dest: /usr/local/sbin/arr-missing-search
+    owner: root
+    group: root
+    mode: '0700'
+  become: yes
+  no_log: true
+
+- name: Install arr-missing-search.service
+  template:
+    src: arr-missing-search.service.j2
+    dest: /etc/systemd/system/arr-missing-search.service
+    mode: '0644'
+  become: yes
+
+- name: Install arr-missing-search.timer
+  template:
+    src: arr-missing-search.timer.j2
+    dest: /etc/systemd/system/arr-missing-search.timer
+    mode: '0644'
+  become: yes
+
+- name: Enable and start arr-missing-search.timer
+  systemd:
+    name: arr-missing-search.timer
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: yes

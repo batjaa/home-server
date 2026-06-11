@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Nightly backlog search for monitored-but-missing media.
+#
+# Radarr/Sonarr RSS sync only grabs releases posted *after* the initial
+# search, so a request whose first search found nothing is never retried.
+# This kicks the same searches the UI's "Search All Missing" button runs.
+# The apps queue and pace the searches themselves; indexer API limits are
+# the reason this runs nightly rather than hourly.
+set -euo pipefail
+
+log() { echo "[$(date -Is)] $*"; }
+
+log "Triggering Radarr MissingMoviesSearch"
+curl -fsS -m 30 -X POST "http://127.0.0.1:{{ radarr_port }}/api/v3/command" \
+  -H "X-Api-Key: {{ radarr_api_key }}" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"MissingMoviesSearch"}' > /dev/null
+
+log "Sleeping {{ arr_search_sonarr_delay_minutes }}m before Sonarr to spread indexer load"
+sleep {{ arr_search_sonarr_delay_minutes * 60 }}
+
+log "Triggering Sonarr MissingEpisodeSearch"
+curl -fsS -m 30 -X POST "http://127.0.0.1:{{ sonarr_port }}/api/v3/command" \
+  -H "X-Api-Key: {{ sonarr_api_key }}" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"MissingEpisodeSearch","monitored":true}' > /dev/null
+
+log "Done"
