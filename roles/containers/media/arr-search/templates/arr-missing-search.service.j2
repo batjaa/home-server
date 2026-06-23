@@ -1,0 +1,11 @@
+[Unit]
+Description=Kick Radarr/Sonarr backlog searches for missing media
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/arr-missing-search
+StandardOutput=journal
+StandardError=journal
+Nice=10

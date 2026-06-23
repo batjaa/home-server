@@ -19,4 +19,9 @@
       TZ: "{{ timezone }}"
     volumes:
       - "{{ docker_dir }}/{{ container_name }}:/app/data"
+    # Point at Pi-hole on the host. Otherwise Docker hands the container
+    # 8.8.8.8 and internal-only subdomains (grafana, home, ollama, chat,
+    # *arr stack) NXDOMAIN — Kuma reports them down even when SWAG is fine.
+    dns_servers:
+      - "{{ uptime_kuma_dns | default('192.168.50.10') }}"
     restart_policy: unless-stopped

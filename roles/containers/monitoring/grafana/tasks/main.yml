@@ -10,6 +10,14 @@
     - "{{ docker_dir }}/{{ container_name }}"
     - "{{ docker_dir }}/{{ container_name }}/data"
 
+- name: Ensure Grafana data ownership is correct
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}/data"
+    state: directory
+    owner: '472'
+    group: '472'
+    recurse: yes
+
 - name: Provision dashboards and datasources
   copy:
     src: provisioning
@@ -19,6 +27,16 @@
     mode: '0644'
     directory_mode: '0755'
 
+- name: Ensure optional Grafana provisioning directories exist
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}/provisioning/{{ item }}"
+    state: directory
+    owner: '472'
+    group: '472'
+    mode: '0755'
+  loop:
+    - alerting
+    - plugins
 
 - name: Make sure the Grafana container is running
   docker_container:
@@ -39,6 +57,7 @@
       GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_admin_password }}"
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_PLUGINS_PREINSTALL_AUTO_UPDATE: "false"
     volumes:
       - "{{ docker_dir }}/{{ container_name }}/data:/var/lib/grafana"
       - "{{ docker_dir }}/{{ container_name }}/provisioning:/etc/grafana/provisioning"

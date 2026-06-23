@@ -2,3 +2,5 @@
 container_name: sonarr
 sonarr_port: 8989
 arr_network: arr-net
+# LAN address Plex (host-network) is reachable on from arr-net containers.
+plex_notification_host: "{{ ansible_default_ipv4.address | default('192.168.50.20') }}"

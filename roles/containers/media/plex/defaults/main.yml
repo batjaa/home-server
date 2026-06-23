@@ -1,3 +1,6 @@
 ---
 container_name: plex
 mergerfs_root: /mnt/storage
+# Scheduled library scan interval (seconds). Backstop for mergerfs's
+# missing inotify propagation — see tasks/main.yml.
+plex_scheduled_scan_interval: 3600

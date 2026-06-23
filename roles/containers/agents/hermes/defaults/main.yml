@@ -1,0 +1,45 @@
+---
+container_name: hermes
+hermes_image: "nousresearch/hermes-agent:latest"
+hermes_data_dir: "/opt/docker/data/hermes"
+
+# Published loopback ports (SWAG proxies the dashboard; the gateway API stays
+# loopback-only for other OpenAI-wire clients on the host).
+hermes_dashboard_port: 9119   # web dashboard  -> agent.{{ host }}
+hermes_api_port: 8642         # OpenAI-compatible gateway API (loopback only)
+
+# Model backend — greymon's Ollama over its OpenAI-compatible API.
+# config.yaml is the source of truth for provider/model; secrets come via env.
+hermes_model_provider: "openai"
+# qwen2.5-coder does NOT emit Ollama-parseable native tool calls (it dumps bare
+# JSON), so Hermes' tool loop breaks with it. qwen3-coder DOES. We run a
+# greymon-side Modelfile variant `qwen3-coder-64k` (FROM qwen3-coder:30b,
+# PARAMETER num_ctx 65536) because num_ctx can't be passed over Ollama's /v1
+# endpoint. At 64k the 30B MoE's KV cache spills ~19 GB to RAM on the 16 GB card,
+# but 3B active params keep it responsive. See docs/hermes-agent.md.
+hermes_model_default: "qwen3-coder-64k"
+hermes_model_context_length: 65536
+hermes_model_ollama_num_ctx: 65536
+hermes_openai_base_url: "http://192.168.50.30:11434/v1"
+hermes_openai_api_key: "ollama"   # Ollama ignores it; client wants it non-empty
+
+# Dashboard basic auth (password is a vault secret, see below)
+hermes_dashboard_username: "batjaa"
+
+# Telegram task-intake allowlist. SECURITY-CRITICAL: the bot can run code and push
+# to GitHub, so Telegram is only enabled when this is set to your numeric chat id
+# (comma-separated for multiple). Not a secret — your own Telegram user id.
+hermes_telegram_allowed_chats: ""
+
+# Run as batjaa's uid/gid so /opt/docker/data/hermes ownership stays consistent
+# with the rest of the stack and the nightly backup. The image is UID 10000 by
+# default; HERMES_UID/HERMES_GID remap it.
+hermes_uid: "{{ guid }}"
+hermes_gid: "{{ guid }}"
+
+# Secrets — define in host_vars/andromon/secret.yml (vault):
+#   hermes_github_token         fine-grained PAT for the bot account (contents:write
+#                               on feature branches + PR read/write; main protected)
+#   hermes_telegram_bot_token   from @BotFather
+#   hermes_dashboard_password   basic-auth password for agent.{{ host }}
+#   hermes_api_server_key       openssl rand -hex 32

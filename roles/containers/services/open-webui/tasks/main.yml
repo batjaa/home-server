@@ -1,4 +1,9 @@
 ---
+- name: Ensure agents docker network exists
+  community.docker.docker_network:
+    name: agents-net
+    state: present
+
 - name: Ensure Open WebUI config dir exists
   file:
     path: "{{ docker_dir }}/{{ container_name }}"
@@ -20,6 +25,19 @@
       WEBUI_URL: "https://chat.{{ host }}"
       WEBUI_NAME: "{{ host }} chat"
       TZ: "{{ timezone }}"
+      TOOL_SERVER_CONNECTIONS: "{{ open_webui_tool_servers | to_json }}"
     volumes:
       - "{{ docker_dir }}/{{ container_name }}:/app/backend/data"
+    networks:
+      - name: agents-net
+    networks_cli_compatible: yes
     restart_policy: unless-stopped
+
+- name: Wait for Open WebUI health endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ open_webui_port }}/health"
+    status_code: 200
+  register: open_webui_health
+  until: open_webui_health.status == 200
+  retries: 30
+  delay: 2

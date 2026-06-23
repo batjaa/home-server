@@ -38,3 +38,40 @@
       - "{{ mergerfs_root }}/Media/Movies:/movies"
       - "{{ mergerfs_root }}/Media/Music:/music"
     restart_policy: unless-stopped
+
+- name: Wait for Plex API to be ready
+  uri:
+    url: "http://127.0.0.1:32400/identity"
+    status_code: 200
+  register: plex_identity
+  retries: 30
+  delay: 2
+  until: plex_identity.status == 200
+
+- name: Read Plex server preferences
+  uri:
+    url: "http://127.0.0.1:32400/:/prefs"
+    headers:
+      Accept: application/json
+      X-Plex-Token: "{{ plex_token }}"
+  register: plex_prefs
+  no_log: true
+
+- name: Extract current scheduled-scan prefs
+  set_fact:
+    plex_scan_enabled: "{{ plex_prefs.json.MediaContainer.Setting | selectattr('id', 'equalto', 'ScheduledLibraryUpdatesEnabled') | map(attribute='value') | first }}"
+    plex_scan_interval: "{{ plex_prefs.json.MediaContainer.Setting | selectattr('id', 'equalto', 'ScheduledLibraryUpdateInterval') | map(attribute='value') | first }}"
+
+# inotify doesn't propagate through the mergerfs union, so Plex's
+# filesystem-watch prefs (FSEventLibraryUpdatesEnabled) can never fire here.
+# Real-time pickup comes from the Radarr/Sonarr "Plex Media Server" connect
+# notifications; this hourly scheduled scan is the catch-all backstop.
+- name: Enable hourly scheduled library scans
+  uri:
+    url: "http://127.0.0.1:32400/:/prefs?ScheduledLibraryUpdatesEnabled=1&ScheduledLibraryUpdateInterval={{ plex_scheduled_scan_interval }}"
+    method: PUT
+    headers:
+      X-Plex-Token: "{{ plex_token }}"
+    status_code: 200
+  changed_when: true
+  when: not (plex_scan_enabled | bool) or (plex_scan_interval | int) != (plex_scheduled_scan_interval | int)

@@ -6,7 +6,7 @@ server {
     listen [::]:443 ssl;
     http2 on;
 
-    server_name grafana.{{ host }};
+    server_name grafana.{{ host }} grafana.home.local;
 
     include /config/nginx/ssl.conf;
     include /config/nginx/internal-only.conf;

@@ -1,0 +1,105 @@
+---
+- name: Ensure Hermes data dir exists
+  file:
+    path: "{{ hermes_data_dir }}"
+    state: directory
+    owner: "{{ hermes_uid }}"
+    group: "{{ hermes_gid }}"
+    mode: "0750"
+
+- name: Seed Hermes config.yaml (once — Hermes owns/expands it after first boot)
+  template:
+    src: config.yaml.j2
+    dest: "{{ hermes_data_dir }}/config.yaml"
+    owner: "{{ hermes_uid }}"
+    group: "{{ hermes_gid }}"
+    mode: "0640"
+    force: false   # seed only; Hermes rewrites this to its full canonical form
+  register: hermes_config
+
+# Assemble env incrementally so Hermes can come up before every integration's
+# secret exists. Only keys whose secret is set are passed.
+- name: Assemble Hermes base env
+  set_fact:
+    hermes_env:
+      HERMES_UID: "{{ hermes_uid }}"
+      HERMES_GID: "{{ hermes_gid }}"
+      HERMES_DASHBOARD: "1"
+      # Hermes refuses to bind 0.0.0.0 without an auth provider. Only bind on all
+      # interfaces (so SWAG can reach it) once a password hash is configured;
+      # otherwise stay on container loopback so it doesn't crash-loop.
+      HERMES_DASHBOARD_HOST: "{{ '0.0.0.0' if (hermes_dashboard_password_hash | default('')) | length > 0 else '127.0.0.1' }}"
+      HERMES_DASHBOARD_PORT: "9119"
+      OPENAI_BASE_URL: "{{ hermes_openai_base_url }}"
+      OPENAI_API_KEY: "{{ hermes_openai_api_key }}"
+
+- name: Enable OpenAI-compatible gateway API (when key set)
+  set_fact:
+    hermes_env: "{{ hermes_env | combine({'API_SERVER_ENABLED': 'true', 'API_SERVER_HOST': '0.0.0.0', 'API_SERVER_PORT': '8642', 'API_SERVER_KEY': hermes_api_server_key}) }}"
+  when: hermes_api_server_key | default('') | length > 0
+
+- name: Wire GitHub token (when set)
+  set_fact:
+    hermes_env: "{{ hermes_env | combine({'GITHUB_TOKEN': hermes_github_token}) }}"
+  when: hermes_github_token | default('') | length > 0
+
+- name: Wire Telegram bot token (when set)
+  set_fact:
+    hermes_env: "{{ hermes_env | combine({'TELEGRAM_BOT_TOKEN': hermes_telegram_bot_token}) }}"
+  when: hermes_telegram_bot_token | default('') | length > 0
+
+# SECURITY: the gateway's allowlist is TELEGRAM_ALLOWED_USERS (your personal
+# numeric Telegram user id, comma-separated). Without it the bot denies everyone.
+- name: Restrict Telegram to allowed users (when set)
+  set_fact:
+    hermes_env: "{{ hermes_env | combine({'TELEGRAM_ALLOWED_USERS': hermes_telegram_allowed_chats}) }}"
+  when:
+    - hermes_telegram_bot_token | default('') | length > 0
+    - hermes_telegram_allowed_chats | default('') | length > 0
+
+- name: Pull Hermes image
+  community.docker.docker_image:
+    name: "{{ hermes_image }}"
+    source: pull
+    state: present
+
+- name: Run Hermes container
+  community.docker.docker_container:
+    name: "{{ container_name }}"
+    image: "{{ hermes_image }}"
+    command: gateway run
+    state: started
+    pull: no
+    # No `init: yes` — the image's s6-overlay entrypoint MUST be PID 1; tini
+    # displacing it makes s6-overlay-suexec fatal ("can only run as pid 1").
+    restart: "{{ hermes_config.changed }}"
+    published_ports:
+      # Loopback only — SWAG proxies the dashboard; the gateway API is host-local.
+      - "127.0.0.1:{{ hermes_dashboard_port }}:9119"
+      - "127.0.0.1:{{ hermes_api_port }}:8642"
+    volumes:
+      - "{{ hermes_data_dir }}:/opt/data"
+      # NOTE: the host Docker socket is intentionally NOT mounted. See
+      # docs/hermes-agent.md "Security: Hermes and the Docker socket".
+    env: "{{ hermes_env }}"
+    restart_policy: unless-stopped
+
+- name: Verify Hermes container is up (not crash-looping)
+  community.docker.docker_container_info:
+    name: "{{ container_name }}"
+  register: hermes_info
+  until:
+    - hermes_info.container.State.Running | default(false)
+    - (hermes_info.container.State.Restarting | default(false)) == false
+  retries: 18
+  delay: 5
+
+- name: Wait for Hermes dashboard (only once exposed with auth)
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ hermes_dashboard_port }}/"
+    status_code: [200, 301, 302, 401]
+  register: hermes_hz
+  until: hermes_hz.status in [200, 301, 302, 401]
+  retries: 30
+  delay: 5
+  when: hermes_dashboard_password_hash | default('') | length > 0

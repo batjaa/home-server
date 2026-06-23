@@ -10,6 +10,14 @@
     mode: '0775'
     recurse: yes
 
+- name: Ensure Seerr logs dir exists, owned by node (uid 1000)
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}/logs"
+    state: directory
+    owner: '1000'
+    group: '1000'
+    mode: '0775'
+
 - name: Ensure arr Docker network
   docker_network:
     name: "{{ arr_network }}"
@@ -33,3 +41,168 @@
     volumes:
       - "{{ docker_dir }}/{{ container_name }}:/app/config"
     restart_policy: unless-stopped
+
+- name: Wait for Seerr status endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/status"
+    status_code: 200
+  register: seerr_status
+  until: seerr_status.status == 200
+  retries: 30
+  delay: 2
+
+# ---- Availability feedback loop --------------------------------------------
+# Without enabled Plex libraries + arr scans, Seerr's availability-sync has
+# nothing to sync against and every request stays "processing" forever.
+
+- name: Read Seerr Plex settings
+  uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/settings/plex"
+    headers:
+      X-Api-Key: "{{ seerr_api_key }}"
+  register: seerr_plex_settings
+  no_log: true
+
+# sync=true rediscovers libraries from Plex but RESETS their enabled flags,
+# so it must only run when Seerr doesn't know the libraries yet (first run).
+- name: Discover Plex libraries (first run only)
+  uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/settings/plex/library?sync=true"
+    headers:
+      X-Api-Key: "{{ seerr_api_key }}"
+  register: seerr_lib_discovery
+  changed_when: true
+  no_log: true
+  when: seerr_plex_settings.json.libraries | length == 0
+
+- name: Determine which media libraries still need enabling
+  set_fact:
+    seerr_known_libs: "{{ seerr_plex_settings.json.libraries if seerr_plex_settings.json.libraries | length > 0 else (seerr_lib_discovery.json | default([])) }}"
+
+- name: Compute pending library enables
+  set_fact:
+    seerr_lib_ids: "{{ seerr_known_libs | selectattr('name', 'in', seerr_enabled_libraries) | map(attribute='id') | list }}"
+    seerr_libs_pending: "{{ seerr_known_libs | selectattr('name', 'in', seerr_enabled_libraries) | rejectattr('enabled') | list }}"
+
+- name: Enable Plex libraries in Seerr
+  uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/settings/plex/library?enable={{ seerr_lib_ids | join(',') }}"
+    headers:
+      X-Api-Key: "{{ seerr_api_key }}"
+  changed_when: true
+  no_log: true
+  when: seerr_libs_pending | length > 0
+
+- name: Read Seerr Radarr service settings
+  uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/settings/radarr"
+    headers:
+      X-Api-Key: "{{ seerr_api_key }}"
+  register: seerr_radarr_settings
+  no_log: true
+
+- name: Enable Radarr availability scan in Seerr
+  uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/settings/radarr/{{ item.id }}"
+    method: PUT
+    headers:
+      X-Api-Key: "{{ seerr_api_key }}"
+    body_format: json
+    # id is read-only in the PUT schema — strip it from the body
+    body: "{{ item | combine({'syncEnabled': true}) | dict2items | rejectattr('key', 'equalto', 'id') | items2dict }}"
+  loop: "{{ seerr_radarr_settings.json | rejectattr('syncEnabled') | list }}"
+  changed_when: true
+  no_log: true
+
+- name: Read Seerr Sonarr service settings
+  uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/settings/sonarr"
+    headers:
+      X-Api-Key: "{{ seerr_api_key }}"
+  register: seerr_sonarr_settings
+  no_log: true
+
+- name: Enable Sonarr availability scan in Seerr
+  uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/settings/sonarr/{{ item.id }}"
+    method: PUT
+    headers:
+      X-Api-Key: "{{ seerr_api_key }}"
+    body_format: json
+    # id is read-only in the PUT schema — strip it from the body
+    body: "{{ item | combine({'syncEnabled': true}) | dict2items | rejectattr('key', 'equalto', 'id') | items2dict }}"
+  loop: "{{ seerr_sonarr_settings.json | rejectattr('syncEnabled') | list }}"
+  changed_when: true
+  no_log: true
+
+# ---- Hardening --------------------------------------------------------------
+
+- name: Read Seerr main settings
+  uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/settings/main"
+    headers:
+      X-Api-Key: "{{ seerr_api_key }}"
+  register: seerr_main_settings
+  no_log: true
+
+# csrfProtection is safe here: the site is HTTPS-only behind SWAG and all
+# automation (this role, movie-agent) authenticates with the API key, which
+# is exempt from CSRF checks.
+- name: Set application URL, trusted proxy and CSRF protection
+  uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/settings/main"
+    method: POST
+    headers:
+      X-Api-Key: "{{ seerr_api_key }}"
+    body_format: json
+    body:
+      applicationUrl: "{{ seerr_application_url }}"
+      trustProxy: true
+      csrfProtection: "{{ seerr_csrf_protection }}"
+  changed_when: true
+  no_log: true
+  when: >
+    seerr_main_settings.json.applicationUrl | default('') != seerr_application_url
+    or not (seerr_main_settings.json.trustProxy | default(false))
+    or (seerr_main_settings.json.csrfProtection | default(false)) != (seerr_csrf_protection | bool)
+
+# ---- Email notifications (Postmark) -----------------------------------------
+# Sender must be the Postmark-verified domain (alerts@batjaa.site) — sending
+# from gmail.com trips DMARC and the mail is silently dropped.
+
+- name: Read Seerr email notification settings
+  uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/settings/notifications/email"
+    headers:
+      X-Api-Key: "{{ seerr_api_key }}"
+  register: seerr_email_settings
+  no_log: true
+
+- name: Configure email notifications via Postmark
+  uri:
+    url: "http://127.0.0.1:{{ seerr_port }}/api/v1/settings/notifications/email"
+    method: POST
+    headers:
+      X-Api-Key: "{{ seerr_api_key }}"
+    body_format: json
+    body:
+      enabled: true
+      embedPoster: true
+      options:
+        userEmailRequired: false
+        emailFrom: "{{ email_from }}"
+        smtpHost: "{{ email_smtp_host }}"
+        smtpPort: "{{ email_smtp_port_startls | int }}"
+        secure: false
+        ignoreTls: false
+        requireTls: true
+        allowSelfSigned: false
+        authUser: "{{ email_postmark_token }}"
+        authPass: "{{ email_postmark_token }}"
+        senderName: "Seerr"
+  changed_when: true
+  no_log: true
+  when: >
+    not (seerr_email_settings.json.enabled | default(false))
+    or seerr_email_settings.json.options.emailFrom | default('') != email_from
+    or seerr_email_settings.json.options.smtpHost | default('') != email_smtp_host

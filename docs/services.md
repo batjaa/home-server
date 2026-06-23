@@ -277,9 +277,24 @@ Successor to Overseerr + Jellyseerr (unified). Image:
 `ghcr.io/seerr-team/seerr:latest`. Auto-migrates from an existing
 Overseerr config dir on first start.
 
+**Auto-configured by Ansible (role API tasks, need `seerr_api_key` in vault):**
+- Plex libraries enabled (Movies + TV Shows) — required or availability-sync
+  has nothing to scan and every request stays "processing" forever
+- Radarr/Sonarr availability scans (`syncEnabled`)
+- `applicationUrl`, `trustProxy`, `csrfProtection`
+- Email notifications via Postmark from `alerts@batjaa.site`
+
+Role gotchas (cost a debugging session, don't rediscover):
+- `GET /settings/plex/library?sync=true` rediscovers libraries but **resets
+  their enabled flags** — only call it when the library list is empty
+- `PUT /settings/{radarr,sonarr}/:id` rejects bodies containing the
+  read-only `id` field (400)
+- `seerr_api_key` in the vault must match `main.apiKey` in
+  `/opt/docker/data/seerr/settings.json` — Seerr regenerates it on
+  migrations; a stale key 403s every role task
+
 **Manual setup if `_docker_data` was lost:**
 - Sign in with your Plex (and/or Jellyfin) account → it auto-discovers
-- Pick libraries to expose (Movies + TV)
 - Settings → Services → Radarr: host `radarr`, port `7878`, API key,
   quality profile, root folder `/storage/Media/Movies`, external URL
   `https://radarr.batjaa.site`
@@ -287,6 +302,107 @@ Overseerr config dir on first start.
   root folder `/storage/Media/TV`
 - Settings → Users → Default Permissions: tick "Auto-Approve" if you
   want friends' requests to skip your inbox
+- Copy the regenerated API key into the vault (`seerr_api_key`), then
+  re-run `--tags seerr` to apply everything in the auto-configured list
+
+### arr-search (timer, no UI)
+
+`arr-missing-search.timer` on andromon, nightly 04:00: triggers
+`MissingMoviesSearch` in Radarr, then `MissingEpisodeSearch` in Sonarr
+30 minutes later. Exists because RSS sync only grabs releases posted
+*after* the initial search — without it, a request whose first search
+found nothing is never retried. Logs: `journalctl -u arr-missing-search`.
+
+### Plex ↔ *arr library updates
+
+inotify does not propagate through the mergerfs union, so Plex can never
+see new files on its own. Two config-managed mechanisms cover it:
+- Radarr/Sonarr "Plex (Ansible)" connect notification → partial scan of
+  the imported path within seconds (mapFrom/mapTo translate
+  `/storage/Media/*` to Plex's `/movies` + `/tv` mounts)
+- Plex hourly scheduled scan (`/:/prefs` set by the plex role) as backstop
+
+---
+
+## AI / agents
+
+### Ollama — `https://ollama.batjaa.site`
+
+**Where it runs:** `greymon` (Windows, not Ansible-managed)
+
+**Manual requirements on greymon:**
+- Start Ollama bound to the LAN, not only localhost.
+- Ensure Windows Firewall allows `11434/tcp` from the local network.
+- Pull at least one coding-oriented model before testing Open WebUI.
+
+This repo assumes Ollama is reachable at `http://192.168.50.30:11434`.
+
+### Open WebUI — `https://chat.batjaa.site`
+
+**Where it runs:** `andromon`
+
+**Auto-configured by Ansible:**
+- Docker container on `127.0.0.1:3014`
+- SWAG reverse proxy for `chat.batjaa.site`
+- upstream Ollama URL set to `greymon`
+- shared `agents-net` Docker network for tool servers
+
+**Manual first-run:**
+- Visit `https://chat.batjaa.site`
+- Create the first account; it becomes admin
+- Confirm the Ollama connection works
+- Select a model and run a smoke test prompt
+
+**Important behavior:**
+- Tool registrations seeded by `TOOL_SERVER_CONNECTIONS` only reliably apply
+  on first boot with a fresh Open WebUI data dir
+- Later tool changes should be done via API/bootstrap automation or by
+  recreating the Open WebUI data volume
+
+### Tool agents
+
+The long-term pattern here is:
+
+- Open WebUI for chat and tool orchestration
+- one small container per service-domain integration
+
+Current scaffold:
+
+- `movie-agent` on the `agents-net` Docker network
+
+For the architecture and rollout strategy, see
+[`docs/agents.md`](/Users/batjaa/git/home-server/docs/agents.md).
+
+### Hermes — `https://agent.batjaa.site` (autonomous coding agent)
+
+Different from the tool agents above: Hermes is asynchronous and autonomous —
+you hand it work over Telegram (or via the vault), it grinds in the background and
+opens PRs. Full architecture in
+[`docs/hermes-agent.md`](/Users/batjaa/git/home-server/docs/hermes-agent.md).
+
+- Image `nousresearch/hermes-agent:latest`, runs on `andromon`, state in
+  `/opt/docker/data/hermes/` (backed up). Model backend = greymon Ollama.
+- Dashboard on `agent.batjaa.site` (internal-only, HTTP basic auth).
+- Opt-in: `enable_hermes: true` in `host_vars/andromon/vars.yml`.
+
+Vault secrets in `host_vars/andromon/secret.yml`:
+
+```yaml
+hermes_github_token: "<fine-grained PAT, bot account, contents:write on feature branches + PR rw>"
+hermes_telegram_bot_token: "<from @BotFather>"
+hermes_dashboard_password: "<basic-auth pw>"
+hermes_api_server_key: "<openssl rand -hex 32>"
+```
+
+Manual setup steps (UI/CLI-only, not yet automated):
+
+- One-time interactive setup writes `~/.hermes/config.yaml`:
+  `docker run -it --rm -v /opt/docker/data/hermes:/opt/data nousresearch/hermes-agent setup`
+- GitHub: create the bot account + fine-grained token, enable branch protection on
+  `main` of each target repo (require PR + CI + review).
+- Telegram: create the bot via @BotFather; confirm the allowed-users schema.
+- The host Docker socket is intentionally **not** mounted — see the security note
+  in `docs/hermes-agent.md` before changing the sandbox execution model.
 
 ---
 

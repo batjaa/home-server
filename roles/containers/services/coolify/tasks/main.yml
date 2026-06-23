@@ -7,6 +7,14 @@
       - openssl
     state: present
 
+- name: Enable memory overcommit for Coolify Redis
+  ansible.posix.sysctl:
+    name: vm.overcommit_memory
+    value: "1"
+    state: present
+    sysctl_file: /etc/sysctl.d/99-coolify.conf
+    reload: yes
+
 - name: Ensure Coolify host directories exist
   file:
     path: "{{ item }}"

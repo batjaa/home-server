@@ -1,0 +1,9 @@
+---
+radarr_port: 7878
+sonarr_port: 8989
+
+# When the nightly backlog search fires (after the 02:00 mover and 03:00
+# backup, before peak indexer hours). Radarr first; Sonarr offset to spread
+# indexer API usage.
+arr_search_schedule: '04:00'
+arr_search_sonarr_delay_minutes: 30
