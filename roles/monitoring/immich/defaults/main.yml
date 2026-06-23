@@ -1,0 +1,24 @@
+---
+# Sample the Immich jobs API on a timer, emit Prometheus textfile metrics,
+# and email when an alertable job queue is left paused.
+#
+# Background: a corrupt photo once segfaulted libvips inside immich-server;
+# BullMQ retried it on every restart -> nightly crash-loop. The stopgap was
+# pausing the thumbnail queue from the UI, which is invisible to the Kuma HTTP
+# check (server stays "healthy") and silently blocked thumbnails for weeks.
+# This guardrail makes that state observable and alertable.
+
+immich_monitor_interval: 10min
+immich_monitor_textfile_dir: /var/lib/node_exporter/textfile_collector
+immich_monitor_state_dir: /var/lib/immich-monitor
+
+# API reachable from the host (container publishes on 127.0.0.1).
+immich_monitor_url: "http://127.0.0.1:{{ immich_port | default(2283) }}"
+
+# Queues whose paused state is treated as an alertable fault.
+immich_monitor_alert_paused_queues:
+  - thumbnailGeneration
+
+# Email alert (msmtp is configured globally with the postmark account).
+immich_monitor_email_to: "{{ email }}"
+immich_monitor_email_from: "{{ email_from }}"

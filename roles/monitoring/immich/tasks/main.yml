@@ -1,0 +1,74 @@
+---
+- name: Ensure textfile_collector dir exists
+  file:
+    path: "{{ immich_monitor_textfile_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure immich-monitor state dir exists
+  file:
+    path: "{{ immich_monitor_state_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install immich-textfile script
+  copy:
+    src: immich-textfile.py
+    dest: /usr/local/sbin/immich-textfile
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Render env file with vault-sourced admin credentials
+  template:
+    src: immich-textfile.env.j2
+    dest: /etc/immich-textfile.env
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+
+- name: Install immich-textfile.service
+  template:
+    src: immich-textfile.service.j2
+    dest: /etc/systemd/system/immich-textfile.service
+    owner: root
+    group: root
+    mode: '0644'
+  register: immich_monitor_service
+
+- name: Install immich-textfile.timer
+  template:
+    src: immich-textfile.timer.j2
+    dest: /etc/systemd/system/immich-textfile.timer
+    owner: root
+    group: root
+    mode: '0644'
+  register: immich_monitor_timer
+
+- name: Reload systemd if immich-monitor units changed
+  systemd:
+    daemon_reload: yes
+  when: immich_monitor_service.changed or immich_monitor_timer.changed
+
+- name: Enable and start immich-textfile.timer
+  systemd:
+    name: immich-textfile.timer
+    enabled: yes
+    state: started
+
+- name: Seed immich metrics once
+  command: /usr/local/sbin/immich-textfile
+  environment:
+    IMMICH_URL: "{{ immich_monitor_url }}"
+    IMMICH_EMAIL: "{{ immich_admin_email }}"
+    IMMICH_PASSWORD: "{{ immich_admin_password }}"
+    IMMICH_ALERT_PAUSED_QUEUES: "{{ immich_monitor_alert_paused_queues | join(',') }}"
+    IMMICH_ALERT_EMAIL_TO: "{{ immich_monitor_email_to }}"
+    IMMICH_ALERT_EMAIL_FROM: "{{ immich_monitor_email_from }}"
+  no_log: true
+  changed_when: false

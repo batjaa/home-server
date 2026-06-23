@@ -1,0 +1,11 @@
+[Unit]
+Description=Sample Immich job queues for Prometheus textfile collector + paused-queue alert
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/immich-textfile.env
+ExecStart=/usr/local/sbin/immich-textfile
+StandardOutput=journal
+StandardError=journal

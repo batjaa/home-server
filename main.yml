@@ -183,6 +183,12 @@
             - monitoring
         when: enable_arr_monitor | default(false) | bool
 
+      - role: monitoring/immich
+        tags:
+            - immich-monitor
+            - monitoring
+        when: enable_immich_monitor | default(false) | bool
+
       # - role: network/adguard
       #   become: no
       #   tags:

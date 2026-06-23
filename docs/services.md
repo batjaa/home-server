@@ -313,6 +313,25 @@ Role gotchas (cost a debugging session, don't rediscover):
 *after* the initial search — without it, a request whose first search
 found nothing is never retried. Logs: `journalctl -u arr-missing-search`.
 
+### immich-monitor (timer, no UI)
+
+`immich-textfile.timer` on andromon, every 10 min (role `monitoring/immich`,
+tag `immich-monitor`): hits Immich's `/api/jobs`, writes `immich_queue_paused`
+and `immich_queue_jobs{queue,state}` to the node_exporter textfile collector,
+and **emails `alerts@batjaa.site` → me when `thumbnailGeneration` is left
+paused** (debounced via `/var/lib/immich-monitor/alert-state.json`).
+
+Exists because of a past failure: one corrupt JPEG segfaulted libvips inside
+immich-server, BullMQ retried it nightly → crash-loop. The stopgap was pausing
+the whole thumbnail queue from the UI, which is invisible to the Kuma HTTP
+check (server stays "healthy") — so thumbnails silently stopped for every new
+upload for weeks. This collector makes the paused state observable + alertable.
+If it fires: look for a poison asset (probe missing-thumbnail originals through
+sharp, one subprocess each; exit 139 = the culprit), delete it via
+`DELETE /api/assets {force:true}`, then resume with
+`PUT /api/jobs/thumbnailGeneration {command:'resume'}`. Logs:
+`journalctl -u immich-textfile`.
+
 ### Plex ↔ *arr library updates
 
 inotify does not propagate through the mergerfs union, so Plex can never

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run immich-textfile every {{ immich_monitor_interval }}
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec={{ immich_monitor_interval }}
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target
