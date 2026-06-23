@@ -1,0 +1,44 @@
+# Managed by Ansible — roles/containers/agents/hermes/templates/config.yaml.j2
+# Source of truth for Hermes' model backend. Secrets (GitHub/Telegram tokens,
+# API keys) are injected via env vars, NOT stored here. See docs/hermes-agent.md.
+
+model:
+  provider: "{{ hermes_model_provider }}"
+  default: "{{ hermes_model_default }}"
+  # Hermes needs >=64k context; qwen2.5-coder is natively 32k, so load it bigger
+  # via Ollama num_ctx and advertise the matching context_length.
+  context_length: {{ hermes_model_context_length }}
+  ollama_num_ctx: {{ hermes_model_ollama_num_ctx }}
+
+# greymon's Ollama speaks the OpenAI wire protocol. base_url/api_key also come
+# through OPENAI_BASE_URL / OPENAI_API_KEY env; kept here so the backend survives
+# a config migration / DR rebuild.
+providers:
+  openai:
+    base_url: "{{ hermes_openai_base_url }}"
+    request_timeout_seconds: 1800
+
+{% if (hermes_dashboard_password_hash | default('')) | length > 0 %}
+# Dashboard auth — Hermes won't bind the dashboard to 0.0.0.0 (so SWAG can reach
+# it) unless an auth provider is configured. password_hash is generated in the
+# container; see docs/hermes-agent.md.
+dashboard:
+  basic_auth:
+    username: "{{ hermes_dashboard_username }}"
+    password_hash: "{{ hermes_dashboard_password_hash }}"
+{% endif %}
+
+# Telegram = the human task-intake doorbell. Token via TELEGRAM_BOT_TOKEN env.
+# SECURITY: only enabled when allowed_chats is set — the bot can run code and push
+# to GitHub, so it must be locked to your chat id. See docs/hermes-agent.md.
+{% if (hermes_telegram_bot_token | default('')) | length > 0 and (hermes_telegram_allowed_chats | default('')) | length > 0 %}
+telegram:
+  allowed_chats: "{{ hermes_telegram_allowed_chats }}"
+messaging_platforms:
+  telegram:
+    enabled: true
+{% else %}
+messaging_platforms:
+  telegram:
+    enabled: false
+{% endif %}

@@ -373,6 +373,37 @@ Current scaffold:
 For the architecture and rollout strategy, see
 [`docs/agents.md`](/Users/batjaa/git/home-server/docs/agents.md).
 
+### Hermes — `https://agent.batjaa.site` (autonomous coding agent)
+
+Different from the tool agents above: Hermes is asynchronous and autonomous —
+you hand it work over Telegram (or via the vault), it grinds in the background and
+opens PRs. Full architecture in
+[`docs/hermes-agent.md`](/Users/batjaa/git/home-server/docs/hermes-agent.md).
+
+- Image `nousresearch/hermes-agent:latest`, runs on `andromon`, state in
+  `/opt/docker/data/hermes/` (backed up). Model backend = greymon Ollama.
+- Dashboard on `agent.batjaa.site` (internal-only, HTTP basic auth).
+- Opt-in: `enable_hermes: true` in `host_vars/andromon/vars.yml`.
+
+Vault secrets in `host_vars/andromon/secret.yml`:
+
+```yaml
+hermes_github_token: "<fine-grained PAT, bot account, contents:write on feature branches + PR rw>"
+hermes_telegram_bot_token: "<from @BotFather>"
+hermes_dashboard_password: "<basic-auth pw>"
+hermes_api_server_key: "<openssl rand -hex 32>"
+```
+
+Manual setup steps (UI/CLI-only, not yet automated):
+
+- One-time interactive setup writes `~/.hermes/config.yaml`:
+  `docker run -it --rm -v /opt/docker/data/hermes:/opt/data nousresearch/hermes-agent setup`
+- GitHub: create the bot account + fine-grained token, enable branch protection on
+  `main` of each target repo (require PR + CI + review).
+- Telegram: create the bot via @BotFather; confirm the allowed-users schema.
+- The host Docker socket is intentionally **not** mounted — see the security note
+  in `docs/hermes-agent.md` before changing the sandbox execution model.
+
 ---
 
 ## Monitoring
