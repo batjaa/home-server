@@ -1,0 +1,172 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Health",
+      "id": 100,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+      "id": 1,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "color": "red", "text": "DOWN" }, "1": { "color": "green", "text": "UP" } }, "type": "value" }
+          ],
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "red" }, { "color": "green", "value": 1 } ] }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+        "textMode": "value"
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_monitor_up", "refId": "A" }
+      ],
+      "title": "Jobs API reachable",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
+      "id": 2,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "color": "green", "text": "RUNNING" }, "1": { "color": "red", "text": "PAUSED" } }, "type": "value" }
+          ],
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green" }, { "color": "red", "value": 1 } ] }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+        "textMode": "value"
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_queue_paused{queue=\"thumbnailGeneration\"}", "refId": "A" }
+      ],
+      "title": "Thumbnail queue",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 },
+      "id": 3,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green" }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 25 } ] },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+        "textMode": "value"
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(immich_queue_jobs{state=\"failed\"})", "refId": "A" }
+      ],
+      "title": "Failed jobs (all queues)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 },
+      "id": 4,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green" }, { "color": "yellow", "value": 900 }, { "color": "red", "value": 1800 } ] },
+          "unit": "s"
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false },
+        "textMode": "value"
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "time() - immich_monitor_last_run_timestamp_seconds", "refId": "A" }
+      ],
+      "title": "Since last collector run",
+      "type": "stat"
+    },
+    {
+      "type": "row",
+      "title": "Trend",
+      "id": 101,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "collapsed": false
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 7 },
+      "id": 5,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20, "lineInterpolation": "stepAfter" },
+          "mappings": [
+            { "options": { "0": { "text": "running" }, "1": { "text": "paused" } }, "type": "value" }
+          ],
+          "max": 1,
+          "min": 0,
+          "unit": "short"
+        }
+      },
+      "options": { "legend": { "showLegend": true, "displayMode": "table", "placement": "right", "calcs": [ "lastNotNull", "max" ] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_queue_paused", "legendFormat": "{{queue}}", "refId": "A" }
+      ],
+      "title": "Paused queues over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 7 },
+      "id": 6,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 15, "gradientMode": "opacity" },
+          "unit": "short"
+        }
+      },
+      "options": { "legend": { "showLegend": true, "displayMode": "table", "placement": "right", "calcs": [ "max", "lastNotNull" ] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by(state) (immich_queue_jobs)", "legendFormat": "{{state}}", "refId": "A" }
+      ],
+      "title": "Job backlog by state (all queues)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 38,
+  "tags": [ "immich", "photos" ],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "title": "Immich",
+  "uid": "immich",
+  "version": 1,
+  "weekStart": ""
+}
