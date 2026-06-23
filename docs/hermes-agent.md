@@ -220,6 +220,47 @@ hermes_api_server_key: "<openssl rand -hex 32>"
 | Grafana | swarm size over time | optional textfile collector counting `in-progress/` |
 | Telegram | tell me on change | push notifications + `/status` |
 
+## Task handoff & multi-repo
+
+Work reaches Hermes via its built-in **kanban** (durable SQLite board; the gateway
+auto-dispatches `ready` cards every ~60s to workers that run in isolated git
+worktrees). **One board per repo.**
+
+**Onboard a new repo (one command):**
+```bash
+scripts/hermes-onboard-repo.sh <owner>/<repo>
+```
+It invites the bot + auto-accepts (using the bot's own token), branch-protects
+`main`, clones the repo into `/opt/data/workspaces/<repo>` in the container
+(chowned to the worker uid **1001**), creates the board, and installs the auto-PR
+workflow.
+
+**Hand off tasks** — from a clone of the repo, run the global `/handoff` slash
+command (`~/.claude/commands/handoff.md`) with a spec. The planner Claude
+decomposes it into small cards and creates them on the repo's board; the worker
+makes the change, commits, and pushes `wt/<slug>`.
+
+**The worker opens its own PR** by running `/opt/data/bin/open-pr "<title>"` after
+pushing (deployed by the role from `roles/.../hermes/files/open-pr`). It uses the
+bot PAT — so it can *create* PRs but **cannot approve** them. We use a fixed helper
+rather than letting the model hand-write the API call: even with the
+`github-pr-workflow` skill force-loaded, qwen3-coder fumbled the raw `curl` (unset
+vars / malformed request). It reliably *pushes*; the one-command helper makes the PR
+step reliable too — and avoids granting GitHub Actions the create-+-approve
+permission that an Action-based opener would require.
+
+### Gotchas learned operationalizing this
+
+- **`docker exec` runs as root (uid 0); the worker runs as uid 1001.** A repo cloned
+  via `docker exec` is root-owned → the worker hits git "dubious ownership" and
+  can't worktree it. The onboarder `chown -R 1001:1001` the workspace.
+- **The local model can't reliably hand-write the GitHub PR API call** (even with the
+  `github-pr-workflow` skill). It nails deterministic git (push every time) but
+  fumbles `curl`. Hence the fixed `open-pr` helper — give the weak model one command,
+  not an API to construct.
+- Branch protection has `enforce_admins: false` so you (admin) can still push
+  directly when needed; the bot cannot (it's only a collaborator).
+
 ## Open decisions / next steps
 
 - [ ] Stand up the bot GitHub account + fine-grained token; enable branch protection.

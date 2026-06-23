@@ -7,6 +7,25 @@
     group: "{{ hermes_gid }}"
     mode: "0750"
 
+- name: Ensure Hermes bin dir exists
+  file:
+    path: "{{ hermes_data_dir }}/bin"
+    state: directory
+    owner: "{{ hermes_uid }}"
+    group: "{{ hermes_gid }}"
+    mode: "0755"
+
+# Deterministic PR opener — workers run `/opt/data/bin/open-pr "<title>"` instead
+# of hand-writing a curl (which the local model gets wrong). Uses the bot PAT, so
+# it can create PRs but not approve them.
+- name: Install the open-pr helper
+  copy:
+    src: open-pr
+    dest: "{{ hermes_data_dir }}/bin/open-pr"
+    owner: "{{ hermes_uid }}"
+    group: "{{ hermes_gid }}"
+    mode: "0755"
+
 - name: Seed Hermes config.yaml (once — Hermes owns/expands it after first boot)
   template:
     src: config.yaml.j2
