@@ -5,10 +5,11 @@
 model:
   provider: "{{ hermes_model_provider }}"
   default: "{{ hermes_model_default }}"
-  # Hermes needs >=64k context; qwen2.5-coder is natively 32k, so load it bigger
-  # via Ollama num_ctx and advertise the matching context_length.
   context_length: {{ hermes_model_context_length }}
+{% if (hermes_model_ollama_num_ctx | default(0) | int) > 0 %}
+  # local Ollama only: force a larger runtime context (num_ctx can't pass over /v1)
   ollama_num_ctx: {{ hermes_model_ollama_num_ctx }}
+{% endif %}
 
 # greymon's Ollama speaks the OpenAI wire protocol. base_url/api_key also come
 # through OPENAI_BASE_URL / OPENAI_API_KEY env; kept here so the backend survives
@@ -17,6 +18,11 @@ providers:
   openai:
     base_url: "{{ hermes_openai_base_url }}"
     request_timeout_seconds: 1800
+
+# Pass the GitHub token into worker shells so /opt/data/bin/open-pr can auth.
+terminal:
+  env_passthrough:
+    - GITHUB_TOKEN
 
 {% if (hermes_dashboard_password_hash | default('')) | length > 0 %}
 # Dashboard auth — Hermes won't bind the dashboard to 0.0.0.0 (so SWAG can reach

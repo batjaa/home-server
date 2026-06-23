@@ -11,6 +11,7 @@ Deployed to /opt/data/bin/open-pr in the Hermes container by the role.
 """
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.error
@@ -26,12 +27,19 @@ def main():
         sys.exit('usage: open-pr "<title>" ["<body>"]')
     title = sys.argv[1]
     body = sys.argv[2] if len(sys.argv) > 2 else "Opened by the Hermes agent."
-    token = os.environ.get("GITHUB_TOKEN")
-    if not token:
-        sys.exit("GITHUB_TOKEN not set")
     base = os.environ.get("PR_BASE", "main")
 
     remote = sh("git", "config", "--get", "remote.origin.url")
+
+    # Prefer the env token; fall back to the token baked into the authenticated
+    # remote url (Hermes doesn't always pass GITHUB_TOKEN into the worker shell).
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        m = re.search(r"://[^:/]+:([^@]+)@", remote)
+        token = m.group(1) if m else None
+    if not token:
+        sys.exit("no GitHub token (GITHUB_TOKEN unset and none in remote url)")
+
     repo = remote.replace("git@github.com:", "").replace("https://github.com/", "")
     repo = repo[:-4] if repo.endswith(".git") else repo
     if "@github.com/" in repo:           # strip token-in-url (x-access-token:TOKEN@github.com/owner/repo)

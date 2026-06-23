@@ -11,17 +11,18 @@ hermes_api_port: 8642         # OpenAI-compatible gateway API (loopback only)
 # Model backend — greymon's Ollama over its OpenAI-compatible API.
 # config.yaml is the source of truth for provider/model; secrets come via env.
 hermes_model_provider: "openai"
-# qwen2.5-coder does NOT emit Ollama-parseable native tool calls (it dumps bare
-# JSON), so Hermes' tool loop breaks with it. qwen3-coder DOES. We run a
-# greymon-side Modelfile variant `qwen3-coder-64k` (FROM qwen3-coder:30b,
-# PARAMETER num_ctx 65536) because num_ctx can't be passed over Ollama's /v1
-# endpoint. At 64k the 30B MoE's KV cache spills ~19 GB to RAM on the 16 GB card,
-# but 3B active params keep it responsive. See docs/hermes-agent.md.
-hermes_model_default: "qwen3-coder-64k"
-hermes_model_context_length: 65536
-hermes_model_ollama_num_ctx: 65536
-hermes_openai_base_url: "http://192.168.50.30:11434/v1"
-hermes_openai_api_key: "ollama"   # Ollama ignores it; client wants it non-empty
+# Primary backend: OpenAI GPT-5.5 — a frontier model handles the full agent loop
+# (including opening its own PRs) reliably. The local greymon qwen3-coder remains a
+# documented fallback (set base_url to http://192.168.50.30:11434/v1, model
+# qwen3-coder-64k, ollama_num_ctx 65536) but the local 30B couldn't finish
+# autonomous tasks — it stops after pushing and fumbles the PR API. See
+# docs/hermes-agent.md.
+hermes_model_default: "gpt-5.5"
+hermes_model_context_length: 200000
+hermes_model_ollama_num_ctx: 0          # >0 only for a local Ollama backend
+hermes_openai_base_url: "https://api.openai.com/v1"
+# hermes_openai_api_key: real OpenAI key, set in host_vars/andromon/secret.yml (vault)
+hermes_openai_api_key: ""
 
 # Dashboard basic auth (password is a vault secret, see below)
 hermes_dashboard_username: "batjaa"
