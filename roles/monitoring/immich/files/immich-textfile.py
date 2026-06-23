@@ -118,6 +118,26 @@ def main():
         "# TYPE immich_queue_active gauge",
         "# HELP immich_queue_jobs Jobs in a queue by state (active/waiting/failed/delayed).",
         "# TYPE immich_queue_jobs gauge",
+        "# HELP immich_photos_total Total photos stored across all users.",
+        "# TYPE immich_photos_total gauge",
+        "# HELP immich_videos_total Total videos stored across all users.",
+        "# TYPE immich_videos_total gauge",
+        "# HELP immich_storage_usage_bytes Total bytes used by all assets.",
+        "# TYPE immich_storage_usage_bytes gauge",
+        "# HELP immich_storage_usage_kind_bytes Bytes used, split by photos vs videos.",
+        "# TYPE immich_storage_usage_kind_bytes gauge",
+        "# HELP immich_user_photos Photos stored per user.",
+        "# TYPE immich_user_photos gauge",
+        "# HELP immich_user_videos Videos stored per user.",
+        "# TYPE immich_user_videos gauge",
+        "# HELP immich_user_usage_bytes Bytes used per user.",
+        "# TYPE immich_user_usage_bytes gauge",
+        "# HELP immich_user_quota_bytes Storage quota per user (only if a quota is set).",
+        "# TYPE immich_user_quota_bytes gauge",
+        "# HELP immich_users_total Number of non-deleted user accounts.",
+        "# TYPE immich_users_total gauge",
+        "# HELP immich_server_info Immich server version (value always 1).",
+        "# TYPE immich_server_info gauge",
         "# HELP immich_monitor_last_run_timestamp_seconds Unix timestamp of the last collector run.",
         "# TYPE immich_monitor_last_run_timestamp_seconds gauge",
     ]
@@ -159,6 +179,40 @@ def main():
             elif not paused and was_alerted:
                 recovered.append(name)
                 state[name] = False
+
+    # ── Usage / library stats (best-effort; never blocks job metrics) ──
+    auth = {"Authorization": f"Bearer {token}"}
+    try:
+        stats = _request(f"{base}/api/server/statistics", headers=auth)
+        lines.append(f'immich_photos_total {int(stats.get("photos", 0))}')
+        lines.append(f'immich_videos_total {int(stats.get("videos", 0))}')
+        lines.append(f'immich_storage_usage_bytes {int(stats.get("usage", 0))}')
+        lines.append(f'immich_storage_usage_kind_bytes{{kind="photos"}} {int(stats.get("usagePhotos", 0))}')
+        lines.append(f'immich_storage_usage_kind_bytes{{kind="videos"}} {int(stats.get("usageVideos", 0))}')
+        for u in stats.get("usageByUser", []) or []:
+            name = (u.get("userName") or "unknown").replace('"', "'")
+            lines.append(f'immich_user_photos{{user="{name}"}} {int(u.get("photos", 0))}')
+            lines.append(f'immich_user_videos{{user="{name}"}} {int(u.get("videos", 0))}')
+            lines.append(f'immich_user_usage_bytes{{user="{name}"}} {int(u.get("usage", 0))}')
+            quota = u.get("quotaSizeInBytes")
+            if quota:
+                lines.append(f'immich_user_quota_bytes{{user="{name}"}} {int(quota)}')
+    except Exception as e:
+        print(f"statistics failed: {e}", file=sys.stderr)
+
+    try:
+        users = _request(f"{base}/api/admin/users", headers=auth)
+        active = [u for u in users if not u.get("deletedAt")]
+        lines.append(f"immich_users_total {len(active)}")
+    except Exception as e:
+        print(f"users failed: {e}", file=sys.stderr)
+
+    try:
+        v = _request(f"{base}/api/server/version", headers=auth)
+        ver = f'{v.get("major", 0)}.{v.get("minor", 0)}.{v.get("patch", 0)}'
+        lines.append(f'immich_server_info{{version="{ver}"}} 1')
+    except Exception as e:
+        print(f"version failed: {e}", file=sys.stderr)
 
     lines.append(f"immich_monitor_last_run_timestamp_seconds {now}")
     write_metrics(lines)

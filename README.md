@@ -673,7 +673,7 @@ These are systemd timers that periodically write `*.prom` files into the textfil
 | `intel-gpu-textfile.timer` | 30 s | `intel_gpu_engine_busy_percent`, `intel_gpu_freq_mhz`, `intel_gpu_imc_bytes_per_sec` (from `intel_gpu_top`) |
 | `speedtest-textfile.timer` | 1 h | `speedtest_download_bytes_per_second`, `_upload_`, `_ping_seconds`, `_packet_loss_ratio` (Ookla CLI) |
 | `arr-textfile.timer` | 5 min | `arr_app_up`, `arr_health_issues`, `arr_queue_warning/failed/pending`, `arr_root_free_bytes` for Sonarr + Radarr |
-| `immich-textfile.timer` | 10 min | `immich_queue_paused`, `immich_queue_jobs{queue,state}`, `immich_monitor_up` — also emails when `thumbnailGeneration` is left paused (the blind spot Kuma can't see) |
+| `immich-textfile.timer` | 10 min | `immich_queue_paused`, `immich_queue_jobs{queue,state}`, `immich_monitor_up`, plus usage (`immich_photos_total`, `immich_videos_total`, `immich_storage_usage_bytes`, `immich_user_*`, `immich_users_total`) — also emails when `thumbnailGeneration` is left paused (the blind spot Kuma can't see) |
 | `storage-textfile.timer` | hourly | `smart_*`, `btrfs_*`, `storage_backup_last_run_*` |
 
 ### Network / Infrastructure

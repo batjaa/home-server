@@ -157,6 +157,124 @@
       ],
       "title": "Job backlog by state (all queues)",
       "type": "timeseries"
+    },
+    {
+      "type": "row",
+      "title": "Library & Usage",
+      "id": 102,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
+      "collapsed": false
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 17 },
+      "id": 7,
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "purple" }, "unit": "short" } },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "value" },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_users_total", "refId": "A" } ],
+      "title": "Users",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 5, "x": 4, "y": 17 },
+      "id": 8,
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "blue" }, "unit": "short" } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "value" },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_photos_total", "refId": "A" } ],
+      "title": "Photos",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 5, "x": 9, "y": 17 },
+      "id": 9,
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "blue" }, "unit": "short" } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "value" },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_videos_total", "refId": "A" } ],
+      "title": "Videos",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 5, "x": 14, "y": 17 },
+      "id": 10,
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "green" }, "unit": "bytes" } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "value" },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_storage_usage_bytes", "refId": "A" } ],
+      "title": "Storage used",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 5, "x": 19, "y": 17 },
+      "id": 11,
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "text" }, "unit": "short" } },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "textMode": "name" },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_server_info", "legendFormat": "v{{version}}", "refId": "A" } ],
+      "title": "Server version",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 22 },
+      "id": 12,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 15, "gradientMode": "opacity" },
+          "unit": "short"
+        }
+      },
+      "options": { "legend": { "showLegend": true, "displayMode": "table", "placement": "right", "calcs": [ "lastNotNull" ] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_photos_total", "legendFormat": "photos", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_videos_total", "legendFormat": "videos", "refId": "B" }
+      ],
+      "title": "Asset count over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 22 },
+      "id": 13,
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 15, "gradientMode": "opacity" },
+          "unit": "bytes"
+        }
+      },
+      "options": { "legend": { "showLegend": true, "displayMode": "table", "placement": "right", "calcs": [ "lastNotNull" ] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_storage_usage_bytes", "legendFormat": "total", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_storage_usage_kind_bytes", "legendFormat": "{{kind}}", "refId": "B" }
+      ],
+      "title": "Storage used over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 30 },
+      "id": 14,
+      "fieldConfig": { "defaults": { "color": { "mode": "continuous-GrYlRd" }, "unit": "bytes" } },
+      "options": { "displayMode": "gradient", "orientation": "horizontal", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "legend": { "showLegend": false } },
+      "targets": [ { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_user_usage_bytes", "legendFormat": "{{user}}", "refId": "A" } ],
+      "title": "Storage by user",
+      "type": "bargauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 30 },
+      "id": 15,
+      "fieldConfig": { "defaults": { "color": { "mode": "continuous-BlPu" }, "unit": "short" } },
+      "options": { "displayMode": "gradient", "orientation": "horizontal", "reduceOptions": { "calcs": [ "lastNotNull" ], "fields": "", "values": false }, "legend": { "showLegend": false } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_user_photos", "legendFormat": "{{user}} photos", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "immich_user_videos", "legendFormat": "{{user}} videos", "refId": "B" }
+      ],
+      "title": "Assets by user",
+      "type": "bargauge"
     }
   ],
   "refresh": "1m",
