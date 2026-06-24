@@ -232,32 +232,46 @@ scripts/hermes-onboard-repo.sh <owner>/<repo>
 ```
 It invites the bot + auto-accepts (using the bot's own token), branch-protects
 `main`, clones the repo into `/opt/data/workspaces/<repo>` in the container
-(chowned to the worker uid **1001**), creates the board, and installs the auto-PR
-workflow.
+(chowned to the worker uid **1001**), and creates the board.
 
 **Hand off tasks** — from a clone of the repo, run the global `/handoff` slash
-command (`~/.claude/commands/handoff.md`) with a spec. The planner Claude
-decomposes it into small cards and creates them on the repo's board; the worker
-makes the change, commits, and pushes `wt/<slug>`.
+command (`~/.claude/commands/handoff.md`) with a spec. It follows *that repo's*
+`docs/agents/` conventions, decomposes the spec into PR-sized handoffs, persists
+each as a vault note under `docs/agents/handoffs/`, and creates a thin card pointing
+to it. Cards carry `--skill obsidian` (worker reads the vault + resolves wikilinks)
+and `--skill github-pr-workflow` (worker opens its own PR), on a `feat/<slug>` branch.
 
-**The worker opens its own PR** by running `/opt/data/bin/open-pr "<title>"` after
-pushing (deployed by the role from `roles/.../hermes/files/open-pr`). It uses the
-bot PAT — so it can *create* PRs but **cannot approve** them. We use a fixed helper
-rather than letting the model hand-write the API call: even with the
-`github-pr-workflow` skill force-loaded, qwen3-coder fumbled the raw `curl` (unset
-vars / malformed request). It reliably *pushes*; the one-command helper makes the PR
-step reliable too — and avoids granting GitHub Actions the create-+-approve
-permission that an Action-based opener would require.
+**The worker opens its own PR** via Hermes' native `github-pr-workflow` skill,
+force-loaded on the card with `--skill github-pr-workflow`. It authenticates with the
+bot PAT (git-only path, no `gh` needed) — so it can *create* PRs but **cannot
+approve** them. Verified on GPT-5.5: edit → commit → push → PR in ~1 min, no custom
+tooling. (On the local qwen3-coder this needed a deterministic `open-pr` helper
+crutch because the weak model fumbled the API call; on a frontier model the native
+skill just works, so the crutch was removed.)
+
+### Docs vault per repo
+
+Each repo's `docs/` **is** an Obsidian vault — the durable knowledge layer
+(architecture, decisions, phase plans, and the orchestration conventions in
+`docs/agents/`). Because it lives *in the repo*, it serves all three readers at once:
+you (Obsidian graph), the planner Claude (grounding), and the Hermes worker (context
+in its clone, via `--skill obsidian`). Use **wikilinks inside the vault** — the
+worker resolves them with the obsidian skill, and they're rename-safe with a richer
+graph; use **standard markdown links only in README / GitHub-facing surfaces** (the
+github.com UI doesn't render wikilinks). `tipped/docs` is the reference example: its
+`docs/agents/` (orchestration-workflow, hermes-handoff-template, definition-of-done)
+is the canonical per-repo convention set that `/handoff` defers to.
 
 ### Gotchas learned operationalizing this
 
 - **`docker exec` runs as root (uid 0); the worker runs as uid 1001.** A repo cloned
   via `docker exec` is root-owned → the worker hits git "dubious ownership" and
   can't worktree it. The onboarder `chown -R 1001:1001` the workspace.
-- **The local model can't reliably hand-write the GitHub PR API call** (even with the
-  `github-pr-workflow` skill). It nails deterministic git (push every time) but
-  fumbles `curl`. Hence the fixed `open-pr` helper — give the weak model one command,
-  not an API to construct.
+- **Model tier decides the final step.** The local qwen3-coder reliably *pushed* but
+  couldn't reliably *open the PR* (fumbled the API call) — it needed a crutch. A
+  frontier model (GPT-5.5) drives the native `github-pr-workflow` skill cleanly, so
+  the crutch was removed. If you ever switch to a weaker backend, expect to re-add a
+  deterministic PR helper.
 - Branch protection has `enforce_admins: false` so you (admin) can still push
   directly when needed; the bot cannot (it's only a collaborator).
 
