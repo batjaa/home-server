@@ -338,12 +338,6 @@
         tags: [movie-agent, agents, containers]
         when: enable_movie_agent | default(false) | bool
 
-      # Hermes — autonomous coding agent (not a chat tool server; opens PRs).
-      # See docs/hermes-agent.md.
-      - role: containers/agents/hermes
-        tags: [hermes, agents, containers]
-        when: enable_hermes | default(false) | bool
-
       # - role: containers/homeautomation/mqtt
       #   become: no
       #   tags:

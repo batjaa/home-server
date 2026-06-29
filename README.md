@@ -645,7 +645,6 @@ What each thing in the stack is for. Per-service runbooks (config steps not yet 
 |---|---|---|
 | **Ollama** | `ollama.batjaa.site` | Local LLM inference (gemma, qwen). Runs on `greymon` (Windows), reached via SWAG → `192.168.50.30:11434`. Internal-only vhost. |
 | **Open WebUI** | `chat.batjaa.site` | ChatGPT-style frontend for Ollama. Runs on `andromon`, talks to greymon's Ollama. First user to sign up becomes admin. |
-| **Hermes** | `agent.batjaa.site` | Autonomous coding agent (`nousresearch/hermes-agent`). Takes work via Telegram/vault, opens PRs, thinks with greymon's Ollama. Opt-in (`enable_hermes`). See `docs/hermes-agent.md`. |
 
 ### App platform
 
