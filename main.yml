@@ -433,6 +433,12 @@
             - containers
         when: enable_beets | default(false) | bool
 
+      - role: containers/media/stash
+        tags:
+            - stash
+            - containers
+        when: enable_stash | default(false) | bool
+
       #
       # *arr stack — movie automation
       #

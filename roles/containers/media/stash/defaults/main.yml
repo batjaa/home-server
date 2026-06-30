@@ -1,0 +1,21 @@
+---
+container_name: stash
+stash_port: 9999
+stash_image: stashapp/stash:latest
+stash_media_dir: "{{ mergerfs_root }}/Media/Whisparr"
+stash_container_media_dir: /data
+stash_config_dir: "{{ docker_dir }}/{{ container_name }}/config"
+stash_metadata_dir: "{{ docker_dir }}/{{ container_name }}/metadata"
+stash_cache_dir: "{{ docker_dir }}/{{ container_name }}/cache"
+stash_blobs_dir: "{{ docker_dir }}/{{ container_name }}/blobs"
+stash_generated_dir: "{{ docker_dir }}/{{ container_name }}/generated"
+stash_database_path: /root/.stash/stash-go.sqlite
+stash_generated_path: /generated
+stash_metadata_path: /metadata
+stash_cache_path: /cache
+stash_blobs_path: /blobs
+stash_external_host: "https://stash.{{ host }}"
+stash_scan_exclude:
+  - "/@eaDir/"
+  - "/#recycle/"
+  - "/\\.@__thumb/"

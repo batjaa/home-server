@@ -1,0 +1,22 @@
+host: 0.0.0.0
+port: 9999
+external_host: "{{ stash_external_host }}"
+database: "{{ stash_database_path }}"
+generated: "{{ stash_generated_path }}"
+metadata: "{{ stash_metadata_path }}"
+cache: "{{ stash_cache_path }}"
+blobs_path: "{{ stash_blobs_path }}"
+blobs_storage: FILESYSTEM
+nobrowser: true
+logOut: true
+logLevel: info
+calculate_md5: false
+video_file_naming_algorithm: oshash
+stash:
+  - path: "{{ stash_container_media_dir }}"
+    excludeVideo: false
+    excludeImage: true
+exclude:
+{% for pattern in stash_scan_exclude %}
+  - '{{ pattern }}'
+{% endfor %}

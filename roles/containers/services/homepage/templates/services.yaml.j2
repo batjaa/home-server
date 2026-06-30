@@ -139,6 +139,13 @@
         href: https://beets.batjaa.site
         description: music tagger
         siteMonitor: http://127.0.0.1:8337/
+{% if enable_stash | default(false) | bool %}
+    - Stash:
+        icon: stash.png
+        href: https://stash.batjaa.site
+        description: private media browser
+        siteMonitor: http://127.0.0.1:9999/
+{% endif %}
 
 - GPU & Transcoding:
     - Plex transcoding:

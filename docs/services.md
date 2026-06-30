@@ -37,6 +37,7 @@ ansible -m debug -a "var=<key>" <host>
 | URL | Service |
 |-----|---------|
 | `grafana.batjaa.site` | Grafana |
+| `stash.batjaa.site` | Stash |
 | `prowlarr.batjaa.site` | Prowlarr |
 | `radarr.batjaa.site` | Radarr |
 | `sonarr.batjaa.site` | Sonarr |
@@ -183,6 +184,21 @@ wizard.
 - First-run wizard (admin user, libraries Movies → `/media/Movies`, TV →
   `/media/TV`)
 - Disable automatic UPnP port mapping (SWAG handles ingress)
+
+### Stash — `https://stash.batjaa.site`
+
+**Auto-configured by Ansible:**
+- Official `stashapp/stash` container on `127.0.0.1:9999`
+- Internal-only SWAG vhost at `stash.batjaa.site`
+- Seeded `config.yml` under `/opt/docker/data/stash/config`
+- Library path: `/mnt/storage/Media/Whisparr` mounted as `/data`
+- Generated previews, blobs, metadata, cache, and SQLite DB live under
+  `/opt/docker/data/stash`
+
+Stash is intentionally separate from Plex/Jellyfin. It only sees the Whisparr
+library and is the browser/player for that media. The first library scan,
+metadata-provider credentials, and optional Stash login/password are managed in
+Stash itself.
 - Per-friend accounts: Dashboard → Users → Add (no email signup)
 
 ### Nextcloud — `https://nextcloud.batjaa.site`

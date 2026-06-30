@@ -1,0 +1,59 @@
+---
+- name: Ensure Stash directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+  loop:
+    - "{{ stash_config_dir }}"
+    - "{{ stash_metadata_dir }}"
+    - "{{ stash_cache_dir }}"
+    - "{{ stash_blobs_dir }}"
+    - "{{ stash_generated_dir }}"
+    - "{{ stash_media_dir }}"
+
+- name: Seed Stash config.yml
+  template:
+    src: config.yml.j2
+    dest: "{{ stash_config_dir }}/config.yml"
+    owner: "{{ username }}"
+    group: users
+    mode: '0644'
+    force: no
+  notify: restart stash
+
+- name: Make sure the Stash container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "{{ stash_image }}"
+    pull: yes
+    state: started
+    published_ports:
+      - "127.0.0.1:{{ stash_port }}:9999"
+    env:
+      STASH_STASH: "{{ stash_container_media_dir }}"
+      STASH_GENERATED: "{{ stash_generated_path }}"
+      STASH_METADATA: "{{ stash_metadata_path }}"
+      STASH_CACHE: "{{ stash_cache_path }}"
+      STASH_PORT: "9999"
+      TZ: "{{ timezone }}"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - "{{ stash_config_dir }}:/root/.stash"
+      - "{{ stash_media_dir }}:{{ stash_container_media_dir }}"
+      - "{{ stash_metadata_dir }}:{{ stash_metadata_path }}"
+      - "{{ stash_cache_dir }}:{{ stash_cache_path }}"
+      - "{{ stash_blobs_dir }}:{{ stash_blobs_path }}"
+      - "{{ stash_generated_dir }}:{{ stash_generated_path }}"
+    restart_policy: unless-stopped
+
+- name: Wait for Stash HTTP endpoint
+  uri:
+    url: "http://127.0.0.1:{{ stash_port }}/"
+    status_code: 200
+  register: stash_http_ready
+  retries: 30
+  delay: 2
+  until: stash_http_ready.status == 200
