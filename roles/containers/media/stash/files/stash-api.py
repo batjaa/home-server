@@ -15,6 +15,10 @@ VIDEO_FILE_NAMING_ALGORITHM = os.environ.get(
     "STASH_VIDEO_FILE_NAMING_ALGORITHM",
     "OSHASH",
 ).upper()
+SCAN_CLEAN_BEFORE = os.environ.get("STASH_SCAN_CLEAN_BEFORE", "true").lower() == "true"
+SCAN_GENERATE_COVERS = (
+    os.environ.get("STASH_SCAN_GENERATE_COVERS", "true").lower() == "true"
+)
 SCAN_ON_CHANGE = os.environ.get("STASH_SCAN_ON_CHANGE", "true").lower() == "true"
 
 
@@ -71,10 +75,35 @@ def desired_stashes():
     return normalize_stashes(normalized)
 
 
+def clean():
+    if not SCAN_PATHS:
+        print("clean skipped")
+        return
+
+    data = request_graphql(
+        """
+        mutation Clean($input: CleanMetadataInput!) {
+          metadataClean(input: $input)
+        }
+        """,
+        {
+            "input": {
+                "paths": SCAN_PATHS,
+                "ignoreZipFileContents": True,
+                "dryRun": False,
+            }
+        },
+    )
+    print(f"clean job {data['metadataClean']}")
+
+
 def scan():
     if not SCAN_PATHS:
         print("scan skipped")
         return
+
+    if SCAN_CLEAN_BEFORE:
+        clean()
 
     data = request_graphql(
         """
@@ -86,7 +115,7 @@ def scan():
             "input": {
                 "paths": SCAN_PATHS,
                 "rescan": False,
-                "scanGenerateCovers": False,
+                "scanGenerateCovers": SCAN_GENERATE_COVERS,
                 "scanGeneratePreviews": False,
                 "scanGenerateSprites": False,
                 "scanGeneratePhashes": False,
@@ -96,6 +125,29 @@ def scan():
         },
     )
     print(f"scan job {data['metadataScan']}")
+
+
+def generate_covers():
+    data = request_graphql(
+        """
+        mutation Generate($input: GenerateMetadataInput!) {
+          metadataGenerate(input: $input)
+        }
+        """,
+        {
+            "input": {
+                "paths": SCAN_PATHS or None,
+                "covers": True,
+                "sprites": False,
+                "previews": False,
+                "phashes": False,
+                "imageThumbnails": False,
+                "clipPreviews": False,
+                "overwrite": False,
+            }
+        },
+    )
+    print(f"generate job {data['metadataGenerate']}")
 
 
 def configure():
@@ -156,8 +208,12 @@ def main():
     command = sys.argv[1] if len(sys.argv) > 1 else "configure"
     if command == "configure":
         configure()
+    elif command == "clean":
+        clean()
     elif command == "scan":
         scan()
+    elif command == "generate-covers":
+        generate_covers()
     else:
         sys.exit(f"unknown command: {command}")
 

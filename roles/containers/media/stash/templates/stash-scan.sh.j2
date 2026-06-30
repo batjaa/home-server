@@ -3,4 +3,6 @@ set -eu
 
 STASH_URL="http://127.0.0.1:{{ stash_port }}" \
 STASH_SCAN_PATHS='{{ stash_scan_paths | to_json }}' \
+STASH_SCAN_CLEAN_BEFORE='{{ stash_scan_clean_before | ternary('true', 'false') }}' \
+STASH_SCAN_GENERATE_COVERS='{{ stash_scan_generate_covers | ternary('true', 'false') }}' \
 /usr/local/sbin/stash-api scan

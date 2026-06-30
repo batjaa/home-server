@@ -197,7 +197,8 @@ wizard.
     `/downloads/whisparr` for manual/direct grabs that Whisparr cannot import
 - Stash GraphQL config is converged by Ansible, including `OSHASH` video
   naming/fingerprints and the configured library paths
-- `stash-scan.timer` scans the library paths every 15 minutes
+- `stash-scan.timer` cleans missing entries, scans the library paths, and
+  generates scene cover thumbnails every 15 minutes
 - Generated previews, blobs, metadata, cache, and SQLite DB live under
   `/opt/docker/data/stash`
 
