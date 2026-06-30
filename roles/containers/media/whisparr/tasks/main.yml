@@ -1,0 +1,88 @@
+---
+- name: Ensure Whisparr config, media, and download dirs exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+  loop:
+    - "{{ docker_dir }}/{{ container_name }}"
+    - "{{ whisparr_media_dir }}"
+    - "{{ whisparr_download_dir }}"
+
+- name: Ensure arr Docker network
+  docker_network:
+    name: "{{ arr_network }}"
+    state: present
+
+- name: Make sure the Whisparr container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "{{ whisparr_image }}"
+    pull: yes
+    state: started
+    networks:
+      - name: "{{ arr_network }}"
+    networks_cli_compatible: yes
+    published_ports:
+      - "127.0.0.1:{{ whisparr_port }}:6969"
+    env:
+      PUID: "{{ guid }}"
+      PGID: "{{ guid }}"
+      UMASK: "002"
+      TZ: "{{ timezone }}"
+      WEBUI_PORTS: "6969/tcp"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/config"
+      - "{{ mergerfs_root }}:/storage"
+    restart_policy: unless-stopped
+
+- name: Wait for Whisparr API to be ready
+  uri:
+    url: "http://127.0.0.1:{{ whisparr_port }}/ping"
+    status_code: 200
+  register: whisparr_ping
+  retries: 30
+  delay: 2
+  until: whisparr_ping.status == 200
+
+- name: Wait for Whisparr config.xml to be created
+  wait_for:
+    path: "{{ docker_dir }}/{{ container_name }}/config.xml"
+    timeout: 30
+
+- name: Install Whisparr configuration script
+  copy:
+    src: configure-whisparr.py
+    dest: /usr/local/sbin/whisparr-configure
+    owner: root
+    group: root
+    mode: '0755'
+  when:
+    - sabnzbd_api_key is defined
+    - prowlarr_api_key is defined
+
+- name: Converge Whisparr integrations
+  command: /usr/local/sbin/whisparr-configure
+  environment:
+    WHISPARR_URL: "http://127.0.0.1:{{ whisparr_port }}"
+    WHISPARR_CONFIG_XML: "{{ docker_dir }}/{{ container_name }}/config.xml"
+    WHISPARR_ROOT_FOLDER: "{{ whisparr_root_folder }}"
+    SABNZBD_HOST: "{{ whisparr_sabnzbd_host }}"
+    SABNZBD_PORT: "{{ whisparr_sabnzbd_port }}"
+    SABNZBD_API_KEY: "{{ sabnzbd_api_key }}"
+    SABNZBD_CATEGORY: "{{ whisparr_sabnzbd_category }}"
+    PROWLARR_URL: "http://127.0.0.1:{{ prowlarr_port | default(9696) }}"
+    PROWLARR_API_KEY: "{{ prowlarr_api_key }}"
+    PROWLARR_SELF_URL: "{{ whisparr_prowlarr_url }}"
+    PROWLARR_WHISPARR_BASE_URL: "{{ whisparr_prowlarr_base_url }}"
+    PROWLARR_SYNC_CATEGORIES: "{{ whisparr_prowlarr_sync_categories | to_json }}"
+    WHISPARR_AUTHENTICATION_METHOD: "{{ whisparr_authentication_method }}"
+    WHISPARR_AUTHENTICATION_REQUIRED: "{{ whisparr_authentication_required }}"
+  register: whisparr_configure_run
+  changed_when: "'changed' in whisparr_configure_run.stdout"
+  no_log: true
+  when:
+    - sabnzbd_api_key is defined
+    - prowlarr_api_key is defined

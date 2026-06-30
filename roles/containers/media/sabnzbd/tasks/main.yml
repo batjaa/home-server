@@ -12,6 +12,8 @@
     - "{{ mergerfs_root }}/usenet/incomplete"
     - "{{ mergerfs_root }}/usenet/complete"
     - "{{ mergerfs_root }}/usenet/complete/movies"
+    - "{{ mergerfs_root }}/usenet/complete/tv"
+    - "{{ mergerfs_root }}/usenet/complete/whisparr"
 
 - name: Ensure arr Docker network
   docker_network:
@@ -53,6 +55,18 @@
     mode: '0644'
   notify: restart sabnzbd
 
+- name: Ensure SABnzbd API key matches vault
+  ini_file:
+    path: "{{ docker_dir }}/{{ container_name }}/sabnzbd.ini"
+    section: misc
+    option: api_key
+    value: "{{ sabnzbd_api_key }}"
+    no_extra_spaces: yes
+    mode: '0644'
+  notify: restart sabnzbd
+  no_log: true
+  when: sabnzbd_api_key is defined
+
 # News servers: vault-managed list, spliced into sabnzbd.ini's [servers]
 # block. Multi-provider for resilience — when the primary can't complete
 # a download (article missing/aged out), SAB falls back to the next
@@ -89,3 +103,52 @@
     path: "{{ docker_dir }}/{{ container_name }}/.sabnzbd-servers.fragment"
     state: absent
   when: usenet_servers is defined
+
+- name: Apply pending SABnzbd config-file changes before API tasks
+  meta: flush_handlers
+  when: sabnzbd_api_key is defined
+
+- name: Wait for SABnzbd API to be ready
+  uri:
+    url: "http://127.0.0.1:{{ sabnzbd_port }}/api?mode=version&apikey={{ sabnzbd_api_key | urlencode }}&output=json"
+    status_code: 200
+    return_content: true
+  register: sabnzbd_api_ready
+  retries: 30
+  delay: 2
+  until: sabnzbd_api_ready.status == 200
+  no_log: true
+  when: sabnzbd_api_key is defined
+
+- name: Read SABnzbd categories
+  uri:
+    url: "http://127.0.0.1:{{ sabnzbd_port }}/api?mode=get_config&section=categories&apikey={{ sabnzbd_api_key | urlencode }}&output=json"
+    status_code: 200
+    return_content: true
+  register: sabnzbd_current_categories
+  no_log: true
+  when: sabnzbd_api_key is defined
+
+- name: Ensure SABnzbd categories
+  uri:
+    url: "http://127.0.0.1:{{ sabnzbd_port }}/api?mode=set_config&section=categories&name={{ item.name | urlencode }}&order={{ item.order | default(0) }}&pp={{ item.pp | default('') | urlencode }}&script={{ item.script | default('Default') | urlencode }}&dir={{ item.dir | urlencode }}&priority={{ item.priority | default(-100) }}&apikey={{ sabnzbd_api_key | urlencode }}&output=json"
+    status_code: 200
+    return_content: true
+  loop: "{{ sabnzbd_categories }}"
+  vars:
+    sabnzbd_category_matches: >-
+      {{
+        sabnzbd_current_categories.json.config.categories
+        | selectattr('name', 'equalto', item.name)
+        | list
+      }}
+    sabnzbd_category: "{{ sabnzbd_category_matches | first | default({}) }}"
+  changed_when: true
+  no_log: true
+  when:
+    - sabnzbd_api_key is defined
+    - sabnzbd_category_matches | length == 0
+      or sabnzbd_category.dir | default('') != item.dir
+      or sabnzbd_category.pp | default('') != item.pp | default('')
+      or sabnzbd_category.script | default('') != item.script | default('Default')
+      or sabnzbd_category.priority | default(-100) | int != item.priority | default(-100) | int

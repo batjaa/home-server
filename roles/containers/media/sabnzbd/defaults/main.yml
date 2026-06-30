@@ -2,3 +2,22 @@
 container_name: sabnzbd
 sabnzbd_port: 8082
 arr_network: arr-net
+sabnzbd_categories:
+  - name: movies
+    dir: /storage/usenet/complete/movies
+    order: 1
+    pp: ""
+    script: Default
+    priority: -100
+  - name: tv
+    dir: /storage/usenet/complete/tv
+    order: 2
+    pp: ""
+    script: Default
+    priority: -100
+  - name: whisparr
+    dir: /storage/usenet/complete/whisparr
+    order: 5
+    pp: ""
+    script: Default
+    priority: -100

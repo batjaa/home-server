@@ -8,7 +8,7 @@ Credits: [notthebee](https://github.com/notthebee) & [geerlingguy](https://githu
 
 | Host | Hardware | IP | What runs here |
 |------|----------|----|----|
-| `andromon` | x86_64 i5-11600K (Ubuntu 22.04) | `192.168.50.20` | SWAG, Plex, Jellyfin, Immich, Nextcloud, *arr stack (Prowlarr/Radarr/Sonarr/SABnzbd/Bazarr/Seerr/Decluttarr), Paperless, monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage |
+| `andromon` | x86_64 i5-11600K (Ubuntu 22.04) | `192.168.50.20` | SWAG, Plex, Jellyfin, Immich, Nextcloud, *arr stack (Prowlarr/Radarr/Sonarr/Whisparr/SABnzbd/Bazarr/Seerr/Decluttarr), Paperless, monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage |
 | `tentomon` | Raspberry Pi 4 4GB (Flirc case) | `192.168.50.10` | Pi-hole DNS, Cloudflare DDNS, Cloudflare DNS records, Uptime Kuma, node_exporter |
 | `greymon` | x86_64 ASUS (Windows) | `192.168.50.30` | LLM inference, image/video generation pipeline, gaming. Not Ansible-managed. |
 | `wormmon` | x86_64 ASUS AMD *(planned)* | `192.168.50.40` | Web app hosting (Coolify) for side projects. Admin at `deploy.batjaa.site` via SWAG on `andromon`, previews under `*.preview.batjaa.site`, SSH stays on `22` for Coolify localhost management. |
@@ -43,7 +43,7 @@ MikroTik CRS326-24G-2S+RM ← managed switch
     ├── andromon       (192.168.50.20)  i5-11600K — the everything box
     │     ├── SWAG (reverse proxy + Let's Encrypt wildcard)
     │     ├── Plex / Jellyfin / Navidrome / Immich / Nextcloud / Paperless
-    │     ├── *arr stack (Prowlarr / Radarr / Sonarr / SABnzbd / Bazarr / Seerr / Decluttarr)
+    │     ├── *arr stack (Prowlarr / Radarr / Sonarr / Whisparr / SABnzbd / Bazarr / Seerr / Decluttarr)
     │     └── Prometheus / Grafana / cAdvisor + storage (mergerfs + btrfs)
     ├── kvm.andromon   (192.168.50.21)  PiKVM — andromon OOB
     ├── greymon        (192.168.50.30)  ASUS Windows — LLM / image-video / gaming
@@ -254,10 +254,14 @@ ansible-playbook main.yml -l tentomon
 In the Asus ZenWifi admin panel (`router.asus.com`):
 1. Go to **LAN → DHCP Server**
 2. Set **DNS Server 1** to `192.168.50.10` (tentomon / Pi-hole)
-3. Set **DNS Server 2** to `1.1.1.1` (Cloudflare fallback — keeps internet working if Pi is down)
+3. Leave **DNS Server 2** empty, or set it to `192.168.50.10` again if the UI requires a value
 4. Apply and reboot router
 
-All devices on the network will now use Pi-hole for DNS.
+All devices on the network will now use Pi-hole for DNS. Do not use a public
+resolver such as `1.1.1.1` or `8.8.8.8` as a LAN fallback unless every internal
+hostname also exists in public DNS. macOS and browsers can race DNS servers, and
+the public NXDOMAIN response for internal-only names like `whisparr.batjaa.site`
+can win over Pi-hole's local answer.
 
 ### 11. Local DNS records (automated)
 
@@ -281,6 +285,20 @@ ansible-playbook main.yml -l tentomon --tags="pihole"
 ```
 
 The `*.home.local` entries are internal only. The `*.batjaa.site` entries are split DNS so internal devices resolve to SWAG on the LAN instead of going out to Cloudflare and back.
+
+After adding a new service/domain, flush the client DNS cache and renew DHCP
+before testing in a browser. Browsers use the OS resolver path, which can keep
+stale NXDOMAIN responses even when `dig @192.168.50.10 newservice.batjaa.site`
+already works.
+
+macOS:
+```bash
+sudo dscacheutil -flushcache
+sudo killall -HUP mDNSResponder
+```
+
+Then restart the browser, reconnect the network interface, or renew the DHCP
+lease if router DNS settings changed.
 
 ### 12. Verify
 
@@ -632,8 +650,9 @@ What each thing in the stack is for. Per-service runbooks (config steps not yet 
 | **Seerr** | `request.batjaa.site` | Friend-facing request UI. Hands titles to Sonarr/Radarr. |
 | **Sonarr** | `sonarr.batjaa.site` | TV show automation — searches indexers, hands NZBs to SABnzbd, imports completed downloads to `/mnt/storage/Media/TV`. |
 | **Radarr** | `radarr.batjaa.site` | Movie automation — same pattern as Sonarr but for movies. |
+| **Whisparr** | `whisparr.batjaa.site` | Private library automation — same Prowlarr/SABnzbd path model, imports to `/mnt/storage/Media/Whisparr`. |
 | **Bazarr** | `bazarr.batjaa.site` | Subtitle automation — fetches missing subtitles for everything Sonarr/Radarr have. |
-| **Prowlarr** | `prowlarr.batjaa.site` | Single indexer manager. Currently feeds NZBgeek + NZBFinder to Sonarr/Radarr; both vault-managed via `prowlarr_indexers`. |
+| **Prowlarr** | `prowlarr.batjaa.site` | Single indexer manager. Currently feeds NZBgeek + NZBFinder to Sonarr/Radarr/Whisparr; both vault-managed via `prowlarr_indexers`. |
 | **SABnzbd** | `sabnzbd.batjaa.site` | Usenet download client. Pulls articles from Newshosting (priority 0) + UsenetExpress (priority 1, fill-in for missing articles); both vault-managed via `usenet_servers`. |
 | **Beets** | `beets.batjaa.site` | Music tagger / library organizer. Used out-of-band when adding music. |
 | **Decluttarr** | (no UI) | Daemon that watches Sonarr/Radarr queues every 10 min and removes stuck items (failed imports, stalled downloads, missing files, orphans) after 3 strikes. The cleanup we keep doing by hand. |

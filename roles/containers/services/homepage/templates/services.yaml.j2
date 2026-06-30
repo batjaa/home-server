@@ -118,6 +118,13 @@
           type: sabnzbd
           url: http://127.0.0.1:8082
           key: {{ sabnzbd_api_key }}
+{% if enable_whisparr | default(false) | bool %}
+    - Whisparr:
+        icon: whisparr.png
+        href: https://whisparr.batjaa.site
+        description: private library automation
+        siteMonitor: http://127.0.0.1:6969/
+{% endif %}
     - Bazarr:
         icon: bazarr.png
         href: https://bazarr.batjaa.site

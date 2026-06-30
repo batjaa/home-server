@@ -452,6 +452,10 @@
         tags: [sonarr, arr, containers]
         when: enable_sonarr | default(false) | bool
 
+      - role: containers/media/whisparr
+        tags: [whisparr, arr, containers]
+        when: enable_whisparr | default(false) | bool
+
       - role: containers/media/bazarr
         tags: [bazarr, arr, containers]
         when: enable_bazarr | default(false) | bool

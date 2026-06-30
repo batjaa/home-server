@@ -1,0 +1,28 @@
+# Reverse proxy: whisparr.{{ host }} -> host:{{ whisparr_port | default(6969) }}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+
+    server_name whisparr.{{ host }};
+
+    include /config/nginx/ssl.conf;
+    include /config/nginx/internal-only.conf;
+
+    client_max_body_size 0;
+
+    location / {
+        include /config/nginx/proxy.conf;
+        include /config/nginx/resolver.conf;
+        set $upstream_app 127.0.0.1;
+        set $upstream_port {{ whisparr_port | default(6969) }};
+        set $upstream_proto http;
+        # Whisparr is protected by this internal-only vhost. Present proxy
+        # traffic as loopback so DisabledForLocalAddresses covers browser API
+        # calls behind SWAG.
+        proxy_set_header X-Forwarded-For 127.0.0.1;
+        proxy_set_header X-Real-IP 127.0.0.1;
+        proxy_pass $upstream_proto://$upstream_app:$upstream_port;
+    }
+}

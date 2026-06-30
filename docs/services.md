@@ -40,6 +40,7 @@ ansible -m debug -a "var=<key>" <host>
 | `prowlarr.batjaa.site` | Prowlarr |
 | `radarr.batjaa.site` | Radarr |
 | `sonarr.batjaa.site` | Sonarr |
+| `whisparr.batjaa.site` | Whisparr |
 | `sabnzbd.batjaa.site` | SABnzbd |
 | `bazarr.batjaa.site` | Bazarr |
 
@@ -49,7 +50,7 @@ ansible -m debug -a "var=<key>" <host>
 - SWAG terminates SSL and routes by hostname to each container's port on
   `127.0.0.1:<port>`
 - Containers see `/mnt/storage` as `/storage` (so `radarr`, `sonarr`,
-  `sabnzbd`, `plex`, `jellyfin` all work with hardlinks)
+  `whisparr`, `sabnzbd`, `plex`, `jellyfin` all work with hardlinks)
 - Tailscale "split DNS" sends `home.local` and `batjaa.site` queries to
   `192.168.50.10` (Pi-hole) so internal browsers resolve correctly
 
@@ -80,7 +81,13 @@ ansible -m debug -a "var=<key>" <host>
 
 **Manual:**
 - Make sure ZenWifi DHCP is pointing clients here as primary DNS
-  (`192.168.50.10`), with `1.1.1.1` as secondary fallback
+  (`192.168.50.10`) and no public secondary resolver. Public fallback DNS can
+  win the resolver race with NXDOMAIN for internal-only names such as
+  `whisparr.batjaa.site`.
+- After adding a new local/split DNS record, flush DNS and renew the client
+  DHCP lease before browser testing. On macOS:
+  `sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder`, then
+  restart the browser or reconnect the network interface.
 - Enable Tailscale split DNS (admin.tailscale.com → DNS) for `home.local`
   and `batjaa.site` → `192.168.50.10`
 
@@ -219,14 +226,16 @@ is single-provider SSL.
 
 ### SABnzbd — `https://sabnzbd.batjaa.site`
 
-**Manual setup if `_docker_data` was lost:**
-- First-run wizard sets API key — **copy it**, you'll need it for
-  Prowlarr/Radarr/Sonarr
+**Auto-configured by Ansible:**
+- API key is pinned from vault (`sabnzbd_api_key`)
+- Categories are converged through the SABnzbd API from `sabnzbd_categories`
+  (`movies`, `tv`, `whisparr`)
+
+**Manual setup if `_docker_data` was lost and vault keys are missing:**
+- First-run wizard sets API key — copy it into vault as `sabnzbd_api_key`
 - Config → Servers → add Newshosting:
   - Host `news.newshosting.com`, Port `563` (SSL), 30 connections
   - User/pass from your Newshosting account
-- Config → Categories → add `movies` (folder
-  `/storage/usenet/complete/movies`), `tv` (`/storage/usenet/complete/tv`)
 - Config → General → host_whitelist already includes
   `sabnzbd.batjaa.site` (Ansible writes this)
 
@@ -261,6 +270,18 @@ Same shape as Radarr but for TV.
 - Download client category: `tv`
 - Quality profile: HD-1080p
 - Same Plex/Jellyfin connect entries
+
+### Whisparr — `https://whisparr.batjaa.site`
+
+Same shape as Radarr/Sonarr, using the existing Prowlarr + SABnzbd pipeline.
+Ansible reads Whisparr's generated API key from `config.xml`, then uses APIs to
+configure:
+
+- Root folder: `/storage/Media/Whisparr`
+- Download client: SABnzbd at `sabnzbd:8080`, category `whisparr`
+- Prowlarr app: `http://whisparr:6969`, API key from Settings → General
+- Prowlarr indexer sync categories: `6000`, `6010`, `6020`, `6030`,
+  `6040`, `6045`, `6050`, `6070`, `6080`, `6090`
 
 ### Bazarr — `https://bazarr.batjaa.site`
 

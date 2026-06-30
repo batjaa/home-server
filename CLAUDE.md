@@ -36,12 +36,13 @@ Inventory groups: `[pi]` and `[homeservers]`. Each play targets one.
    - Then commit
    The bar: a fresh disaster-recovery rebuild from `_docker_data` + `ansible-playbook main.yml` should reach the same state as the live system. If a setting is only "in the running container's memory" or "saved by clicking Save in a UI", it doesn't survive recovery and isn't real.
    Exceptions: read-only debugging, and the small list of UI-only steps documented in `docs/services.md` (Plex first claim, Bazarr provider auth, etc.). When the UI is the only option, hit the app's REST API from a task (see `roles/containers/monitoring/grafana/tasks/main.yml` setting the org's home dashboard, or `roles/containers/media/navidrome/tasks/main.yml` calling `/auth/createAdmin`).
-2. **Bridge networking, never macvlan.** All containers publish to `127.0.0.1:<port>` on the host; SWAG terminates SSL on `:443` and proxies in. Macvlan is dead — every old role using it has been rewritten.
-3. **Hardlinks must work across services.** Bind-mount `/mnt/storage` as `/storage` (or `/media`) inside containers — never individual sub-paths. Radarr, Sonarr, SABnzbd, Plex, Jellyfin, Navidrome all see the same root.
-4. **All persistent state goes to `/opt/docker/data/<service>/`.** Media files live under `/mnt/storage/Media/`. Both are backed up.
-5. **Secrets in vault, never inline.** `host_vars/<host>/secret.yml` is encrypted; the vault password lives in macOS Keychain via `pass.sh`. To peek: `ansible -m debug -a "var=<key>" <host>`.
-6. **Idempotency required.** Re-running any tag is a no-op when state matches.
-7. **Hardware acceleration via `/dev/dri` + render/video groups.** When a container needs the iGPU (transcoding, ML), the role should:
+2. ***arr stack must be automatically configured.** Prowlarr, SABnzbd, Radarr, Sonarr, Whisparr, Bazarr, Seerr, Decluttarr, and related helpers should converge from role defaults, host vars, templates, or small API-driven scripts. Indexers, applications, download clients, root folders, categories, notifications, cleanup rules, and scheduled searches belong in config. Do not leave "go click this in the UI" as the normal path; only document UI steps for true first-claim/auth flows that cannot be driven by an API. Every *arr tag should be safe to rerun and should leave the same state when nothing changed.
+3. **Bridge networking, never macvlan.** All containers publish to `127.0.0.1:<port>` on the host; SWAG terminates SSL on `:443` and proxies in. Macvlan is dead — every old role using it has been rewritten.
+4. **Hardlinks must work across services.** Bind-mount `/mnt/storage` as `/storage` (or `/media`) inside containers — never individual sub-paths. Radarr, Sonarr, Whisparr, SABnzbd, Plex, Jellyfin, Navidrome all see the same root.
+5. **All persistent state goes to `/opt/docker/data/<service>/`.** Media files live under `/mnt/storage/Media/`. Both are backed up.
+6. **Secrets in vault, never inline.** `host_vars/<host>/secret.yml` is encrypted; the vault password lives in macOS Keychain via `pass.sh`. To peek: `ansible -m debug -a "var=<key>" <host>`.
+7. **Idempotency required.** Re-running any tag is a no-op when state matches.
+8. **Hardware acceleration via `/dev/dri` + render/video groups.** When a container needs the iGPU (transcoding, ML), the role should:
    - mount `devices: ["/dev/dri:/dev/dri"]`
    - add the host's `render` (gid 109) + `video` (gid 44) groups via `groups:` or the linuxserver `GIDLIST` env var
    The `gpu_render_gid` and `gpu_video_gid` group_vars are the source of truth — override per host only if the OS uses different gids.
@@ -105,6 +106,8 @@ Drive identity is **pinned by serial** in `host_vars/andromon/vars.yml` under `s
 - **SABnzbd hostname check** rejects requests if `Host:` doesn't match its whitelist. Role writes `host_whitelist` to `sabnzbd.ini` automatically.
 - **Mergerfs mount option changes** require `umount + mount`, not just a remount.
 - **`guid` is per-host:** `1001` on andromon (batjaa), `1000` on tentomon (tentomon). Default `1000` in group_vars is for tentomon. Container PUID/PGID picks it up via `{{ guid }}`.
+- **New internal domains often need DHCP/DNS flushing before browser tests.** After adding `pihole_split_dns` or `pihole_local_dns`, renew the client DHCP lease and flush DNS caches before debugging the app/proxy. On macOS: `sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder`, then restart the browser. If the router DHCP DNS changed, reconnect Wi-Fi/Ethernet or renew the lease.
+- **LAN DNS must not use public fallback for internal-only names.** DHCP clients should use Pi-hole (`192.168.50.10`) only, not `1.1.1.1`/`8.8.8.8` as secondary. macOS/browser resolvers can accept the public NXDOMAIN first, making internal-only hosts such as `whisparr.batjaa.site` fail even though `dig @192.168.50.10 ...` works.
 - **Tailscale split DNS** must be configured for both `home.local` AND `batjaa.site` → Pi-hole at `192.168.50.10`. Without this, browsers can't resolve internal-only subdomains like `grafana.batjaa.site`.
 - **Seerr image** (`ghcr.io/seerr-team/seerr:latest`) runs as the `node` user (uid 1000) and ignores PUID/PGID — chown the config dir to `1000:1000` explicitly. Also requires `init: yes` in the docker_container task because the image dropped its init shim.
 - **Immich Postgres `command:` overrides** must keep `-c shared_preload_libraries=vchord.so`. The vectorchord extension refuses to load otherwise and immich-server crash-loops on any vector query (SmartSearch, OCR, face detection). The role has a post-deploy guard that fails the play if it drops out — don't disable it.
