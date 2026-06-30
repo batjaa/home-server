@@ -4,6 +4,8 @@ stash_port: 9999
 stash_image: stashapp/stash:latest
 stash_media_dir: "{{ mergerfs_root }}/Media/Whisparr"
 stash_container_media_dir: /data
+stash_download_dir: "{{ mergerfs_root }}/usenet/complete/whisparr"
+stash_container_download_dir: /downloads/whisparr
 stash_config_dir: "{{ docker_dir }}/{{ container_name }}/config"
 stash_metadata_dir: "{{ docker_dir }}/{{ container_name }}/metadata"
 stash_cache_dir: "{{ docker_dir }}/{{ container_name }}/cache"
@@ -15,6 +17,24 @@ stash_metadata_path: /metadata
 stash_cache_path: /cache
 stash_blobs_path: /blobs
 stash_external_host: "https://stash.{{ host }}"
+stash_video_file_naming_algorithm: OSHASH
+stash_library_paths:
+  - host_path: "{{ stash_media_dir }}"
+    container_path: "{{ stash_container_media_dir }}"
+    exclude_video: false
+    exclude_image: false
+    mode: rw
+  - host_path: "{{ stash_download_dir }}"
+    container_path: "{{ stash_container_download_dir }}"
+    exclude_video: false
+    exclude_image: false
+    mode: ro
+stash_scan_paths:
+  - "{{ stash_container_media_dir }}"
+  - "{{ stash_container_download_dir }}"
+stash_scan_on_configure: true
+stash_scan_timer_enabled: true
+stash_scan_interval: 15min
 stash_scan_exclude:
   - "/@eaDir/"
   - "/#recycle/"

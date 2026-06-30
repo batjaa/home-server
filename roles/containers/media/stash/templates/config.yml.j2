@@ -11,11 +11,13 @@ nobrowser: true
 logOut: true
 logLevel: info
 calculate_md5: false
-video_file_naming_algorithm: oshash
+video_file_naming_algorithm: "{{ stash_video_file_naming_algorithm | lower }}"
 stash:
-  - path: "{{ stash_container_media_dir }}"
-    excludeVideo: false
-    excludeImage: true
+{% for library_path in stash_library_paths %}
+  - path: "{{ library_path.container_path }}"
+    excludeVideo: {{ library_path.exclude_video | default(false) | bool | lower }}
+    excludeImage: {{ library_path.exclude_image | default(false) | bool | lower }}
+{% endfor %}
 exclude:
 {% for pattern in stash_scan_exclude %}
   - '{{ pattern }}'

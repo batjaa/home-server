@@ -6,13 +6,36 @@
     owner: "{{ username }}"
     group: users
     mode: '0775'
-  loop:
-    - "{{ stash_config_dir }}"
-    - "{{ stash_metadata_dir }}"
-    - "{{ stash_cache_dir }}"
-    - "{{ stash_blobs_dir }}"
-    - "{{ stash_generated_dir }}"
-    - "{{ stash_media_dir }}"
+  loop: >-
+    {{
+      [
+        stash_config_dir,
+        stash_metadata_dir,
+        stash_cache_dir,
+        stash_blobs_dir,
+        stash_generated_dir
+      ] + (stash_library_paths | map(attribute='host_path') | list)
+    }}
+
+- name: Build Stash library mounts
+  set_fact:
+    stash_library_volumes: >-
+      {{
+        stash_library_volumes | default([]) + [
+          item.host_path ~ ':' ~ item.container_path ~ ':' ~ (item.mode | default('rw'))
+        ]
+      }}
+    stash_api_stashes: >-
+      {{
+        stash_api_stashes | default([]) + [
+          {
+            'path': item.container_path,
+            'excludeVideo': item.exclude_video | default(false) | bool,
+            'excludeImage': item.exclude_image | default(false) | bool
+          }
+        ]
+      }}
+  loop: "{{ stash_library_paths }}"
 
 - name: Seed Stash config.yml
   template:
@@ -33,20 +56,23 @@
     published_ports:
       - "127.0.0.1:{{ stash_port }}:9999"
     env:
-      STASH_STASH: "{{ stash_container_media_dir }}"
+      STASH_STASH: "{{ stash_library_paths[0].container_path }}"
       STASH_GENERATED: "{{ stash_generated_path }}"
       STASH_METADATA: "{{ stash_metadata_path }}"
       STASH_CACHE: "{{ stash_cache_path }}"
       STASH_PORT: "9999"
       TZ: "{{ timezone }}"
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - "{{ stash_config_dir }}:/root/.stash"
-      - "{{ stash_media_dir }}:{{ stash_container_media_dir }}"
-      - "{{ stash_metadata_dir }}:{{ stash_metadata_path }}"
-      - "{{ stash_cache_dir }}:{{ stash_cache_path }}"
-      - "{{ stash_blobs_dir }}:{{ stash_blobs_path }}"
-      - "{{ stash_generated_dir }}:{{ stash_generated_path }}"
+    volumes: >-
+      {{
+        [
+          '/etc/localtime:/etc/localtime:ro',
+          stash_config_dir ~ ':/root/.stash',
+          stash_metadata_dir ~ ':' ~ stash_metadata_path,
+          stash_cache_dir ~ ':' ~ stash_cache_path,
+          stash_blobs_dir ~ ':' ~ stash_blobs_path,
+          stash_generated_dir ~ ':' ~ stash_generated_path
+        ] + stash_library_volumes
+      }}
     restart_policy: unless-stopped
 
 - name: Wait for Stash HTTP endpoint
@@ -57,3 +83,51 @@
   retries: 30
   delay: 2
   until: stash_http_ready.status == 200
+
+- name: Install Stash API helper
+  copy:
+    src: stash-api.py
+    dest: /usr/local/sbin/stash-api
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Converge Stash API configuration
+  command: /usr/local/sbin/stash-api configure
+  environment:
+    STASH_URL: "http://127.0.0.1:{{ stash_port }}"
+    STASH_STASHES: "{{ stash_api_stashes | to_json }}"
+    STASH_SCAN_PATHS: "{{ stash_scan_paths | to_json }}"
+    STASH_VIDEO_FILE_NAMING_ALGORITHM: "{{ stash_video_file_naming_algorithm }}"
+    STASH_SCAN_ON_CHANGE: "{{ stash_scan_on_configure | ternary('true', 'false') }}"
+  register: stash_api_configure_run
+  changed_when: "'changed' in stash_api_configure_run.stdout"
+
+- name: Install Stash scan script
+  template:
+    src: stash-scan.sh.j2
+    dest: /usr/local/sbin/stash-scan
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install Stash scan service
+  template:
+    src: stash-scan.service.j2
+    dest: /etc/systemd/system/stash-scan.service
+    mode: '0644'
+
+- name: Install Stash scan timer
+  template:
+    src: stash-scan.timer.j2
+    dest: /etc/systemd/system/stash-scan.timer
+    mode: '0644'
+  when: stash_scan_timer_enabled | bool
+
+- name: Enable and start Stash scan timer
+  systemd:
+    name: stash-scan.timer
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  when: stash_scan_timer_enabled | bool

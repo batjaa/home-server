@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+STASH_URL="http://127.0.0.1:{{ stash_port }}" \
+STASH_SCAN_PATHS='{{ stash_scan_paths | to_json }}' \
+/usr/local/sbin/stash-api scan

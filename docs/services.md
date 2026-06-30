@@ -191,14 +191,20 @@ wizard.
 - Official `stashapp/stash` container on `127.0.0.1:9999`
 - Internal-only SWAG vhost at `stash.batjaa.site`
 - Seeded `config.yml` under `/opt/docker/data/stash/config`
-- Library path: `/mnt/storage/Media/Whisparr` mounted as `/data`
+- Library paths:
+  - `/mnt/storage/Media/Whisparr` mounted as `/data`
+  - `/mnt/storage/usenet/complete/whisparr` mounted read-only as
+    `/downloads/whisparr` for manual/direct grabs that Whisparr cannot import
+- Stash GraphQL config is converged by Ansible, including `OSHASH` video
+  naming/fingerprints and the configured library paths
+- `stash-scan.timer` scans the library paths every 15 minutes
 - Generated previews, blobs, metadata, cache, and SQLite DB live under
   `/opt/docker/data/stash`
 
-Stash is intentionally separate from Plex/Jellyfin. It only sees the Whisparr
-library and is the browser/player for that media. The first library scan,
-metadata-provider credentials, and optional Stash login/password are managed in
-Stash itself.
+Stash is intentionally separate from Plex/Jellyfin. It sees the Whisparr
+library plus the Whisparr SAB completed-download inbox, and is the browser/player
+for that media. Metadata-provider credentials and optional Stash login/password
+are managed in Stash itself.
 - Per-friend accounts: Dashboard → Users → Add (no email signup)
 
 ### Nextcloud — `https://nextcloud.batjaa.site`

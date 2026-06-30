@@ -1,0 +1,11 @@
+[Unit]
+Description=Scan Stash library paths
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/stash-scan
+StandardOutput=journal
+StandardError=journal
+Nice=10

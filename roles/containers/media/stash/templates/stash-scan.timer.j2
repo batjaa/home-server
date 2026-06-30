@@ -1,0 +1,10 @@
+[Unit]
+Description=Periodic Stash library scan
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec={{ stash_scan_interval }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target
