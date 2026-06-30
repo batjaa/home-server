@@ -32,6 +32,14 @@ PROWLARR_API_KEY = env("PROWLARR_API_KEY")
 PROWLARR_SELF_URL = env("PROWLARR_SELF_URL")
 PROWLARR_WHISPARR_BASE_URL = env("PROWLARR_WHISPARR_BASE_URL")
 PROWLARR_SYNC_CATEGORIES = json.loads(env("PROWLARR_SYNC_CATEGORIES"))
+PROWLARR_DOWNLOAD_CLIENT_NAME = env("PROWLARR_DOWNLOAD_CLIENT_NAME", "SABnzbd")
+PROWLARR_DOWNLOAD_CLIENT_DEFAULT_CATEGORY = env(
+    "PROWLARR_DOWNLOAD_CLIENT_DEFAULT_CATEGORY",
+    "movies",
+)
+PROWLARR_DOWNLOAD_CLIENT_MAPPED_CATEGORIES = json.loads(
+    env("PROWLARR_DOWNLOAD_CLIENT_MAPPED_CATEGORIES", "[]")
+)
 WHISPARR_AUTHENTICATION_METHOD = env("WHISPARR_AUTHENTICATION_METHOD", "none")
 WHISPARR_AUTHENTICATION_REQUIRED = env(
     "WHISPARR_AUTHENTICATION_REQUIRED",
@@ -88,6 +96,31 @@ def fields_match(resource, expected):
         if actual.get(key) != value:
             return False
     return True
+
+
+def normalize_mapped_categories(categories):
+    normalized = []
+    for item in categories or []:
+        client_category = item.get("clientCategory")
+        mapped_categories = item.get("categories") or []
+        if not client_category:
+            continue
+        normalized.append(
+            {
+                "clientCategory": client_category,
+                "categories": sorted(int(category) for category in mapped_categories),
+            }
+        )
+    return sorted(
+        normalized,
+        key=lambda item: item["clientCategory"],
+    )
+
+
+def mapped_categories_match(resource, expected):
+    actual = normalize_mapped_categories(resource.get("categories"))
+    desired = normalize_mapped_categories(expected)
+    return actual == desired
 
 
 def ensure_whisparr_root_folder():
@@ -212,6 +245,82 @@ def ensure_whisparr_download_client():
     return True
 
 
+def prowlarr_sabnzbd_payload(existing_id=None, existing=None):
+    fields = {
+        "host": SABNZBD_HOST,
+        "port": SABNZBD_PORT,
+        "useSsl": False,
+        "urlBase": None,
+        "apiKey": SABNZBD_API_KEY,
+        "username": None,
+        "password": None,
+        "category": PROWLARR_DOWNLOAD_CLIENT_DEFAULT_CATEGORY,
+        "priority": -100,
+    }
+    payload = {
+        "enable": True,
+        "protocol": "usenet",
+        "priority": (existing or {}).get("priority", 1),
+        "categories": PROWLARR_DOWNLOAD_CLIENT_MAPPED_CATEGORIES,
+        "name": PROWLARR_DOWNLOAD_CLIENT_NAME,
+        "implementation": "Sabnzbd",
+        "configContract": "SabnzbdSettings",
+        "tags": (existing or {}).get("tags", []),
+        "fields": [
+            {"name": name, "value": value}
+            for name, value in fields.items()
+        ],
+    }
+    if existing_id is not None:
+        payload["id"] = existing_id
+    return payload, fields
+
+
+def ensure_prowlarr_download_client():
+    clients = request_json(
+        "GET",
+        f"{PROWLARR_URL}/api/v1/downloadclient",
+        PROWLARR_API_KEY,
+    )
+    existing = next(
+        (
+            client
+            for client in clients
+            if client.get("name") == PROWLARR_DOWNLOAD_CLIENT_NAME
+            or client.get("implementation") == "Sabnzbd"
+        ),
+        None,
+    )
+
+    if existing is None:
+        payload, _ = prowlarr_sabnzbd_payload()
+        request_json(
+            "POST",
+            f"{PROWLARR_URL}/api/v1/downloadclient",
+            PROWLARR_API_KEY,
+            payload,
+        )
+        return True
+
+    payload, expected_fields = prowlarr_sabnzbd_payload(existing["id"], existing)
+    if (
+        existing.get("name") == payload["name"]
+        and existing.get("enable") is True
+        and existing.get("protocol") == payload["protocol"]
+        and fields_match(existing, expected_fields)
+        and mapped_categories_match(existing, payload["categories"])
+    ):
+        return False
+
+    request_json(
+        "PUT",
+        f"{PROWLARR_URL}/api/v1/downloadclient/{existing['id']}",
+        PROWLARR_API_KEY,
+        payload,
+    )
+    return True
+
+
 def prowlarr_whisparr_payload(existing_id=None):
     fields = {
         "prowlarrUrl": PROWLARR_SELF_URL,
@@ -284,6 +393,7 @@ def main():
     changed |= ensure_whisparr_host_config()
     changed |= ensure_whisparr_root_folder()
     changed |= ensure_whisparr_download_client()
+    changed |= ensure_prowlarr_download_client()
     changed |= ensure_prowlarr_application()
     print("changed" if changed else "ok")
 

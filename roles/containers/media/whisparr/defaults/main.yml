@@ -19,8 +19,25 @@ whisparr_prowlarr_sync_categories:
   - 6040
   - 6045
   - 6050
+  - 6060
   - 6070
   - 6080
   - 6090
+whisparr_prowlarr_download_client_name: SABnzbd
+whisparr_prowlarr_download_client_default_category: movies
+whisparr_prowlarr_download_client_mapped_categories:
+  - clientCategory: whisparr
+    categories:
+      - 6000
+      - 6010
+      - 6020
+      - 6030
+      - 6040
+      - 6045
+      - 6050
+      - 6060
+      - 6070
+      - 6080
+      - 6090
 whisparr_authentication_method: none
 whisparr_authentication_required: disabledForLocalAddresses

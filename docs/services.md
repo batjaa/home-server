@@ -297,7 +297,9 @@ configure:
 - Download client: SABnzbd at `sabnzbd:8080`, category `whisparr`
 - Prowlarr app: `http://whisparr:6969`, API key from Settings → General
 - Prowlarr indexer sync categories: `6000`, `6010`, `6020`, `6030`,
-  `6040`, `6045`, `6050`, `6070`, `6080`, `6090`
+  `6040`, `6045`, `6050`, `6060`, `6070`, `6080`, `6090`
+- Prowlarr direct-grab SABnzbd mapped category: all `XXX/*` categories,
+  including `XXX/Other` (`6070`), map to SAB category `whisparr`
 
 ### Bazarr — `https://bazarr.batjaa.site`
 

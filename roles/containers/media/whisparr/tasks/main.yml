@@ -78,6 +78,9 @@
     PROWLARR_SELF_URL: "{{ whisparr_prowlarr_url }}"
     PROWLARR_WHISPARR_BASE_URL: "{{ whisparr_prowlarr_base_url }}"
     PROWLARR_SYNC_CATEGORIES: "{{ whisparr_prowlarr_sync_categories | to_json }}"
+    PROWLARR_DOWNLOAD_CLIENT_NAME: "{{ whisparr_prowlarr_download_client_name }}"
+    PROWLARR_DOWNLOAD_CLIENT_DEFAULT_CATEGORY: "{{ whisparr_prowlarr_download_client_default_category }}"
+    PROWLARR_DOWNLOAD_CLIENT_MAPPED_CATEGORIES: "{{ whisparr_prowlarr_download_client_mapped_categories | to_json }}"
     WHISPARR_AUTHENTICATION_METHOD: "{{ whisparr_authentication_method }}"
     WHISPARR_AUTHENTICATION_REQUIRED: "{{ whisparr_authentication_required }}"
   register: whisparr_configure_run
