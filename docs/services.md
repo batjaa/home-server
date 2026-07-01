@@ -307,6 +307,9 @@ configure:
   `6040`, `6045`, `6050`, `6060`, `6070`, `6080`, `6090`
 - Prowlarr direct-grab SABnzbd mapped category: all `XXX/*` categories,
   including `XXX/Other` (`6070`), map to SAB category `whisparr`
+- Search terms: title-only, studio+date, studio+code, and studio+title are
+  converged by Ansible. Title-only is needed for indexer releases that only
+  publish the scene code/title without the studio prefix.
 
 ### Bazarr — `https://bazarr.batjaa.site`
 
@@ -354,10 +357,34 @@ Role gotchas (cost a debugging session, don't rediscover):
 ### arr-search (timer, no UI)
 
 `arr-missing-search.timer` on andromon, nightly 04:00: triggers
-`MissingMoviesSearch` in Radarr, then `MissingEpisodeSearch` in Sonarr
-30 minutes later. Exists because RSS sync only grabs releases posted
-*after* the initial search — without it, a request whose first search
-found nothing is never retried. Logs: `journalctl -u arr-missing-search`.
+`MissingMoviesSearch` in Radarr, `MissingEpisodeSearch` in Sonarr
+30 minutes later, then a rotating Whisparr batch another 30 minutes later.
+Exists because RSS sync only grabs releases posted *after* the initial search
+— without it, a request whose first search found nothing is never retried.
+Whisparr is batched with a cursor in `/var/lib/arr-search/state.json` so the
+job works through the backlog without spending the whole indexer quota in one
+run. The default Whisparr batch is intentionally small (`10`) because each
+scene can trigger native search plus supplemental code/title Prowlarr queries.
+
+Whisparr also gets supplemental matching for releases its parser rejects. For
+each selected missing scene, the helper queries the Prowlarr-backed indexers for
+the scene code (for example `SIVR-427`) because Whisparr sometimes searches
+studio/date terms instead of the code that indexers use in release titles.
+Matching releases are added to SAB category `whisparr` with a normalized
+code-style job name (`ABC-123` instead of `ABC.123`).
+
+For non-code scenes, the helper falls back to title matching and queues SAB jobs
+as `Studio YYYY-MM-DD Title`, which is the shape Whisparr can parse for StashDB
+scene metadata. Completed helper grabs are remembered by GUID/SAB job ID, and
+completed jobs get a bounded Whisparr `DownloadedMoviesScan` against the
+completed SAB path. Logs: `journalctl -u arr-missing-search`.
+
+Operational lesson: if SAB has a raw dotted-code Whisparr job near the top of
+the queue, first check whether Whisparr can parse that exact SAB name. Valid
+NZBFinder releases like `SIVR.427...` can still be invisible to Whisparr's queue
+tracking until requeued as `SIVR-427`. If a bad SAB job is deleted, stale
+`arr-search` state for that GUID must be pruned so the helper can retry the
+same release with a canonical SAB `nzbname`.
 
 ### immich-monitor (timer, no UI)
 

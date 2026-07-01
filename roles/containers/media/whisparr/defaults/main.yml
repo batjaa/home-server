@@ -41,3 +41,10 @@ whisparr_prowlarr_download_client_mapped_categories:
       - 6090
 whisparr_authentication_method: none
 whisparr_authentication_required: disabledForLocalAddresses
+whisparr_search_studio_code: true
+whisparr_search_title_only: true
+whisparr_search_title_date: false
+whisparr_search_studio_date: true
+whisparr_search_studio_title: true
+whisparr_search_date_format: yymmdd
+whisparr_search_studio_format: clean

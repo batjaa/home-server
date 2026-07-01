@@ -20,6 +20,15 @@ def env(name, default=None):
     return value
 
 
+def env_bool(name, default):
+    value = str(env(name, default)).strip().lower()
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+    sys.exit(f"{name} must be a boolean value")
+
+
 WHISPARR_URL = env("WHISPARR_URL").rstrip("/")
 WHISPARR_CONFIG_XML = env("WHISPARR_CONFIG_XML")
 WHISPARR_ROOT_FOLDER = env("WHISPARR_ROOT_FOLDER")
@@ -45,6 +54,15 @@ WHISPARR_AUTHENTICATION_REQUIRED = env(
     "WHISPARR_AUTHENTICATION_REQUIRED",
     "disabledForLocalAddresses",
 )
+WHISPARR_INDEXER_CONFIG = {
+    "searchStudioCode": env_bool("WHISPARR_SEARCH_STUDIO_CODE", "true"),
+    "searchTitleOnly": env_bool("WHISPARR_SEARCH_TITLE_ONLY", "false"),
+    "searchTitleDate": env_bool("WHISPARR_SEARCH_TITLE_DATE", "false"),
+    "searchStudioDate": env_bool("WHISPARR_SEARCH_STUDIO_DATE", "true"),
+    "searchStudioTitle": env_bool("WHISPARR_SEARCH_STUDIO_TITLE", "true"),
+    "searchDateFormat": env("WHISPARR_SEARCH_DATE_FORMAT", "yymmdd"),
+    "searchStudioFormat": env("WHISPARR_SEARCH_STUDIO_FORMAT", "clean"),
+}
 
 
 def whisparr_api_key():
@@ -162,6 +180,25 @@ def ensure_whisparr_host_config():
     request_json(
         "PUT",
         f"{WHISPARR_URL}/api/v3/config/host",
+        WHISPARR_API_KEY,
+        config,
+    )
+    return True
+
+
+def ensure_whisparr_indexer_config():
+    config = request_json(
+        "GET",
+        f"{WHISPARR_URL}/api/v3/config/indexer",
+        WHISPARR_API_KEY,
+    )
+    if all(config.get(key) == value for key, value in WHISPARR_INDEXER_CONFIG.items()):
+        return False
+
+    config.update(WHISPARR_INDEXER_CONFIG)
+    request_json(
+        "PUT",
+        f"{WHISPARR_URL}/api/v3/config/indexer",
         WHISPARR_API_KEY,
         config,
     )
@@ -391,6 +428,7 @@ def ensure_prowlarr_application():
 def main():
     changed = False
     changed |= ensure_whisparr_host_config()
+    changed |= ensure_whisparr_indexer_config()
     changed |= ensure_whisparr_root_folder()
     changed |= ensure_whisparr_download_client()
     changed |= ensure_prowlarr_download_client()

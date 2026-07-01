@@ -1,9 +1,82 @@
 ---
 radarr_port: 7878
 sonarr_port: 8989
+whisparr_port: 6969
 
 # When the nightly backlog search fires (after the 02:00 mover and 03:00
-# backup, before peak indexer hours). Radarr first; Sonarr offset to spread
-# indexer API usage.
+# backup, before peak indexer hours). Apps are offset to spread indexer API
+# usage.
 arr_search_schedule: '04:00'
 arr_search_sonarr_delay_minutes: 30
+arr_search_whisparr_delay_minutes: 30
+arr_search_state_dir: /var/lib/arr-search
+arr_search_state_file: "{{ arr_search_state_dir }}/state.json"
+
+# Whisparr can have a large manual/imported backlog. Search a rotating batch
+# instead of firing one all-missing search that can consume a lot of indexer
+# quota in one run. The code search supplements Whisparr's native search for
+# scenes whose indexer release titles use the scene code while Whisparr searches
+# studio/date-derived terms.
+arr_search_whisparr_config_xml: "{{ docker_dir }}/whisparr/config.xml"
+arr_search_prowlarr_config_xml: "{{ docker_dir }}/prowlarr/config.xml"
+arr_search_sabnzbd_config_ini: "{{ docker_dir }}/sabnzbd/sabnzbd.ini"
+arr_search_whisparr_missing_batch_size: 10
+arr_search_whisparr_wanted_page_size: 500
+arr_search_whisparr_code_search_max_grabs_per_item: 2
+arr_search_whisparr_title_search_max_grabs_per_item: 1
+arr_search_whisparr_downloaded_state_limit: 2000
+arr_search_whisparr_import_scan_attempts: 5
+arr_search_prowlarr_url: "http://127.0.0.1:{{ prowlarr_port | default(9696) }}"
+arr_search_prowlarr_download_url: "{{ whisparr_prowlarr_url | default('http://prowlarr:9696') }}"
+arr_search_sabnzbd_url: "http://127.0.0.1:{{ sabnzbd_port | default(8082) }}"
+arr_search_sabnzbd_history_limit: 200
+arr_search_storage_container_path: /storage
+arr_search_storage_host_path: "{{ mergerfs_root }}"
+arr_search_storage_host_uid: "{{ guid }}"
+arr_search_storage_host_gid: 100
+
+arr_search_apps:
+  - name: Radarr
+    enabled: "{{ enable_radarr | default(false) | bool }}"
+    url: "http://127.0.0.1:{{ radarr_port }}"
+    api_key: "{{ radarr_api_key }}"
+    mode: command
+    payload:
+      name: MissingMoviesSearch
+    delay_before_minutes: 0
+
+  - name: Sonarr
+    enabled: "{{ enable_sonarr | default(false) | bool }}"
+    url: "http://127.0.0.1:{{ sonarr_port }}"
+    api_key: "{{ sonarr_api_key }}"
+    mode: command
+    payload:
+      name: MissingEpisodeSearch
+      monitored: true
+    delay_before_minutes: "{{ arr_search_sonarr_delay_minutes }}"
+
+  - name: Whisparr
+    enabled: "{{ enable_whisparr | default(false) | bool }}"
+    url: "http://127.0.0.1:{{ whisparr_port }}"
+    api_key_config_xml: "{{ arr_search_whisparr_config_xml }}"
+    mode: whisparr_code_search_batch
+    command: MoviesSearch
+    native_search: true
+    batch_size: "{{ arr_search_whisparr_missing_batch_size }}"
+    wanted_page_size: "{{ arr_search_whisparr_wanted_page_size }}"
+    prowlarr_url: "{{ arr_search_prowlarr_url }}"
+    prowlarr_download_url: "{{ arr_search_prowlarr_download_url }}"
+    prowlarr_api_key_config_xml: "{{ arr_search_prowlarr_config_xml }}"
+    sabnzbd_url: "{{ arr_search_sabnzbd_url }}"
+    sabnzbd_api_key_config_ini: "{{ arr_search_sabnzbd_config_ini }}"
+    sabnzbd_category: "{{ whisparr_sabnzbd_category | default('whisparr') }}"
+    sabnzbd_history_limit: "{{ arr_search_sabnzbd_history_limit }}"
+    max_grabs_per_item: "{{ arr_search_whisparr_code_search_max_grabs_per_item }}"
+    title_max_grabs_per_item: "{{ arr_search_whisparr_title_search_max_grabs_per_item }}"
+    downloaded_state_limit: "{{ arr_search_whisparr_downloaded_state_limit }}"
+    import_scan_attempts: "{{ arr_search_whisparr_import_scan_attempts }}"
+    storage_container_path: "{{ arr_search_storage_container_path }}"
+    storage_host_path: "{{ arr_search_storage_host_path }}"
+    storage_host_uid: "{{ arr_search_storage_host_uid }}"
+    storage_host_gid: "{{ arr_search_storage_host_gid }}"
+    delay_before_minutes: "{{ arr_search_whisparr_delay_minutes }}"

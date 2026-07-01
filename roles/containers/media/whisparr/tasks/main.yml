@@ -83,6 +83,13 @@
     PROWLARR_DOWNLOAD_CLIENT_MAPPED_CATEGORIES: "{{ whisparr_prowlarr_download_client_mapped_categories | to_json }}"
     WHISPARR_AUTHENTICATION_METHOD: "{{ whisparr_authentication_method }}"
     WHISPARR_AUTHENTICATION_REQUIRED: "{{ whisparr_authentication_required }}"
+    WHISPARR_SEARCH_STUDIO_CODE: "{{ whisparr_search_studio_code }}"
+    WHISPARR_SEARCH_TITLE_ONLY: "{{ whisparr_search_title_only }}"
+    WHISPARR_SEARCH_TITLE_DATE: "{{ whisparr_search_title_date }}"
+    WHISPARR_SEARCH_STUDIO_DATE: "{{ whisparr_search_studio_date }}"
+    WHISPARR_SEARCH_STUDIO_TITLE: "{{ whisparr_search_studio_title }}"
+    WHISPARR_SEARCH_DATE_FORMAT: "{{ whisparr_search_date_format }}"
+    WHISPARR_SEARCH_STUDIO_FORMAT: "{{ whisparr_search_studio_format }}"
   register: whisparr_configure_run
   changed_when: "'changed' in whisparr_configure_run.stdout"
   no_log: true

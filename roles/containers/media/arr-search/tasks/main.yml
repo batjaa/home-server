@@ -1,10 +1,19 @@
 ---
 # Nightly systemd timer that re-searches the monitored-but-missing backlog
-# in Radarr and Sonarr. Contains API keys, hence root-only script.
+# in configured *arr apps. Contains API keys, hence root-only script.
+
+- name: Ensure arr-search state dir exists
+  file:
+    path: "{{ arr_search_state_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  become: yes
 
 - name: Install arr-missing-search script
   template:
-    src: arr-missing-search.sh.j2
+    src: arr-missing-search.py.j2
     dest: /usr/local/sbin/arr-missing-search
     owner: root
     group: root

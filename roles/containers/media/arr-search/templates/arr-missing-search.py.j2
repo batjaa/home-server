@@ -1,0 +1,1025 @@
+#!/usr/bin/env python3
+"""Nightly backlog searches for configured *arr apps."""
+
+import json
+import os
+import re
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+from pathlib import Path
+
+
+APPS = json.loads(r'''{{ arr_search_apps | to_json }}''')
+STATE_FILE = Path("{{ arr_search_state_file }}")
+
+
+def log(message):
+    print(f"[{datetime.now(timezone.utc).astimezone().isoformat()}] {message}", flush=True)
+
+
+def truthy(value):
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() not in {"", "0", "false", "no", "off"}
+
+
+def as_int(value, default=0):
+    if value in (None, ""):
+        return default
+    return int(value)
+
+
+def app_key(app):
+    return str(app["name"]).strip().lower()
+
+
+def redact_url(url):
+    return re.sub(r"([?&](?:apikey|api_key)=)[^&]+", r"\1***", str(url), flags=re.IGNORECASE)
+
+
+def load_state():
+    try:
+        return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"{STATE_FILE} is not valid JSON: {exc}") from exc
+
+
+def save_state(state):
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    tmp = STATE_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(state, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    tmp.replace(STATE_FILE)
+    STATE_FILE.chmod(0o600)
+
+
+def read_api_key_from_config_xml(path):
+    api_key = ET.parse(path).getroot().findtext("ApiKey")
+    if not api_key:
+        raise RuntimeError(f"ApiKey not found in {path}")
+    return api_key
+
+
+def read_api_key_from_config_ini(path):
+    section = ""
+    for raw_line in Path(path).read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith(("#", ";")):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            section = line[1:-1].strip()
+            continue
+        if section != "misc" or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        if key.strip() == "api_key" and value.strip():
+            return value.strip()
+
+    raise RuntimeError(f"misc.api_key not found in {path}")
+
+
+def api_key_for(app):
+    if app.get("api_key"):
+        return app["api_key"]
+    if app.get("api_key_config_xml"):
+        return read_api_key_from_config_xml(app["api_key_config_xml"])
+    raise RuntimeError(f"{app['name']} has no API key source configured")
+
+
+def prefixed_api_key_for(app, prefix):
+    value = app.get(f"{prefix}_api_key")
+    if value:
+        return value
+    value = app.get(f"{prefix}_api_key_config_xml")
+    if value:
+        return read_api_key_from_config_xml(value)
+    value = app.get(f"{prefix}_api_key_config_ini")
+    if value:
+        return read_api_key_from_config_ini(value)
+    raise RuntimeError(f"{app['name']} has no {prefix} API key source configured")
+
+
+def request_json(method, base_url, api_key, path, payload=None, params=None):
+    url = f"{base_url.rstrip('/')}{path}"
+    if params:
+        url = f"{url}?{urllib.parse.urlencode(params)}"
+
+    data = None
+    headers = {"Accept": "application/json", "X-Api-Key": api_key}
+    if payload is not None:
+        headers["Content-Type"] = "application/json"
+        data = json.dumps(payload).encode("utf-8")
+
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            body = response.read()
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace")
+        raise RuntimeError(f"{method} {redact_url(url)} failed: {exc.code} {detail}") from exc
+
+    if not body:
+        return None
+    return json.loads(body.decode("utf-8"))
+
+
+def request_json_url(url):
+    req = urllib.request.Request(url, headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            body = response.read()
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace")
+        raise RuntimeError(f"GET {redact_url(url)} failed: {exc.code} {detail}") from exc
+
+    if not body:
+        return None
+    return json.loads(body.decode("utf-8"))
+
+
+def request_xml_url(url):
+    req = urllib.request.Request(url, headers={"Accept": "application/xml"})
+    try:
+        with urllib.request.urlopen(req, timeout=45) as response:
+            body = response.read()
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace")
+        raise RuntimeError(f"GET {redact_url(url)} failed: {exc.code} {detail}") from exc
+    return ET.fromstring(body)
+
+
+def trigger_command(app, api_key):
+    payload = app["payload"]
+    log(f"Triggering {app['name']} {payload['name']}")
+    request_json("POST", app["url"], api_key, "/api/v3/command", payload=payload)
+
+
+def wanted_missing_records(app, api_key):
+    page_size = as_int(app.get("wanted_page_size"), 500)
+    page = 1
+    records = []
+
+    while True:
+        data = request_json(
+            "GET",
+            app["url"],
+            api_key,
+            "/api/v3/wanted/missing",
+            params={
+                "page": page,
+                "pageSize": page_size,
+                "sortDirection": "ascending",
+            },
+        )
+        page_records = data.get("records", [])
+        records.extend(page_records)
+
+        total = as_int(data.get("totalRecords"), len(records))
+        if len(records) >= total or not page_records:
+            return records, total
+        page += 1
+
+
+def trigger_missing_movie_batch(app, api_key, state):
+    records, total = wanted_missing_records(app, api_key)
+    missing_ids = []
+    for record in records:
+        if not truthy(record.get("monitored", True)) or truthy(record.get("hasFile")):
+            continue
+        movie_id = record.get("movieId") or record.get("id")
+        if movie_id is not None:
+            missing_ids.append(int(movie_id))
+
+    if not missing_ids:
+        log(f"{app['name']} has no monitored missing items")
+        return False
+
+    key = app_key(app)
+    batch_size = min(as_int(app.get("batch_size"), 50), len(missing_ids))
+    offset = as_int(state.get(key, {}).get("offset"), 0) % len(missing_ids)
+    selected = missing_ids[offset : offset + batch_size]
+    if len(selected) < batch_size:
+        selected.extend(missing_ids[: batch_size - len(selected)])
+
+    command = app.get("command", "MoviesSearch")
+    log(
+        f"Triggering {app['name']} {command} for {len(selected)} of "
+        f"{len(missing_ids)} monitored missing items; total wanted records: {total}; offset: {offset}"
+    )
+    request_json(
+        "POST",
+        app["url"],
+        api_key,
+        "/api/v3/command",
+        payload={"name": command, "movieIds": selected},
+    )
+
+    state[key] = {
+        "offset": (offset + batch_size) % len(missing_ids),
+        "last_count": len(missing_ids),
+        "last_run": datetime.now(timezone.utc).isoformat(),
+    }
+    return True
+
+
+def local_name(element):
+    return element.tag.rsplit("}", 1)[-1]
+
+
+def child_text(element, name, default=""):
+    for child in list(element):
+        if local_name(child) == name:
+            return child.text or default
+    return default
+
+
+def first_int(values, default=0):
+    for value in values:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            continue
+    return default
+
+
+def field_value(resource, name, default=None):
+    if name in resource:
+        return resource.get(name)
+    for field in resource.get("fields", []):
+        if field.get("name") == name:
+            return field.get("value", default)
+    return default
+
+
+def as_list(value):
+    if value in (None, ""):
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
+def prowlarr_proxy_id(base_url):
+    parsed = urllib.parse.urlparse(str(base_url))
+    parts = [part for part in parsed.path.split("/") if part]
+    if parts and parts[0].isdigit():
+        return parts[0]
+    return None
+
+
+def configured_prowlarr_indexers(app, api_key):
+    indexers = request_json("GET", app["url"], api_key, "/api/v3/indexer")
+    prowlarr_indexers = []
+
+    for indexer in indexers:
+        base_url = field_value(indexer, "baseUrl")
+        indexer_id = prowlarr_proxy_id(base_url)
+        if not indexer_id:
+            continue
+        if not truthy(indexer.get("enableAutomaticSearch", True)) and not truthy(
+            indexer.get("enableInteractiveSearch", True)
+        ):
+            continue
+
+        categories = []
+        for category in as_list(field_value(indexer, "categories")):
+            try:
+                categories.append(str(int(category)))
+            except (TypeError, ValueError):
+                continue
+
+        prowlarr_indexers.append(
+            {
+                "id": indexer_id,
+                "name": indexer.get("name") or f"Prowlarr {indexer_id}",
+                "categories": categories,
+            }
+        )
+
+    return prowlarr_indexers
+
+
+def code_parts(code):
+    text = str(code or "").strip().upper()
+    if not text:
+        return None
+
+    match = re.search(
+        r"\b([A-Z][A-Z0-9]{1,}(?:[-_.][A-Z0-9]+)*)[-_.\s]+([0-9]{2,8})\b",
+        text,
+    )
+    if not match:
+        compact = re.sub(r"[^A-Z0-9]", "", text)
+        match = re.fullmatch(r"([A-Z]{2,})(0*[0-9]{2,8})", compact)
+        if not match:
+            return None
+
+    prefix = match.group(1).replace(".", "-").replace("_", "-")
+    raw_digits = match.group(2)
+    digits = raw_digits.lstrip("0") or "0"
+    return prefix, digits, raw_digits
+
+
+def scene_code(record):
+    for field in ("code", "title", "sortTitle", "cleanTitle"):
+        value = record.get(field)
+        if code_parts(value):
+            return str(value).strip().upper()
+    return ""
+
+
+def code_query_terms(code):
+    parts = code_parts(code)
+    if not parts:
+        return []
+    prefix, digits, raw_digits = parts
+    terms = [str(code).strip().upper(), f"{prefix}-{raw_digits}", f"{prefix} {raw_digits}", f"{prefix}.{raw_digits}"]
+    if raw_digits == digits:
+        terms.extend([f"{prefix}-{digits}", f"{prefix} {digits}"])
+    unique_terms = []
+    for term in terms:
+        if term and term not in unique_terms:
+            unique_terms.append(term)
+    return unique_terms
+
+
+def canonical_code_name(code):
+    parts = code_parts(code)
+    if not parts:
+        return str(code or "").strip().upper()
+    prefix, _digits, raw_digits = parts
+    return f"{prefix}-{raw_digits}"
+
+
+def title_matches_code(title, code):
+    parts = code_parts(code)
+    if not parts:
+        return False
+    prefix, digits, _raw_digits = parts
+    prefix = re.sub(r"[^A-Z0-9]", "", prefix.upper())
+    compact_title = re.sub(r"[^A-Z0-9]", "", str(title or "").upper())
+    return re.search(rf"{re.escape(prefix)}0*{re.escape(digits)}(?![0-9])", compact_title) is not None
+
+
+TITLE_STOP_WORDS = {
+    "a",
+    "an",
+    "and",
+    "at",
+    "by",
+    "for",
+    "from",
+    "in",
+    "is",
+    "of",
+    "on",
+    "or",
+    "the",
+    "to",
+    "with",
+}
+RELEASE_QUALITY_WORDS = {
+    "480p",
+    "576p",
+    "720p",
+    "1080p",
+    "2160p",
+    "4k",
+    "8k",
+    "h264",
+    "h265",
+    "hevc",
+    "web",
+    "webdl",
+    "webrip",
+    "x264",
+    "x265",
+}
+PACK_WORDS = {"collection", "compilation", "pack"}
+
+
+def text_tokens(value):
+    return re.findall(r"[a-z0-9]+", str(value or "").lower())
+
+
+def meaningful_title_tokens(value):
+    tokens = []
+    for token in text_tokens(value):
+        if token in TITLE_STOP_WORDS or token in RELEASE_QUALITY_WORDS:
+            continue
+        if len(token) < 2:
+            continue
+        tokens.append(token)
+    return tokens
+
+
+def unique_tokens(tokens):
+    unique = []
+    for token in tokens:
+        if token not in unique:
+            unique.append(token)
+    return unique
+
+
+def scene_title_query_terms(record):
+    title = str(record.get("title") or "").strip()
+    terms = [title]
+
+    if " - " in title:
+        terms.append(title.split(" - ", 1)[0].strip())
+
+    code = str(record.get("code") or "").strip()
+    if code and not code_parts(code):
+        terms.append(code)
+
+    unique_terms = []
+    for term in terms:
+        if term and term not in unique_terms:
+            unique_terms.append(term)
+    return unique_terms
+
+
+def scene_release_date(record):
+    value = str(record.get("releaseDate") or "").strip()
+    match = re.match(r"(\d{4}-\d{2}-\d{2})", value)
+    return match.group(1) if match else ""
+
+
+def canonical_scene_name(record):
+    title = str(record.get("title") or "").strip()
+    studio = str(record.get("studioTitle") or "").strip()
+    release_date = scene_release_date(record)
+    if studio and release_date and title:
+        return f"{studio} {release_date} {title}"
+    return title
+
+
+def title_release_score(release_title, record):
+    record_tokens = unique_tokens(meaningful_title_tokens(record.get("title")))
+    if len(record_tokens) < 3:
+        return -1
+
+    release_tokens = meaningful_title_tokens(release_title)
+    release_token_set = set(release_tokens)
+    if PACK_WORDS.intersection(release_token_set) and not PACK_WORDS.intersection(set(record_tokens)):
+        return -1
+
+    missing = [token for token in record_tokens if token not in release_token_set]
+    if missing:
+        return -1
+
+    score = 100
+    record_phrase = " ".join(record_tokens)
+    release_phrase = " ".join(release_tokens)
+    if record_phrase in release_phrase:
+        score += 25
+
+    studio = str(record.get("studioTitle") or "").strip().lower()
+    if studio and studio in release_token_set:
+        score += 10
+
+    release_date = scene_release_date(record)
+    if release_date:
+        compact_date = release_date.replace("-", "")
+        if release_date in str(release_title) or compact_date in re.sub(r"[^0-9]", "", str(release_title)):
+            score += 10
+
+    return score
+
+
+def title_matches_scene(release_title, record):
+    return title_release_score(release_title, record) >= 0
+
+
+def parse_pubdate(value):
+    if not value:
+        return 0
+    try:
+        return int(parsedate_to_datetime(value).timestamp())
+    except (TypeError, ValueError):
+        return 0
+
+
+def parse_newznab_items(root, indexer, prowlarr_download_url):
+    releases = []
+
+    for item in root.findall("./channel/item"):
+        attrs = {}
+        for child in list(item):
+            if local_name(child) != "attr":
+                continue
+            name = child.attrib.get("name")
+            value = child.attrib.get("value")
+            if name and value:
+                attrs.setdefault(name, []).append(value)
+
+        enclosure_url = ""
+        enclosure_length = "0"
+        for child in list(item):
+            if local_name(child) == "enclosure":
+                enclosure_url = child.attrib.get("url", "")
+                enclosure_length = child.attrib.get("length", "0")
+                break
+
+        link = child_text(item, "link") or enclosure_url
+        releases.append(
+            {
+                "title": child_text(item, "title"),
+                "guid": child_text(item, "guid"),
+                "link": rewrite_prowlarr_download_url(link, prowlarr_download_url),
+                "indexer": indexer["name"],
+                "size": first_int(attrs.get("size", []) + [enclosure_length]),
+                "pubdate": child_text(item, "pubDate"),
+                "pubdate_ts": parse_pubdate(child_text(item, "pubDate")),
+            }
+        )
+
+    return releases
+
+
+def rewrite_prowlarr_download_url(url, prowlarr_download_url):
+    if not url:
+        return ""
+    parsed_url = urllib.parse.urlsplit(url)
+    parsed_base = urllib.parse.urlsplit(prowlarr_download_url.rstrip("/"))
+    if not parsed_url.scheme:
+        return urllib.parse.urljoin(prowlarr_download_url.rstrip("/") + "/", url.lstrip("/"))
+    return urllib.parse.urlunsplit(
+        (parsed_base.scheme, parsed_base.netloc, parsed_url.path, parsed_url.query, "")
+    )
+
+
+def release_key(release):
+    return (release.get("guid") or release.get("link") or release.get("title") or "").strip().lower()
+
+
+def search_code_releases(app, prowlarr_api_key, indexers, code):
+    prowlarr_url = app["prowlarr_url"].rstrip("/")
+    prowlarr_download_url = app.get("prowlarr_download_url", prowlarr_url).rstrip("/")
+    candidates = {}
+
+    for indexer in indexers:
+        categories = ",".join(indexer["categories"])
+        for term in code_query_terms(code):
+            params = {"t": "search", "q": term, "apikey": prowlarr_api_key}
+            if categories:
+                params["cat"] = categories
+            url = f"{prowlarr_url}/{indexer['id']}/api?{urllib.parse.urlencode(params)}"
+
+            try:
+                root = request_xml_url(url)
+            except Exception as exc:
+                log(f"{app['name']} code search {code} failed on {indexer['name']}: {exc}")
+                continue
+
+            for release in parse_newznab_items(root, indexer, prowlarr_download_url):
+                if not release["link"] or not title_matches_code(release["title"], code):
+                    continue
+                release["nzbname"] = canonical_code_name(code)
+                candidates.setdefault(release_key(release), release)
+
+    return sorted(
+        candidates.values(),
+        key=lambda release: (release.get("pubdate_ts", 0), release.get("size", 0)),
+        reverse=True,
+    )
+
+
+def search_title_releases(app, prowlarr_api_key, indexers, record):
+    prowlarr_url = app["prowlarr_url"].rstrip("/")
+    prowlarr_download_url = app.get("prowlarr_download_url", prowlarr_url).rstrip("/")
+    candidates = {}
+    nzbname = canonical_scene_name(record)
+
+    for indexer in indexers:
+        categories = ",".join(indexer["categories"])
+        for term in scene_title_query_terms(record):
+            params = {"t": "search", "q": term, "apikey": prowlarr_api_key}
+            if categories:
+                params["cat"] = categories
+            url = f"{prowlarr_url}/{indexer['id']}/api?{urllib.parse.urlencode(params)}"
+
+            try:
+                root = request_xml_url(url)
+            except Exception as exc:
+                log(f"{app['name']} title search for movie {record['_arr_search_movie_id']} failed on {indexer['name']}: {exc}")
+                continue
+
+            for release in parse_newznab_items(root, indexer, prowlarr_download_url):
+                if not release["link"] or not title_matches_scene(release["title"], record):
+                    continue
+                release["nzbname"] = nzbname
+                release["title_score"] = title_release_score(release["title"], record)
+                candidates.setdefault(release_key(release), release)
+
+    return sorted(
+        candidates.values(),
+        key=lambda release: (
+            release.get("title_score", 0),
+            release.get("pubdate_ts", 0),
+            release.get("size", 0),
+        ),
+        reverse=True,
+    )
+
+
+def format_size(size):
+    size = int(size or 0)
+    if size <= 0:
+        return "unknown size"
+    gib = size / (1024 ** 3)
+    return f"{gib:.1f} GiB"
+
+
+def sabnzbd_add_url(app, sabnzbd_api_key, release):
+    params = {
+        "mode": "addurl",
+        "name": release["link"],
+        "nzbname": release.get("nzbname") or release["title"],
+        "cat": app.get("sabnzbd_category", "whisparr"),
+        "apikey": sabnzbd_api_key,
+        "output": "json",
+    }
+    url = f"{app['sabnzbd_url'].rstrip('/')}/api?{urllib.parse.urlencode(params)}"
+    response = request_json_url(url) or {}
+    if response.get("status") not in (True, "true", "True"):
+        raise RuntimeError(f"SABnzbd rejected addurl for {release['guid'] or release['title']}: {response}")
+    return response
+
+
+def sabnzbd_history(app, sabnzbd_api_key):
+    params = {
+        "mode": "history",
+        "limit": as_int(app.get("sabnzbd_history_limit"), 200),
+        "apikey": sabnzbd_api_key,
+        "output": "json",
+    }
+    url = f"{app['sabnzbd_url'].rstrip('/')}/api?{urllib.parse.urlencode(params)}"
+    data = request_json_url(url) or {}
+    return data.get("history", {}).get("slots", [])
+
+
+def sabnzbd_queue(app, sabnzbd_api_key):
+    params = {
+        "mode": "queue",
+        "limit": 9999,
+        "apikey": sabnzbd_api_key,
+        "output": "json",
+    }
+    url = f"{app['sabnzbd_url'].rstrip('/')}/api?{urllib.parse.urlencode(params)}"
+    data = request_json_url(url) or {}
+    return data.get("queue", {}).get("slots", [])
+
+
+def whisparr_movie_has_file(app, api_key, movie_id):
+    movie = request_json("GET", app["url"], api_key, f"/api/v3/movie/{movie_id}")
+    return truthy(movie.get("hasFile"))
+
+
+def container_to_host_path(app, path):
+    container_prefix = str(app.get("storage_container_path", "/storage")).rstrip("/")
+    host_prefix = app.get("storage_host_path")
+    if not host_prefix or not path:
+        return ""
+    if path == container_prefix:
+        return str(host_prefix)
+    if path.startswith(container_prefix + "/"):
+        return str(host_prefix).rstrip("/") + path[len(container_prefix) :]
+    return ""
+
+
+def ensure_host_dir_for_container_path(app, container_path):
+    host_path = container_to_host_path(app, container_path)
+    if not host_path:
+        return
+
+    path = Path(host_path)
+    path.mkdir(parents=True, exist_ok=True)
+    path.chmod(0o775)
+
+    uid = app.get("storage_host_uid")
+    gid = app.get("storage_host_gid")
+    if uid not in (None, "") and gid not in (None, ""):
+        os.chown(path, int(uid), int(gid))
+
+
+def trigger_downloaded_movie_scan(app, api_key, path):
+    request_json(
+        "POST",
+        app["url"],
+        api_key,
+        "/api/v3/command",
+        payload={"name": "DownloadedMoviesScan", "path": path},
+    )
+
+
+def process_completed_whisparr_downloads(app, api_key, sabnzbd_api_key, app_state):
+    downloaded = app_state.get("downloaded_release_guids", {})
+    if not downloaded:
+        return False
+
+    history = sabnzbd_history(app, sabnzbd_api_key)
+    history_by_id = {slot.get("nzo_id"): slot for slot in history if slot.get("nzo_id")}
+    queue_ids = {slot.get("nzo_id") for slot in sabnzbd_queue(app, sabnzbd_api_key) if slot.get("nzo_id")}
+    max_attempts = max(as_int(app.get("import_scan_attempts"), 5), 0)
+    changed = False
+    scanned = 0
+    imported = 0
+    pruned = 0
+
+    for release_key, release_state in list(downloaded.items()):
+        movie_id = release_state.get("movie_id")
+        sabnzbd_ids = release_state.get("sabnzbd_ids") or []
+        if not movie_id or not sabnzbd_ids:
+            continue
+
+        if release_state.get("imported_at"):
+            continue
+
+        if not any(sabnzbd_id in history_by_id or sabnzbd_id in queue_ids for sabnzbd_id in sabnzbd_ids):
+            if whisparr_movie_has_file(app, api_key, movie_id):
+                release_state["imported_at"] = datetime.now(timezone.utc).isoformat()
+                imported += 1
+            else:
+                downloaded.pop(release_key, None)
+                pruned += 1
+            changed = True
+            continue
+
+        completed_slots = []
+        for sabnzbd_id in sabnzbd_ids:
+            slot = history_by_id.get(sabnzbd_id)
+            if not slot:
+                continue
+
+            release_state["sabnzbd_status"] = slot.get("status")
+            if slot.get("status") != "Completed" or not slot.get("storage"):
+                changed = True
+                continue
+            completed_slots.append(slot)
+
+        if not completed_slots:
+            continue
+
+        if whisparr_movie_has_file(app, api_key, movie_id):
+            release_state["imported_at"] = datetime.now(timezone.utc).isoformat()
+            imported += 1
+            changed = True
+            continue
+
+        for slot in completed_slots:
+            attempts = as_int(release_state.get("import_scan_attempts"), 0)
+            if max_attempts and attempts >= max_attempts:
+                continue
+
+            ensure_host_dir_for_container_path(app, release_state.get("movie_path", ""))
+            trigger_downloaded_movie_scan(app, api_key, slot["storage"])
+            release_state["completed_storage"] = slot["storage"]
+            release_state["import_scan_attempts"] = attempts + 1
+            release_state["last_import_scan_at"] = datetime.now(timezone.utc).isoformat()
+            scanned += 1
+            changed = True
+
+    if scanned or imported or pruned:
+        log(
+            f"{app['name']} completed-download import scan: "
+            f"{scanned} scan(s) triggered, {imported} item(s) already imported, "
+            f"{pruned} stale state entries pruned"
+        )
+    return changed
+
+
+def requested_item_ids():
+    raw = os.environ.get("ARR_SEARCH_ITEM_IDS") or os.environ.get("ARR_SEARCH_MOVIE_IDS") or ""
+    ids = set()
+    for value in raw.replace(",", " ").split():
+        try:
+            ids.add(int(value))
+        except ValueError:
+            continue
+    return ids
+
+
+def select_missing_records(app, records, state):
+    missing = []
+    for record in records:
+        if not truthy(record.get("monitored", True)) or truthy(record.get("hasFile")):
+            continue
+        movie_id = record.get("movieId") or record.get("id")
+        if movie_id is not None:
+            record["_arr_search_movie_id"] = int(movie_id)
+            missing.append(record)
+
+    target_ids = requested_item_ids()
+    if target_ids:
+        return [record for record in missing if record["_arr_search_movie_id"] in target_ids], False, len(missing), 0
+
+    if not missing:
+        return [], True, 0, 0
+
+    key = app_key(app)
+    batch_size = min(as_int(app.get("batch_size"), 50), len(missing))
+    offset = as_int(state.get(key, {}).get("offset"), 0) % len(missing)
+    selected = missing[offset : offset + batch_size]
+    if len(selected) < batch_size:
+        selected.extend(missing[: batch_size - len(selected)])
+    return selected, True, len(missing), offset
+
+
+def prune_download_state(downloaded, limit):
+    if len(downloaded) <= limit:
+        return downloaded
+    items = sorted(downloaded.items(), key=lambda item: item[1].get("queued_at", ""))
+    return dict(items[-limit:])
+
+
+def trigger_whisparr_code_search_batch(app, api_key, state):
+    records, total = wanted_missing_records(app, api_key)
+    selected, advance_offset, missing_count, offset = select_missing_records(app, records, state)
+    key = app_key(app)
+    app_state = state.setdefault(key, {})
+    prowlarr_api_key = prefixed_api_key_for(app, "prowlarr")
+    sabnzbd_api_key = prefixed_api_key_for(app, "sabnzbd")
+    changed = process_completed_whisparr_downloads(app, api_key, sabnzbd_api_key, app_state)
+
+    if not selected:
+        if requested_item_ids():
+            log(f"{app['name']} had no matching monitored missing items for requested ids")
+        else:
+            log(f"{app['name']} has no monitored missing items")
+        return changed
+
+    batch_size = len(selected)
+    command = app.get("command", "MoviesSearch")
+
+    if truthy(app.get("native_search", True)):
+        movie_ids = [record["_arr_search_movie_id"] for record in selected]
+        log(
+            f"Triggering {app['name']} {command} for {len(movie_ids)} of "
+            f"{missing_count} monitored missing items; total wanted records: {total}; offset: {offset}"
+        )
+        request_json(
+            "POST",
+            app["url"],
+            api_key,
+            "/api/v3/command",
+            payload={"name": command, "movieIds": movie_ids},
+        )
+
+    indexers = configured_prowlarr_indexers(app, api_key)
+    if not indexers:
+        raise RuntimeError(f"{app['name']} has no Prowlarr-backed indexers configured")
+
+    downloaded = app_state.get("downloaded_release_guids", {})
+    max_code_grabs = max(as_int(app.get("max_grabs_per_item"), 1), 0)
+    max_title_grabs = max(as_int(app.get("title_max_grabs_per_item"), 1), 0)
+    queued = 0
+    code_searched = 0
+    title_searched = 0
+    skipped_without_code = 0
+    already_queued = 0
+
+    for record in selected:
+        code = scene_code(record)
+        movie_id = record["_arr_search_movie_id"]
+        search_label = code
+        search_kind = "code"
+
+        if code:
+            code_searched += 1
+            max_grabs = max_code_grabs
+            releases = search_code_releases(app, prowlarr_api_key, indexers, code)
+        else:
+            title_terms = scene_title_query_terms(record)
+            if not title_terms or not canonical_scene_name(record):
+                skipped_without_code += 1
+                continue
+
+            title_searched += 1
+            max_grabs = max_title_grabs
+            search_kind = "title"
+            search_label = f"movie {movie_id}"
+            releases = search_title_releases(app, prowlarr_api_key, indexers, record)
+
+        grabs_for_item = sum(
+            1
+            for release_state in downloaded.values()
+            if release_state.get("movie_id") == movie_id
+            or (
+                release_state.get("movie_id") is None
+                and release_state.get("code") == code
+            )
+        )
+        for release in releases:
+            key_for_release = release_key(release)
+            if not key_for_release:
+                continue
+            if key_for_release in downloaded:
+                already_queued += 1
+                continue
+            if max_grabs and grabs_for_item >= max_grabs:
+                break
+
+            sab_response = sabnzbd_add_url(app, sabnzbd_api_key, release)
+            downloaded[key_for_release] = {
+                "code": code,
+                "search_kind": search_kind,
+                "movie_id": movie_id,
+                "movie_path": record.get("path"),
+                "movie_title": record.get("title"),
+                "indexer": release["indexer"],
+                "release_title": release["title"],
+                "nzbname": release.get("nzbname") or release["title"],
+                "queued_at": datetime.now(timezone.utc).isoformat(),
+                "sabnzbd_ids": sab_response.get("nzo_ids", []),
+            }
+            queued += 1
+            grabs_for_item += 1
+            log(
+                f"Queued {app['name']} {search_label} from {release['indexer']} "
+                f"as {release.get('nzbname') or release['title']} "
+                f"({format_size(release.get('size'))})"
+            )
+
+    app_state["downloaded_release_guids"] = prune_download_state(
+        downloaded, as_int(app.get("downloaded_state_limit"), 2000)
+    )
+    if advance_offset:
+        app_state["offset"] = (offset + batch_size) % missing_count
+    app_state["last_count"] = missing_count
+    app_state["last_run"] = datetime.now(timezone.utc).isoformat()
+    app_state["last_code_search"] = {
+        "searched": code_searched,
+        "title_searched": title_searched,
+        "queued": queued,
+        "already_queued": already_queued,
+        "skipped_without_code": skipped_without_code,
+    }
+    log(
+        f"{app['name']} supplemental search checked {code_searched} code item(s) "
+        f"and {title_searched} title item(s), queued {queued} release(s), "
+        f"skipped {skipped_without_code} without usable code/title terms"
+    )
+    return True
+
+
+def maybe_sleep(app, only):
+    if only:
+        return
+    minutes = as_int(app.get("delay_before_minutes"), 0)
+    if minutes <= 0:
+        return
+    log(f"Sleeping {minutes}m before {app['name']} to spread indexer load")
+    time.sleep(minutes * 60)
+
+
+def main():
+    only = os.environ.get("ARR_SEARCH_ONLY", "").strip().lower()
+    state = load_state()
+    changed_state = False
+    ran = 0
+
+    for app in APPS:
+        name = app["name"]
+        if not truthy(app.get("enabled", True)):
+            log(f"Skipping {name}: disabled")
+            continue
+        if only and app_key(app) != only:
+            continue
+
+        maybe_sleep(app, only)
+        key = api_key_for(app)
+        mode = app.get("mode", "command")
+        if mode == "command":
+            trigger_command(app, key)
+        elif mode == "missing_movie_batch":
+            changed_state |= trigger_missing_movie_batch(app, key, state)
+        elif mode == "whisparr_code_search_batch":
+            changed_state |= trigger_whisparr_code_search_batch(app, key, state)
+        else:
+            raise RuntimeError(f"Unknown arr-search mode for {name}: {mode}")
+        ran += 1
+
+    if changed_state:
+        save_state(state)
+    if only and ran == 0:
+        raise RuntimeError(f"No enabled arr-search app matched ARR_SEARCH_ONLY={only!r}")
+    log("Done")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        log(f"ERROR: {exc}")
+        sys.exit(1)
