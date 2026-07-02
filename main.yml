@@ -285,12 +285,11 @@
       #   when: enable_deconz | default(false)
 
       - role: containers/homeautomation/homeassistant
-        become: no
         tags:
             - homeassistant
             - smarthome
             - containers
-        when: enable_homeassistant | default(false)
+        when: enable_homeassistant | default(false) | bool
 
       #
       # Services

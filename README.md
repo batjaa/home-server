@@ -8,7 +8,7 @@ Credits: [notthebee](https://github.com/notthebee) & [geerlingguy](https://githu
 
 | Host | Hardware | IP | What runs here |
 |------|----------|----|----|
-| `andromon` | x86_64 i5-11600K (Ubuntu 22.04) | `192.168.50.20` | SWAG, Plex, Jellyfin, Stash, Immich, Nextcloud, *arr stack (Prowlarr/Radarr/Sonarr/Whisparr/SABnzbd/Bazarr/Seerr/Decluttarr), Paperless, monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage |
+| `andromon` | x86_64 i5-11600K (Ubuntu 22.04) | `192.168.50.20` | SWAG, Home Assistant, Plex, Jellyfin, Stash, Immich, Nextcloud, *arr stack (Prowlarr/Radarr/Sonarr/Whisparr/SABnzbd/Bazarr/Seerr/Decluttarr), Paperless, monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage |
 | `tentomon` | Raspberry Pi 4 4GB (Flirc case) | `192.168.50.10` | Pi-hole DNS, Cloudflare DDNS, Cloudflare DNS records, Uptime Kuma, node_exporter |
 | `greymon` | x86_64 ASUS (Windows) | `192.168.50.30` | LLM inference, image/video generation pipeline, gaming. Not Ansible-managed. |
 | `wormmon` | x86_64 ASUS AMD *(planned)* | `192.168.50.40` | Web app hosting (Coolify) for side projects. Admin at `deploy.batjaa.site` via SWAG on `andromon`, previews under `*.preview.batjaa.site`, SSH stays on `22` for Coolify localhost management. |
@@ -42,7 +42,7 @@ MikroTik CRS326-24G-2S+RM ← managed switch
     │     └── Uptime Kuma (status.batjaa.site)
     ├── andromon       (192.168.50.20)  i5-11600K — the everything box
     │     ├── SWAG (reverse proxy + Let's Encrypt wildcard)
-    │     ├── Plex / Jellyfin / Stash / Navidrome / Immich / Nextcloud / Paperless
+    │     ├── Home Assistant / Plex / Jellyfin / Stash / Navidrome / Immich / Nextcloud / Paperless
     │     ├── *arr stack (Prowlarr / Radarr / Sonarr / Whisparr / SABnzbd / Bazarr / Seerr / Decluttarr)
     │     └── Prometheus / Grafana / cAdvisor + storage (mergerfs + btrfs)
     ├── kvm.andromon   (192.168.50.21)  PiKVM — andromon OOB
@@ -643,6 +643,12 @@ What each thing in the stack is for. Per-service runbooks (config steps not yet 
 | **Immich** | `photos.batjaa.site` | Photo library + ML face/object recognition. Postgres + Redis + ML service. Replaced PhotoPrism. |
 | **Nextcloud** | `nextcloud.batjaa.site` | Files, calendar, contacts. MariaDB-backed. Phone CalDAV/CardDAV target. |
 | **Paperless** | `paperless.batjaa.site` | Document OCR + archive. Postgres + Redis. |
+
+### Smart home
+
+| Service | Subdomain | What it does |
+|---|---|---|
+| **Home Assistant** | `hass.batjaa.site` | Smart home controller and automation brain. Runs on `andromon` with host networking for LAN discovery; Google Home can remain the voice/family UI via Home Assistant Cloud or manual Google Assistant setup. |
 
 ### Movie/TV automation (*arr stack)
 

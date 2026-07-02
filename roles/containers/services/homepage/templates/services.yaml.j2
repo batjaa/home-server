@@ -77,6 +77,13 @@
           password: {{ nextcloud_admin_password }}
 
 - Automation:
+{% if enable_homeassistant | default(false) | bool %}
+    - Home Assistant:
+        icon: home-assistant.png
+        href: https://hass.batjaa.site
+        description: smart home control
+        siteMonitor: http://127.0.0.1:{{ homeassistant_port | default(8123) }}/
+{% endif %}
     - Seerr:
         icon: jellyseerr.png
         href: https://request.batjaa.site

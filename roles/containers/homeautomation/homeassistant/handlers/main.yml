@@ -1,0 +1,6 @@
+---
+# Plain `docker restart` avoids docker_container treating the handler's minimal
+# spec as the desired full container definition.
+- name: restart homeassistant
+  command: docker restart {{ container_name }}
+  changed_when: true

@@ -1,16 +1,141 @@
 ---
-# More information: https://www.home-assistant.io/installation/raspberrypi#docker-compose
-- name: Make sure the {{ container_name }} container is created and running
+# Home Assistant's official container install uses host networking. That is
+# intentional here: LAN discovery, Bluetooth/D-Bus, and Google local fulfillment
+# are materially worse behind Docker bridge networking.
+- name: Stop Home Assistant before resetting config
   docker_container:
-      name: '{{ container_name }}'
-      image: 'homeassistant/home-assistant:stable'
-      networks:
-          - name: swag_internal_macvlan
-            ipv4_address: '{{ ip_address }}'
-      pull: yes
-      state: 'started'
-      env:
-          'TZ': '{{ timezone }}'
-      volumes:
-          - '{{ docker_dir }}/{{ container_name }}/config:/config'
-      restart_policy: unless-stopped
+    name: "{{ container_name }}"
+    state: absent
+  when: homeassistant_reset_config | bool
+
+- name: Reset Home Assistant config when requested
+  file:
+    path: "{{ homeassistant_config_dir }}"
+    state: absent
+  when: homeassistant_reset_config | bool
+
+- name: Ensure Home Assistant config dir exists
+  file:
+    path: "{{ homeassistant_config_dir }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+
+- name: Seed Home Assistant baseline configuration
+  copy:
+    dest: "{{ homeassistant_config_dir }}/configuration.yaml"
+    owner: "{{ username }}"
+    group: users
+    mode: '0664'
+    force: false
+    content: |
+      # Loads default set of integrations. Do not remove.
+      default_config:
+
+      frontend:
+
+      automation: !include automations.yaml
+      script: !include scripts.yaml
+      scene: !include scenes.yaml
+
+      http:
+        use_x_forwarded_for: true
+        trusted_proxies:
+      {% for proxy in homeassistant_trusted_proxies %}
+          - {{ proxy }}
+      {% endfor %}
+  notify: restart homeassistant
+
+- name: Ensure Home Assistant include files exist
+  copy:
+    dest: "{{ homeassistant_config_dir }}/{{ item.name }}"
+    owner: "{{ username }}"
+    group: users
+    mode: '0664'
+    force: false
+    content: "{{ item.content }}"
+  loop:
+    - { name: automations.yaml, content: "[]\n" }
+    - { name: scripts.yaml, content: "{}\n" }
+    - { name: scenes.yaml, content: "[]\n" }
+
+- name: Check for existing Home Assistant HTTP config
+  command: "grep -Eq '^http:' {{ homeassistant_config_dir }}/configuration.yaml"
+  register: homeassistant_http_config
+  failed_when: false
+  changed_when: false
+
+- name: Add reverse proxy config to existing Home Assistant config
+  blockinfile:
+    path: "{{ homeassistant_config_dir }}/configuration.yaml"
+    marker: "# {mark} ANSIBLE MANAGED HOME-SERVER REVERSE PROXY"
+    block: |
+      http:
+        use_x_forwarded_for: true
+        trusted_proxies:
+      {% for proxy in homeassistant_trusted_proxies %}
+          - {{ proxy }}
+      {% endfor %}
+  when: homeassistant_http_config.rc != 0
+  notify: restart homeassistant
+
+- name: Ensure reverse proxy forwarding is enabled in existing Home Assistant HTTP config
+  lineinfile:
+    path: "{{ homeassistant_config_dir }}/configuration.yaml"
+    regexp: '^  use_x_forwarded_for:'
+    line: '  use_x_forwarded_for: true'
+    insertafter: '^http:'
+  when: homeassistant_http_config.rc == 0
+  notify: restart homeassistant
+
+- name: Check for existing Home Assistant trusted proxy list
+  command: "grep -Eq '^  trusted_proxies:' {{ homeassistant_config_dir }}/configuration.yaml"
+  register: homeassistant_trusted_proxy_config
+  failed_when: false
+  changed_when: false
+  when: homeassistant_http_config.rc == 0
+
+- name: Ensure trusted proxy list exists in existing Home Assistant HTTP config
+  lineinfile:
+    path: "{{ homeassistant_config_dir }}/configuration.yaml"
+    line: '  trusted_proxies:'
+    insertafter: '^  use_x_forwarded_for:'
+  when:
+    - homeassistant_http_config.rc == 0
+    - (homeassistant_trusted_proxy_config.rc | default(1)) != 0
+  notify: restart homeassistant
+
+- name: Trust SWAG reverse proxy addresses in existing Home Assistant HTTP config
+  lineinfile:
+    path: "{{ homeassistant_config_dir }}/configuration.yaml"
+    line: "    - {{ item }}"
+    insertafter: '^  trusted_proxies:'
+  loop: "{{ homeassistant_trusted_proxies }}"
+  when: homeassistant_http_config.rc == 0
+  notify: restart homeassistant
+
+- name: Make sure the Home Assistant container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "{{ homeassistant_image }}"
+    pull: yes
+    state: started
+    network_mode: host
+    privileged: true
+    env:
+      TZ: "{{ timezone }}"
+    volumes:
+      - "{{ homeassistant_config_dir }}:/config"
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/run/dbus:/run/dbus:ro"
+    restart_policy: unless-stopped
+
+- name: Wait for Home Assistant HTTP to be ready
+  uri:
+    url: "http://127.0.0.1:{{ homeassistant_port }}/"
+    status_code: [200, 302, 401]
+  register: homeassistant_http
+  retries: 60
+  delay: 2
+  until: homeassistant_http.status in [200, 302, 401]

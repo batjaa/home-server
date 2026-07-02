@@ -36,6 +36,7 @@ ansible -m debug -a "var=<key>" <host>
 
 | URL | Service |
 |-----|---------|
+| `hass.batjaa.site` | Home Assistant |
 | `grafana.batjaa.site` | Grafana |
 | `stash.batjaa.site` | Stash |
 | `prowlarr.batjaa.site` | Prowlarr |
@@ -125,6 +126,30 @@ DNS-01 wildcard cert challenge. Lives in
 `roles/network/swag/templates/proxy-confs/`.
 
 **Manual:** make sure router forwards `:443/tcp` to `192.168.50.20`.
+
+### Home Assistant — `https://hass.batjaa.site`
+
+**Auth:** created during Home Assistant onboarding and stored under
+`/opt/docker/data/homeassistant/config`.
+
+**Auto-configured:**
+- Official `ghcr.io/home-assistant/home-assistant:stable` container
+- Host networking on `andromon` for LAN discovery, Bluetooth/D-Bus, and
+  Google local fulfillment
+- Reverse proxy through SWAG at `hass.batjaa.site`
+- Config seed includes `http.use_x_forwarded_for` and trusted proxy
+  settings for SWAG when starting from an empty config dir
+
+**Manual:**
+- Complete the first-run onboarding if there is no existing config.
+- Preferred Google Home path: subscribe/sign in to Home Assistant Cloud,
+  enable Google Assistant under Settings → Voice assistants, and expose only
+  the entities you want Google Home to control.
+- Manual Google Assistant setup is possible, but requires making
+  `hass.batjaa.site` publicly resolvable via Cloudflare and configuring the
+  Google Home Developer Console.
+- The role preserves existing config by default. To start over intentionally,
+  run the tag once with `-e homeassistant_reset_config=true`.
 
 ### Postmark (SMTP relay)
 

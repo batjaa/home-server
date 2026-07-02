@@ -1,9 +1,17 @@
 ---
 container_name: homeassistant
 
-url: 'homeassistant.{{ host_local }}'
+homeassistant_image: ghcr.io/home-assistant/home-assistant:stable
+homeassistant_port: 8123
+homeassistant_config_dir: "{{ docker_dir }}/{{ container_name }}/config"
 
-ip_address: '{{ swag_base }}.38'
+# Keep the existing HA state by default. Run the role with
+# `-e homeassistant_reset_config=true` only when intentionally starting over.
+homeassistant_reset_config: false
+
+homeassistant_trusted_proxies:
+    - 127.0.0.1
+    - ::1
 
 homer_category: smarthome
 
