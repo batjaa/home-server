@@ -104,33 +104,11 @@ for entry in $BACKUP_DRIVES; do
   rmdir "$fsroot" 2>/dev/null || true
 done
 
-# ── 2a. rsync /mnt/storage/ → /mnt/backup_pool/ ──────────────────────────
-log "rsync ${SOURCE_DIR}/ -> ${DEST_DIR}/ (chown=${CHOWN_SPEC})"
-rsync_status=0
-# shellcheck disable=SC2086
-rsync -aHAXE --delete --info=stats2 \
-  --chown="$CHOWN_SPEC" \
-  $RSYNC_EXTRA_OPTS \
-  "${SOURCE_DIR}/" "${DEST_DIR}/" \
-  >>"$LOGFILE" 2>&1 || rsync_status=$?
-
-# rsync exit 24 = "some files vanished" — normal when backing up live services
-# (Nextcloud/Plex creating temp files that get deleted during the run).
-# Treat as a warning and continue.
-if [[ $rsync_status -eq 24 ]]; then
-  log "WARN: rsync exit 24 (vanished source files) — treating as success"
-  rsync_status=0
-fi
-
-if [[ $rsync_status -ne 0 ]]; then
-  log "ERROR: rsync failed with exit ${rsync_status}; NOT pruning snapshots"
-  exit "$rsync_status"
-fi
-
-# ── 2b. rsync /opt/docker/data/ → /mnt/backup_pool/_docker_data/ ─────────
+# ── 2a. rsync /opt/docker/data/ → /mnt/backup_pool/_docker_data/ ─────────
 # Captures app config + small DBs (API keys, indexers, libraries) so a
 # disaster recovery is "restore + ansible-playbook" rather than clicking
-# through every service's wizard.
+# through every service's wizard. Runs BEFORE the bulk media rsync so a
+# full pool or media I/O error can never starve the DR-critical copy.
 mkdir -p "${DOCKER_DATA_DEST}"
 log "rsync ${DOCKER_DATA_SRC}/ -> ${DOCKER_DATA_DEST}/"
 docker_rsync_status=0
@@ -153,6 +131,32 @@ fi
 if [[ $docker_rsync_status -ne 0 ]]; then
   log "ERROR: docker_data rsync failed with exit ${docker_rsync_status}; NOT pruning snapshots"
   exit "$docker_rsync_status"
+fi
+
+# ── 2b. rsync /mnt/storage/ → /mnt/backup_pool/ ──────────────────────────
+# /_docker_data is excluded so --delete can't remove the copy 2a just wrote
+# (it has no counterpart under /mnt/storage).
+log "rsync ${SOURCE_DIR}/ -> ${DEST_DIR}/ (chown=${CHOWN_SPEC})"
+rsync_status=0
+# shellcheck disable=SC2086
+rsync -aHAXE --delete --info=stats2 \
+  --chown="$CHOWN_SPEC" \
+  --exclude='/_docker_data' \
+  $RSYNC_EXTRA_OPTS \
+  "${SOURCE_DIR}/" "${DEST_DIR}/" \
+  >>"$LOGFILE" 2>&1 || rsync_status=$?
+
+# rsync exit 24 = "some files vanished" — normal when backing up live services
+# (Nextcloud/Plex creating temp files that get deleted during the run).
+# Treat as a warning and continue.
+if [[ $rsync_status -eq 24 ]]; then
+  log "WARN: rsync exit 24 (vanished source files) — treating as success"
+  rsync_status=0
+fi
+
+if [[ $rsync_status -ne 0 ]]; then
+  log "ERROR: rsync failed with exit ${rsync_status}; NOT pruning snapshots"
+  exit "$rsync_status"
 fi
 
 # ── 3. Prune snapshots older than RETAIN_DAYS on each backup drive ───────
