@@ -596,7 +596,7 @@ After the backup drives exist, layer in:
 |-------|---------|--------------|
 | **3a — pool** | `... -e storage_phase=pool` | mergerfs union of `/mnt/backup{1,2,3}` → `/mnt/backup_pool` |
 | **3b — mover** | `... -e storage_phase=mover` | systemd timer (daily 02:00) moves cache files >7d old onto sda1 |
-| **3c — backup** | `... -e storage_phase=backup` | systemd timer (daily 03:00) rsyncs `/mnt/storage` + `/opt/docker/data` → `/mnt/backup_pool` with btrfs snapshots, 14-day retention |
+| **3c — backup** | `... -e storage_phase=backup` | systemd timer (daily 03:00) rsyncs `/mnt/storage` + `/opt/docker/data` → `/mnt/backup_pool` with btrfs snapshots, 14-day retention. *arr-managed media (`Media/Movies`, `Media/TV`, `Media/Whisparr`) and `usenet/` are excluded (`rsync_extra_opts` in andromon host_vars) — re-acquirable via the *arr catalogs in `_docker_data` |
 | **3d — health** | `... -e storage_phase=health` | smartd config, btrfs scrub timers per mount, Prometheus textfile metrics |
 
 All four are idempotent and non-destructive — safe to re-run.
