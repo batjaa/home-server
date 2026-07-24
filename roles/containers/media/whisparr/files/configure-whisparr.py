@@ -54,6 +54,8 @@ WHISPARR_AUTHENTICATION_REQUIRED = env(
     "WHISPARR_AUTHENTICATION_REQUIRED",
     "disabledForLocalAddresses",
 )
+WHISPARR_LOG_LEVEL = env("WHISPARR_LOG_LEVEL", "info")
+WHISPARR_CONSOLE_LOG_LEVEL = env("WHISPARR_CONSOLE_LOG_LEVEL", "info")
 WHISPARR_INDEXER_CONFIG = {
     "searchStudioCode": env_bool("WHISPARR_SEARCH_STUDIO_CODE", "true"),
     "searchTitleOnly": env_bool("WHISPARR_SEARCH_TITLE_ONLY", "false"),
@@ -165,14 +167,16 @@ def ensure_whisparr_host_config():
         f"{WHISPARR_URL}/api/v3/config/host",
         WHISPARR_API_KEY,
     )
-    if (
-        config.get("authenticationMethod") == WHISPARR_AUTHENTICATION_METHOD
-        and config.get("authenticationRequired") == WHISPARR_AUTHENTICATION_REQUIRED
-    ):
+    expected = {
+        "authenticationMethod": WHISPARR_AUTHENTICATION_METHOD,
+        "authenticationRequired": WHISPARR_AUTHENTICATION_REQUIRED,
+        "logLevel": WHISPARR_LOG_LEVEL,
+        "consoleLogLevel": WHISPARR_CONSOLE_LOG_LEVEL,
+    }
+    if all(config.get(key) == value for key, value in expected.items()):
         return False
 
-    config["authenticationMethod"] = WHISPARR_AUTHENTICATION_METHOD
-    config["authenticationRequired"] = WHISPARR_AUTHENTICATION_REQUIRED
+    config.update(expected)
     if config.get("password") is None:
         config["password"] = ""
     if config.get("passwordConfirmation") is None:

@@ -3,6 +3,8 @@
 /hosts
 /files/fonts/*
 .DS_Store
+__pycache__/
+*.py[cod]
 secret.yml
 /group_vars/
 /host_vars/

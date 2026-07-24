@@ -4,6 +4,7 @@
 import json
 import os
 import re
+import stat
 import sys
 import time
 import urllib.error
@@ -681,9 +682,59 @@ def sabnzbd_queue(app, sabnzbd_api_key):
     return data.get("queue", {}).get("slots", [])
 
 
+def sabnzbd_archive_history(app, sabnzbd_api_key, sabnzbd_ids):
+    if not sabnzbd_ids or not truthy(app.get("cleanup_sabnzbd_history", True)):
+        return 0
+
+    params = {
+        "mode": "history",
+        "name": "delete",
+        "value": ",".join(sabnzbd_ids),
+        "del_files": "0",
+        "apikey": sabnzbd_api_key,
+        "output": "json",
+    }
+    url = f"{app['sabnzbd_url'].rstrip('/')}/api?{urllib.parse.urlencode(params)}"
+    response = request_json_url(url) or {}
+    if response.get("status") not in (True, "true", "True"):
+        raise RuntimeError(f"SABnzbd rejected history cleanup for {len(sabnzbd_ids)} item(s): {response}")
+    return len(sabnzbd_ids)
+
+
 def whisparr_movie_has_file(app, api_key, movie_id):
     movie = request_json("GET", app["url"], api_key, f"/api/v3/movie/{movie_id}")
-    return truthy(movie.get("hasFile"))
+    if "hasFile" in movie:
+        return truthy(movie.get("hasFile"))
+    return bool(movie.get("movieFileId") or movie.get("movieFile"))
+
+
+def whisparr_download_queue(app, api_key):
+    data = request_json(
+        "GET",
+        app["url"],
+        api_key,
+        "/api/v3/queue",
+        params={
+            "page": 1,
+            "pageSize": 1000,
+            "includeUnknownMovieItems": "true",
+        },
+    )
+    return data.get("records", [])
+
+
+def queue_item_requires_manual_import(record):
+    messages = []
+    for group in record.get("statusMessages") or []:
+        messages.extend(group.get("messages") or [])
+    message = " ".join(messages).lower()
+    return (
+        record.get("trackedDownloadState") == "importBlocked"
+        and (
+            "automatic import is not possible" in message
+            or "manual import required" in message
+        )
+    )
 
 
 def container_to_host_path(app, path):
@@ -703,14 +754,29 @@ def ensure_host_dir_for_container_path(app, container_path):
     if not host_path:
         return
 
-    path = Path(host_path)
-    path.mkdir(parents=True, exist_ok=True)
-    path.chmod(0o775)
-
+    path = Path(host_path).resolve()
     uid = app.get("storage_host_uid")
     gid = app.get("storage_host_gid")
-    if uid not in (None, "") and gid not in (None, ""):
-        os.chown(path, int(uid), int(gid))
+    uid = int(uid) if uid not in (None, "") else None
+    gid = int(gid) if gid not in (None, "") else None
+    ownership_root = Path(app["storage_host_path"]).resolve()
+
+    try:
+        relative_path = path.relative_to(ownership_root)
+    except ValueError as exc:
+        raise RuntimeError(f"Refusing to create path outside {ownership_root}: {path}") from exc
+
+    current = ownership_root
+    for part in relative_path.parts:
+        current /= part
+        current.mkdir(exist_ok=True)
+        current_stat = current.stat()
+        if stat.S_IMODE(current_stat.st_mode) != 0o775:
+            current.chmod(0o775)
+        if uid is not None and gid is not None and (
+            current_stat.st_uid != uid or current_stat.st_gid != gid
+        ):
+            os.chown(current, uid, gid)
 
 
 def trigger_downloaded_movie_scan(app, api_key, path):
@@ -731,11 +797,19 @@ def process_completed_whisparr_downloads(app, api_key, sabnzbd_api_key, app_stat
     history = sabnzbd_history(app, sabnzbd_api_key)
     history_by_id = {slot.get("nzo_id"): slot for slot in history if slot.get("nzo_id")}
     queue_ids = {slot.get("nzo_id") for slot in sabnzbd_queue(app, sabnzbd_api_key) if slot.get("nzo_id")}
+    manual_download_ids = {
+        record.get("downloadId")
+        for record in whisparr_download_queue(app, api_key)
+        if record.get("downloadId") and queue_item_requires_manual_import(record)
+    }
     max_attempts = max(as_int(app.get("import_scan_attempts"), 5), 0)
     changed = False
     scanned = 0
     imported = 0
     pruned = 0
+    manual = 0
+    untracked_manual = 0
+    history_archived = 0
 
     for release_key, release_state in list(downloaded.items()):
         movie_id = release_state.get("movie_id")
@@ -743,7 +817,7 @@ def process_completed_whisparr_downloads(app, api_key, sabnzbd_api_key, app_stat
         if not movie_id or not sabnzbd_ids:
             continue
 
-        if release_state.get("imported_at"):
+        if release_state.get("imported_at") or release_state.get("manual_import_required_at"):
             continue
 
         if not any(sabnzbd_id in history_by_id or sabnzbd_id in queue_ids for sabnzbd_id in sabnzbd_ids):
@@ -756,7 +830,52 @@ def process_completed_whisparr_downloads(app, api_key, sabnzbd_api_key, app_stat
             changed = True
             continue
 
+        history_slots = [
+            history_by_id[sabnzbd_id]
+            for sabnzbd_id in sabnzbd_ids
+            if sabnzbd_id in history_by_id
+        ]
+
+        if whisparr_movie_has_file(app, api_key, movie_id):
+            history_archived += sabnzbd_archive_history(
+                app,
+                sabnzbd_api_key,
+                [slot["nzo_id"] for slot in history_slots],
+            )
+            release_state["imported_at"] = datetime.now(timezone.utc).isoformat()
+            imported += 1
+            changed = True
+            continue
+
+        manual_slots = [
+            history_by_id[sabnzbd_id]
+            for sabnzbd_id in sabnzbd_ids
+            if sabnzbd_id in history_by_id and sabnzbd_id in manual_download_ids
+        ]
+        if manual_slots:
+            history_archived += sabnzbd_archive_history(
+                app,
+                sabnzbd_api_key,
+                [slot["nzo_id"] for slot in manual_slots],
+            )
+            release_state["manual_import_required_at"] = datetime.now(timezone.utc).isoformat()
+            manual += 1
+            changed = True
+            continue
+
+        failed_slots = [slot for slot in history_slots if slot.get("status") == "Failed"]
+        if failed_slots:
+            history_archived += sabnzbd_archive_history(
+                app,
+                sabnzbd_api_key,
+                [slot["nzo_id"] for slot in failed_slots],
+            )
+            for slot in failed_slots:
+                history_by_id.pop(slot["nzo_id"], None)
+            changed = True
+
         completed_slots = []
+        missing_slots = []
         for sabnzbd_id in sabnzbd_ids:
             slot = history_by_id.get(sabnzbd_id)
             if not slot:
@@ -766,14 +885,42 @@ def process_completed_whisparr_downloads(app, api_key, sabnzbd_api_key, app_stat
             if slot.get("status") != "Completed" or not slot.get("storage"):
                 changed = True
                 continue
-            completed_slots.append(slot)
+            host_storage = container_to_host_path(app, slot["storage"])
+            if host_storage and not Path(host_storage).exists():
+                missing_slots.append(slot)
+            else:
+                completed_slots.append(slot)
+
+        if missing_slots:
+            history_archived += sabnzbd_archive_history(
+                app,
+                sabnzbd_api_key,
+                [slot["nzo_id"] for slot in missing_slots],
+            )
+            changed = True
+
+        if failed_slots and not completed_slots:
+            downloaded.pop(release_key, None)
+            pruned += 1
+            continue
+
+        if missing_slots and not completed_slots:
+            downloaded.pop(release_key, None)
+            pruned += 1
+            continue
 
         if not completed_slots:
             continue
 
-        if whisparr_movie_has_file(app, api_key, movie_id):
-            release_state["imported_at"] = datetime.now(timezone.utc).isoformat()
-            imported += 1
+        attempts = as_int(release_state.get("import_scan_attempts"), 0)
+        if max_attempts and attempts >= max_attempts:
+            history_archived += sabnzbd_archive_history(
+                app,
+                sabnzbd_api_key,
+                [slot["nzo_id"] for slot in completed_slots],
+            )
+            release_state["manual_import_required_at"] = datetime.now(timezone.utc).isoformat()
+            manual += 1
             changed = True
             continue
 
@@ -790,11 +937,30 @@ def process_completed_whisparr_downloads(app, api_key, sabnzbd_api_key, app_stat
             scanned += 1
             changed = True
 
-    if scanned or imported or pruned:
+    tracked_sabnzbd_ids = {
+        sabnzbd_id
+        for release_state in downloaded.values()
+        for sabnzbd_id in release_state.get("sabnzbd_ids") or []
+    }
+    untracked_manual_ids = sorted(
+        manual_download_ids.intersection(history_by_id).difference(tracked_sabnzbd_ids)
+    )
+    if untracked_manual_ids:
+        history_archived += sabnzbd_archive_history(
+            app,
+            sabnzbd_api_key,
+            untracked_manual_ids,
+        )
+        untracked_manual = len(untracked_manual_ids)
+        changed = True
+
+    if scanned or imported or pruned or manual or untracked_manual or history_archived:
         log(
             f"{app['name']} completed-download import scan: "
             f"{scanned} scan(s) triggered, {imported} item(s) already imported, "
-            f"{pruned} stale state entries pruned"
+            f"{pruned} stale/failed state entries pruned, "
+            f"{manual} tracked and {untracked_manual} untracked item(s) left for manual import, "
+            f"{history_archived} SAB history item(s) archived without deleting files"
         )
     return changed
 

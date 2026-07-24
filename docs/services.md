@@ -402,14 +402,19 @@ For non-code scenes, the helper falls back to title matching and queues SAB jobs
 as `Studio YYYY-MM-DD Title`, which is the shape Whisparr can parse for StashDB
 scene metadata. Completed helper grabs are remembered by GUID/SAB job ID, and
 completed jobs get a bounded Whisparr `DownloadedMoviesScan` against the
-completed SAB path. Logs: `journalctl -u arr-missing-search`.
+completed SAB path. Once Whisparr reports a movie file, the helper archives the
+corresponding SAB history item without deleting downloaded files. Failed or
+missing history entries are pruned, while downloads that exhaust the bounded
+scan attempts are archived in SAB and retained on disk for manual
+import. This keeps Whisparr from reparsing stale completed jobs every minute.
+Logs: `journalctl -u arr-missing-search`.
 
 Operational lesson: if SAB has a raw dotted-code Whisparr job near the top of
 the queue, first check whether Whisparr can parse that exact SAB name. Valid
 NZBFinder releases like `SIVR.427...` can still be invisible to Whisparr's queue
 tracking until requeued as `SIVR-427`. If a bad SAB job is deleted, stale
-`arr-search` state for that GUID must be pruned so the helper can retry the
-same release with a canonical SAB `nzbname`.
+`arr-search` state for that GUID is pruned on the next helper run so it can
+retry the same release with a canonical SAB `nzbname`.
 
 ### immich-monitor (timer, no UI)
 

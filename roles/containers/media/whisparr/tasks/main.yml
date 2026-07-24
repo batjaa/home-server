@@ -1,5 +1,13 @@
 ---
-- name: Ensure Whisparr config, media, and download dirs exist
+- name: Ensure Whisparr config dir exists
+  file:
+    path: "{{ docker_dir }}/{{ container_name }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0775'
+
+- name: Ensure Whisparr media and download dirs exist
   file:
     path: "{{ item }}"
     state: directory
@@ -7,9 +15,27 @@
     group: users
     mode: '0775'
   loop:
-    - "{{ docker_dir }}/{{ container_name }}"
     - "{{ whisparr_media_dir }}"
     - "{{ whisparr_download_dir }}"
+
+- name: Find Whisparr library directories
+  find:
+    paths: "{{ whisparr_media_dir }}"
+    file_type: directory
+    recurse: yes
+  register: whisparr_library_directories
+  changed_when: false
+  no_log: true
+
+- name: Ensure Whisparr library directories allow imports
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ username }}"
+    group: users
+    mode: '0775'
+  loop: "{{ [{'path': whisparr_media_dir}] + whisparr_library_directories.files }}"
+  no_log: true
 
 - name: Ensure arr Docker network
   docker_network:
@@ -83,6 +109,8 @@
     PROWLARR_DOWNLOAD_CLIENT_MAPPED_CATEGORIES: "{{ whisparr_prowlarr_download_client_mapped_categories | to_json }}"
     WHISPARR_AUTHENTICATION_METHOD: "{{ whisparr_authentication_method }}"
     WHISPARR_AUTHENTICATION_REQUIRED: "{{ whisparr_authentication_required }}"
+    WHISPARR_LOG_LEVEL: "{{ whisparr_log_level }}"
+    WHISPARR_CONSOLE_LOG_LEVEL: "{{ whisparr_console_log_level }}"
     WHISPARR_SEARCH_STUDIO_CODE: "{{ whisparr_search_studio_code }}"
     WHISPARR_SEARCH_TITLE_ONLY: "{{ whisparr_search_title_only }}"
     WHISPARR_SEARCH_TITLE_DATE: "{{ whisparr_search_title_date }}"

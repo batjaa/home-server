@@ -26,6 +26,7 @@ arr_search_whisparr_code_search_max_grabs_per_item: 2
 arr_search_whisparr_title_search_max_grabs_per_item: 1
 arr_search_whisparr_downloaded_state_limit: 2000
 arr_search_whisparr_import_scan_attempts: 5
+arr_search_whisparr_cleanup_sabnzbd_history: true
 arr_search_prowlarr_url: "http://127.0.0.1:{{ prowlarr_port | default(9696) }}"
 arr_search_prowlarr_download_url: "{{ whisparr_prowlarr_url | default('http://prowlarr:9696') }}"
 arr_search_sabnzbd_url: "http://127.0.0.1:{{ sabnzbd_port | default(8082) }}"
@@ -75,6 +76,7 @@ arr_search_apps:
     title_max_grabs_per_item: "{{ arr_search_whisparr_title_search_max_grabs_per_item }}"
     downloaded_state_limit: "{{ arr_search_whisparr_downloaded_state_limit }}"
     import_scan_attempts: "{{ arr_search_whisparr_import_scan_attempts }}"
+    cleanup_sabnzbd_history: "{{ arr_search_whisparr_cleanup_sabnzbd_history }}"
     storage_container_path: "{{ arr_search_storage_container_path }}"
     storage_host_path: "{{ arr_search_storage_host_path }}"
     storage_host_uid: "{{ arr_search_storage_host_uid }}"
