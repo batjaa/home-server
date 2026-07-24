@@ -72,7 +72,7 @@
 - name: Make sure the Nextcloud container is running
   docker_container:
     name: "{{ container_name }}"
-    image: "nextcloud:stable"
+    image: "{{ nextcloud_image }}"
     pull: yes
     state: started
     networks:

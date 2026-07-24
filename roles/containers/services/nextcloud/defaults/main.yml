@@ -6,6 +6,12 @@ nextcloud_network: nextcloud-net
 # Host port that SWAG proxies to
 nextcloud_port: 8081
 
+# Official image. Nextcloud only upgrades one major at a time, so when the
+# installed version falls >1 major behind :stable, step through the middle
+# major(s) with e.g. -e nextcloud_image=nextcloud:33-apache before letting
+# it back onto stable.
+nextcloud_image: "nextcloud:stable"
+
 # User data lives on plain ext4 (NVMe). mergerfs uid handling makes
 # permissions painful for non-1000 containers; revisit later if data grows.
 nextcloud_data_dir: "{{ docker_dir }}/{{ container_name }}-data"
