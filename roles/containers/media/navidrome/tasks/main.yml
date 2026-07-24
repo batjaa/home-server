@@ -29,6 +29,9 @@
       ND_REVERSEPROXYUSERHEADER: ""
       # Auto-import playlists dropped into the music folder
       ND_AUTOIMPORTPLAYLISTS: "true"
+      # Navidrome 0.63+ flips the default to enabled; music.batjaa.site is
+      # public, so keep sharing off until we decide to use it
+      ND_ENABLESHARING: "false"
       # Re-scan filesystem every 1m (default); set to 0s to use the inotify
       # watcher only (cheaper, faster pickup of new files)
       ND_SCANNER_SCHEDULE: "1h"
