@@ -15,6 +15,14 @@
     sysctl_file: /etc/sysctl.d/99-coolify.conf
     reload: yes
 
+- name: Check whether Coolify is already installed
+  stat:
+    path: "{{ coolify_env_file }}"
+  register: coolify_install_state
+
+# Bootstrap only: once installed, Coolify's install/upgrade script owns this
+# tree as the in-container www-data uid (coolify_container_uid) and re-running
+# this with root:root would break the control plane's writes.
 - name: Ensure Coolify host directories exist
   file:
     path: "{{ item }}"
@@ -30,17 +38,13 @@
     - "{{ coolify_root_dir }}/databases"
     - "{{ coolify_root_dir }}/services"
     - "{{ coolify_root_dir }}/backups"
+  when: not coolify_install_state.stat.exists
 
 - name: Download Coolify installer
   get_url:
     url: "{{ coolify_install_script_url }}"
     dest: /usr/local/sbin/coolify-install.sh
     mode: "0755"
-
-- name: Check whether Coolify is already installed
-  stat:
-    path: "{{ coolify_env_file }}"
-  register: coolify_install_state
 
 - name: Install Coolify
   command: /usr/local/sbin/coolify-install.sh
@@ -54,6 +58,23 @@
   when: not coolify_install_state.stat.exists
   register: coolify_install
   changed_when: true
+
+# Coolify's install/upgrade script chmods /data/coolify to 700 for its
+# container uid, but scheduled DB backups run over SSH as the deploy user
+# and need to traverse into backups/ to write the dump — without o+x every
+# backup fails with "Permission denied" until re-converged. Re-run this
+# role after any Coolify upgrade.
+- name: Ensure backup dirs are traversable by the SSH deploy user
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ coolify_container_uid }}"
+    group: root
+    mode: "0711"
+  loop:
+    - "{{ coolify_root_dir }}"
+    - "{{ coolify_root_dir }}/backups"
+    - "{{ coolify_root_dir }}/backups/coolify"
 
 - name: Set Coolify app port
   lineinfile:

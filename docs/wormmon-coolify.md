@@ -336,7 +336,17 @@ Caught while wiring up `demo` and `demo1`.
    `app-bootstrap@f293d0d`** (refresh the id right after the gh API
    call).
 
-4. **Failure mid-pipeline leaves partial state in three places.** A
+4. **Coolify upgrades reset `/data/coolify` perms and break scheduled DB
+   backups.** The install/upgrade script chowns the tree to uid 9999
+   (in-container www-data) with mode 700, but the scheduled backup writes
+   its dump over SSH as `batjaa` and needs traverse (`o+x`) into
+   `backups/` — every nightly backup then fails with `Permission denied`
+   (bit us after the 4.1.2 upgrade on 2026-07-24). The coolify role now
+   converges `/data/coolify{,/backups,/backups/coolify}` to `9999:root
+   0711`; **re-run `ansible-playbook main.yml -l wormmon --tags coolify`
+   after any Coolify upgrade.**
+
+5. **Failure mid-pipeline leaves partial state in three places.** A
    failed `new-wormmon-app` can leave behind a Coolify project, a
    Coolify deploy key, *and* a GitHub deploy key. No rollback. Manual
    cleanup before retrying:

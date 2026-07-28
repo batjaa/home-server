@@ -4,6 +4,8 @@ coolify_root_dir: /data/coolify
 coolify_source_dir: "{{ coolify_root_dir }}/source"
 coolify_env_file: "{{ coolify_source_dir }}/.env"
 coolify_install_script_url: https://cdn.coollabs.io/coolify/install.sh
+# uid of www-data inside the coolify image; its install script chowns /data/coolify to this
+coolify_container_uid: "9999"
 coolify_auto_update: false
 coolify_app_port: "8000"
 coolify_soketi_port: "6001"
