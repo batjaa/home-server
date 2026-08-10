@@ -66,3 +66,45 @@
       - "{{ docker_dir }}/swag/dns-conf:/config/dns-conf"
       - "{{ docker_dir }}/swag/letsencrypt:/config/etc/letsencrypt"
     restart_policy: unless-stopped
+
+# SWAG's env-change detection lives in /config/.donoteditthisfile.conf, which
+# is NOT on a persisted volume here (only nginx/, dns-conf/, letsencrypt/ are)
+# — so every container recreate seeds fresh state from the current env and
+# concludes "parameters unchanged", and a domain added to EXTRA_DOMAINS never
+# triggers reissuance. Compare the live cert's SANs against the requested
+# domain set instead and run certbot only when they diverge: idempotent, and
+# the old cert stays in place if issuance fails (no revoke-first window).
+
+- name: Read certificate SANs
+  command: >
+    docker exec swag openssl x509
+    -in /config/etc/letsencrypt/live/{{ host }}/fullchain.pem
+    -noout -ext subjectAltName
+  register: swag_cert_sans
+  changed_when: false
+
+- name: Determine requested domains missing from the certificate
+  set_fact:
+    swag_missing_domains: >-
+      {{
+        (swag_extra_domains.split(',') | map('trim') | select() | list)
+        | difference(swag_cert_sans.stdout | regex_findall('DNS:([^,\s]+)'))
+      }}
+
+- name: Re-issue certificate to cover added domains
+  command: >
+    docker exec swag certbot certonly --non-interactive --agree-tos
+    --config-dir /config/etc/letsencrypt
+    --work-dir /tmp/letsencrypt
+    --logs-dir /config/log/letsencrypt
+    --expand --force-renewal --cert-name {{ host }}
+    --dns-cloudflare
+    --dns-cloudflare-credentials /config/dns-conf/cloudflare.ini
+    --dns-cloudflare-propagation-seconds 30
+    --key-type ecdsa
+    --email {{ email }}
+    -d "{{ host }}" -d "*.{{ host }}"
+    {% for d in swag_extra_domains.split(',') | map('trim') | select() %}-d "{{ d }}" {% endfor %}
+  when: swag_missing_domains | length > 0
+  register: swag_cert_reissue
+  notify: restart swag

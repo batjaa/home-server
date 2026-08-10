@@ -1,0 +1,27 @@
+# Reverse proxy: kedge.page → wormmon:443 (Coolify routes the Host to the
+# Kedge preview stack). Same shape as preview.subdomain.conf, fixed hostname:
+# kedge.page is the Kedge preview's public product domain, a separate zone
+# covered via EXTRA_DOMAINS on the SWAG cert (host_vars/andromon).
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+
+    server_name kedge.page;
+
+    include /config/nginx/ssl.conf;
+
+    client_max_body_size 0;
+
+    location / {
+        include /config/nginx/proxy.conf;
+        include /config/nginx/resolver.conf;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        set $upstream_app {{ hostvars['wormmon']['ansible_host'] }};
+        set $upstream_port 443;
+        set $upstream_proto https;
+        proxy_pass $upstream_proto://$upstream_app:$upstream_port;
+    }
+}
