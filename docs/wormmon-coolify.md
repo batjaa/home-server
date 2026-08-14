@@ -166,6 +166,86 @@ Example preview app:
 - SWAG on `andromon`: wildcard/regex proxy to `wormmon:80`
 - Coolify preview domain: `plotling.preview.batjaa.site`
 
+## Groove production domain (`usegroove.app`)
+
+`usegroove.app` is a Cloudflare Registrar zone routed through the existing
+home ingress:
+
+```text
+visitor -> Cloudflare -> andromon/SWAG -> wormmon/Traefik -> Groove app
+```
+
+The desired state is split across the app and home-server repositories:
+
+- `home-server/host_vars/tentomon/vars.yml` declares proxied CNAMEs for the
+  apex and `www`, plus Pi-hole split-DNS records.
+- `home-server/host_vars/andromon/vars.yml` adds both names to the SWAG
+  certificate SAN list.
+- `home-server/roles/network/swag/templates/proxy-confs/usegroove-app.subdomain.conf.j2`
+  proxies the apex to Coolify and permanently redirects `www` to the apex.
+- `groove/.batjaa/app.yml` records the production domains alongside the
+  existing preview domain.
+- Coolify routes `https://usegroove.app` to the Compose `app` service. It does
+  not need `www.usegroove.app` because SWAG handles that redirect.
+
+### Cloudflare prerequisites
+
+The `cloudflare_dns_token` in `host_vars/tentomon/secret.yml` is also mounted
+into SWAG for DNS-01 certificate issuance. It must have **Zone DNS Edit** for
+both `batjaa.site` and `usegroove.app`; a token restricted to only the original
+zone will create neither the records nor the certificate.
+
+Because the `usegroove.app` records are proxied, set the zone's **SSL/TLS
+encryption mode** to **Full (strict)** in Cloudflare. SWAG presents a public
+Let's Encrypt certificate matching the apex and `www`, so strict validation is
+supported. This setting is intentionally a one-time dashboard step because the
+DNS-only API token has no Zone Settings permission.
+
+### Apply or recover the route
+
+Run DNS and split DNS first, then issue the expanded origin certificate and
+install the nginx vhost:
+
+```bash
+cd ~/git/home-server
+ansible-playbook main.yml -l tentomon --tags="cloudflare-dns,pihole"
+ansible-playbook main.yml -l andromon --tags="swag"
+```
+
+In Coolify, open the Groove application and set the Compose `app` service's
+domains to:
+
+```text
+https://groove.preview.batjaa.site,https://usegroove.app
+```
+
+Keep the preview hostname during the transition so released mobile builds and
+existing NFC stickers continue to work. Set the non-preview application
+environment variables to:
+
+```dotenv
+APP_URL=https://usegroove.app
+SANCTUM_STATEFUL_DOMAINS=usegroove.app,groove.preview.batjaa.site
+```
+
+Redeploy Groove after changing either the domains or environment variables.
+
+### Verify
+
+```bash
+dig +short usegroove.app @1.1.1.1
+curl -I https://usegroove.app
+curl -I https://www.usegroove.app
+curl -fsS https://usegroove.app/up
+```
+
+Expected results:
+
+- the public lookup returns Cloudflare anycast addresses;
+- the apex returns the Groove application over HTTPS;
+- `www` returns `308` with `Location: https://usegroove.app/...`;
+- `/up` returns a successful response.
+
 ## Certificate notes
 
 `*.batjaa.site` does not cover `*.preview.batjaa.site` — wildcards only
@@ -178,28 +258,29 @@ parent wildcard ("redundant with a wildcard domain in the same request").
 The knob is `swag_extra_domains` in `host_vars/andromon/vars.yml`:
 
 ```yaml
-swag_extra_domains: "*.preview.{{ host }}"
+swag_extra_domains: "*.preview.{{ host }},kedge.page,usegroove.app,www.usegroove.app"
 ```
 
 For third-party app domains like `plotling.app`, add those domains to
 `swag_extra_domains` (comma-separated) before exposing them publicly.
 
-### Forcing a cert re-issue after changing `swag_extra_domains`
+### Certificate re-issue after changing `swag_extra_domains`
 
-SWAG only checks expiry on startup, not SAN drift. If you change
-`swag_extra_domains` while the existing cert is still valid, it won't
-be re-issued until overnight renewal. To force:
+The SWAG role compares the live certificate SANs with `swag_extra_domains` and
+automatically runs certbot when a name is missing. Normally, re-running the
+role is enough. If that task fails and you need to reproduce it manually:
 
 ```bash
 ssh -p 100 batjaa@192.168.50.20 'docker exec swag certbot certonly \
   --config-dir /config/etc/letsencrypt \
-  --work-dir /config/var/lib/letsencrypt \
-  --logs-dir /config/var/log/letsencrypt \
-  --non-interactive --agree-tos --expand \
+  --work-dir /tmp/letsencrypt \
+  --logs-dir /config/log/letsencrypt \
+  --non-interactive --agree-tos --expand --force-renewal \
   --authenticator dns-cloudflare \
   --dns-cloudflare-credentials /config/dns-conf/cloudflare.ini \
   --cert-name batjaa.site \
-  -d batjaa.site,*.batjaa.site,*.preview.batjaa.site \
+  -d batjaa.site -d "*.batjaa.site" -d "*.preview.batjaa.site" \
+  -d kedge.page -d usegroove.app -d www.usegroove.app \
   --preferred-challenges dns-01'
 ssh -p 100 batjaa@192.168.50.20 'docker exec swag nginx -s reload'
 ```
@@ -283,8 +364,10 @@ Needs the `COOLIFY_*` env vars (see below). Creates:
 It prints the deployment UUID. Poll status:
 
 ```bash
-curl -s -H "Authorization: Bearer $COOLIFY_TOKEN" \
+coolify_api_token="$(op read "${COOLIFY_TOKEN_REF:-op://Private/Coolify/API Token}")"
+curl -s -H "Authorization: Bearer $coolify_api_token" \
   "$COOLIFY_URL/api/v1/deployments/<uuid>" | jq -r .status
+unset coolify_api_token
 ```
 
 Builds typically take ~2-3 min (Laravel + Composer + Vite). When status
@@ -292,14 +375,22 @@ is `finished`, hit `https://demo2.preview.batjaa.site`.
 
 ### Required environment
 
-Sourced from `~/.extra` (gitignored, `chmod 600`, loaded by `.bash_profile`):
+Non-secret settings and the 1Password secret reference are sourced from
+`~/.extra` (gitignored, `chmod 600`, loaded by `.bash_profile`):
 
 ```bash
 export COOLIFY_URL="https://deploy.batjaa.site"
-export COOLIFY_TOKEN="..."           # Sanctum personal access token, ["*"] abilities
+export COOLIFY_TOKEN_REF="op://Private/Coolify/API Token"
 export COOLIFY_SERVER_UUID="..."     # the localhost server in Coolify
 export COOLIFY_DESTINATION_UUID="..." # the localhost-default Docker destination
 ```
+
+The plaintext Sanctum token lives only in the concealed **API Token** field on
+the `Private/Coolify` 1Password item. `new-app` and `new-wormmon-app` resolve
+the reference at runtime with `op read`; the 1Password desktop app must be
+unlocked with CLI integration enabled. A plaintext `COOLIFY_TOKEN` remains a
+supported override for CI or a short-lived shell, but must not be stored in
+`~/.extra`, a dotenv file, or this repository.
 
 If `~/.extra` is wiped:
 
@@ -307,9 +398,14 @@ If `~/.extra` is wiped:
 - `COOLIFY_SERVER_UUID` / `COOLIFY_DESTINATION_UUID` — query the API:
   `GET /api/v1/servers` and `GET /api/v1/destinations` (or copy from the
   Coolify UI's URL bar on the Server / Destination pages)
-- `COOLIFY_TOKEN` — **must be freshly minted** (Sanctum stores only the
-  hash). Coolify UI → top-right avatar → **Keys & Tokens** → New API
-  Token. If the UI is locked out, see "Recovering a token" below.
+- `COOLIFY_TOKEN_REF` — `op://Private/Coolify/API Token`. Verify it with
+  `op read "$COOLIFY_TOKEN_REF" >/dev/null`; this checks access without
+  printing the token.
+- If the 1Password token is missing or rejected, it must be freshly minted
+  because Sanctum stores only the hash. Coolify UI → top-right avatar →
+  **Keys & Tokens** → New API Token, then immediately replace the **API
+  Token** field on the `Private/Coolify` item. If the UI is locked out, see
+  "Recovering a token" below.
 
 ---
 
@@ -317,9 +413,11 @@ If `~/.extra` is wiped:
 
 Caught while wiring up `demo` and `demo1`.
 
-1. **`COOLIFY_*` env vars not persisted on first setup.** They now live
-   in `~/.extra` (sourced by `.bash_profile`, `chmod 600`, gitignored).
-   Do NOT put them in `.exports` — that file is committed to
+1. **`COOLIFY_*` settings not persisted on first setup.** Non-secret values
+   and `COOLIFY_TOKEN_REF` now live in `~/.extra` (sourced by
+   `.bash_profile`, `chmod 600`, gitignored). The plaintext token lives in
+   `Private/Coolify` in 1Password and is resolved only at runtime. Do NOT put
+   the token in `.extra` or `.exports` — the latter is committed to
    `batjaa/settings`.
 
 2. **`new-laravel` wrote `\\` instead of `\` in `bootstrap/app.php`.**
@@ -353,22 +451,25 @@ Caught while wiring up `demo` and `demo1`.
 
    ```bash
    APP=demoN
+   coolify_api_token="$(op read "${COOLIFY_TOKEN_REF:-op://Private/Coolify/API Token}")"
 
    # Coolify project
-   PROJ_UUID=$(curl -s -H "Authorization: Bearer $COOLIFY_TOKEN" "$COOLIFY_URL/api/v1/projects" \
+   PROJ_UUID=$(curl -s -H "Authorization: Bearer $coolify_api_token" "$COOLIFY_URL/api/v1/projects" \
      | jq -r --arg n "$APP" '.[] | select(.name == $n) | .uuid')
-   [[ -n "$PROJ_UUID" ]] && curl -X DELETE -H "Authorization: Bearer $COOLIFY_TOKEN" \
+   [[ -n "$PROJ_UUID" ]] && curl -X DELETE -H "Authorization: Bearer $coolify_api_token" \
      "$COOLIFY_URL/api/v1/projects/$PROJ_UUID"
 
    # Coolify deploy key
-   KEY_UUID=$(curl -s -H "Authorization: Bearer $COOLIFY_TOKEN" "$COOLIFY_URL/api/v1/security/keys" \
+   KEY_UUID=$(curl -s -H "Authorization: Bearer $coolify_api_token" "$COOLIFY_URL/api/v1/security/keys" \
      | jq -r --arg n "github-batjaa-$APP" '.[] | select(.name == $n) | .uuid')
-   [[ -n "$KEY_UUID" ]] && curl -X DELETE -H "Authorization: Bearer $COOLIFY_TOKEN" \
+   [[ -n "$KEY_UUID" ]] && curl -X DELETE -H "Authorization: Bearer $coolify_api_token" \
      "$COOLIFY_URL/api/v1/security/keys/$KEY_UUID"
 
    # GitHub deploy key
    GH_KEY=$(gh api "repos/batjaa/$APP/keys" --jq --arg t "coolify-$APP" '.[] | select(.title == $t) | .id')
    [[ -n "$GH_KEY" ]] && gh api -X DELETE "repos/batjaa/$APP/keys/$GH_KEY"
+
+   unset coolify_api_token
    ```
 
    Then re-run `new-wormmon-app $APP`. The Laravel project + GitHub repo
@@ -377,21 +478,41 @@ Caught while wiring up `demo` and `demo1`.
 ### Recovering a token
 
 Sanctum stores only the hash, so a lost token can't be read back. If the
-Coolify UI is reachable, mint a fresh one there. If it's not, do it via
-artisan on the box. Note Coolify's `User::createToken()` override reads
-`session('currentTeam')` which is `null` under tinker, so you have to
-build the row directly:
+Coolify UI is reachable, mint a fresh one there and immediately replace the
+concealed **API Token** field on the `Private/Coolify` 1Password item. If the
+UI is unavailable, create the token via artisan and pipe it directly into
+1Password without printing it or writing it to disk. Coolify's
+`User::createToken()` override reads `session('currentTeam')`, which is `null`
+under tinker, so the recovery command builds the row directly:
 
 ```bash
-ssh batjaa@wormmon.home.local 'sudo docker exec coolify php artisan tinker --execute="
+coolify_recovered_token="$(ssh batjaa@wormmon.home.local 'sudo docker exec coolify php artisan tinker --execute="
   \$plain=bin2hex(random_bytes(32));
   \$row=new Laravel\\Sanctum\\PersonalAccessToken();
   \$row->tokenable_type=\"App\\Models\\User\"; \$row->tokenable_id=0; \$row->team_id=0;
   \$row->name=\"recovery\"; \$row->token=hash(\"sha256\", \$plain); \$row->abilities=[\"*\"];
   \$row->save();
   echo \$row->id.\"|\".\$plain.\"\\n\";
-"'
+"' | tail -n 1)"
+
+[[ "$coolify_recovered_token" == *"|"* ]] || {
+  echo "Token recovery failed; 1Password was not changed" >&2
+  unset coolify_recovered_token
+  false
+}
+
+op item get Coolify --vault Private --format=json \
+  | jq --arg token "$coolify_recovered_token" '
+      if any(.fields[]; .label == "API Token") then
+        .fields |= map(if .label == "API Token" then .type = "CONCEALED" | .value = $token else . end)
+      else
+        .fields += [{"id":"coolify_api_token","type":"CONCEALED","label":"API Token","value":$token}]
+      end
+    ' \
+  | op item edit Coolify --vault Private >/dev/null
+unset coolify_recovered_token
 ```
 
 The Sanctum format is `<id>|<plaintext>` — that whole string is the
-`COOLIFY_TOKEN` value. Revoke from the UI once you regain access.
+token value saved in 1Password. Revoke any superseded token from the UI once
+you regain access.
