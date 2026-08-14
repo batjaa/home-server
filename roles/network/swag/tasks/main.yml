@@ -9,7 +9,9 @@
     path: "{{ item }}"
     state: directory
     owner: "{{ username }}"
-    group: users
+    # The SWAG image normalizes bind-mounted paths to PUID:PGID on startup.
+    # Match that ownership here so a second Ansible run stays a no-op.
+    group: "{{ guid }}"
     mode: '0775'
   loop:
     - "{{ docker_dir }}/swag"
@@ -22,7 +24,8 @@
   template:
     src: internal-only.conf.j2
     dest: "{{ docker_dir }}/swag/nginx/internal-only.conf"
-    mode: '0644'
+    # SWAG normalizes files under /config/nginx to 0664 on startup.
+    mode: '0664'
   notify: restart swag
 
 - name: Install Cloudflare DNS-01 credentials
@@ -36,7 +39,7 @@
   template:
     src: "{{ item }}"
     dest: "{{ docker_dir }}/swag/nginx/proxy-confs/{{ item | basename | regex_replace('.j2$', '') }}"
-    mode: '0644'
+    mode: '0664'
   with_fileglob:
     - "templates/proxy-confs/*.j2"
   notify: restart swag
