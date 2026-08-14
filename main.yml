@@ -32,7 +32,9 @@
       - role: network/cloudflare-dns
         tags:
             - cloudflare-dns
-        when: cloudflare_records | default([]) | length > 0
+        when: >-
+            cloudflare_records | default([]) | length > 0
+            or cloudflare_additional_zones | default([]) | length > 0
 
       - role: network/pihole
         tags:

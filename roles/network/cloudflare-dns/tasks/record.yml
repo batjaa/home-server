@@ -1,0 +1,46 @@
+---
+- name: Resolve Cloudflare DNS record name
+  set_fact:
+    cloudflare_record_fqdn: >-
+      {{
+        cloudflare_managed_zone.name
+        if cloudflare_dns_record.name in ['@', cloudflare_managed_zone.name]
+        else cloudflare_dns_record.name ~ '.' ~ cloudflare_managed_zone.name
+      }}
+
+- name: Find existing Cloudflare DNS record
+  set_fact:
+    cloudflare_existing_record: >-
+      {{
+        cloudflare_records_response.json.result
+        | selectattr('name', 'equalto', cloudflare_record_fqdn)
+        | selectattr('type', 'equalto', cloudflare_dns_record.type)
+        | first
+        | default({})
+      }}
+
+- name: "Converge {{ cloudflare_record_fqdn }} ({{ cloudflare_dns_record.type }})"
+  delegate_to: localhost
+  become: no
+  uri:
+    url: >-
+      https://api.cloudflare.com/client/v4/zones/{{ cloudflare_zone_response.json.result[0].id }}/dns_records{% if cloudflare_existing_record.id is defined %}/{{ cloudflare_existing_record.id }}{% endif %}
+    method: "{{ 'PUT' if cloudflare_existing_record.id is defined else 'POST' }}"
+    headers:
+      Authorization: "Bearer {{ cloudflare_dns_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      type: "{{ cloudflare_dns_record.type }}"
+      name: "{{ cloudflare_record_fqdn }}"
+      content: "{{ cloudflare_dns_record.content }}"
+      proxied: "{{ cloudflare_dns_record.proxied | default(false) | bool }}"
+      ttl: "{{ cloudflare_dns_record.ttl | default(1) | int }}"
+    status_code: 200
+  when: >-
+    cloudflare_existing_record.id is not defined
+    or cloudflare_existing_record.content != cloudflare_dns_record.content
+    or (cloudflare_existing_record.proxied | bool) != (cloudflare_dns_record.proxied | default(false) | bool)
+    or (cloudflare_existing_record.ttl | int) != (cloudflare_dns_record.ttl | default(1) | int)
+  changed_when: true
+  no_log: true

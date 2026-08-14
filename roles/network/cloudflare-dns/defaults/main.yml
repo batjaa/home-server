@@ -6,3 +6,10 @@ cloudflare_zone: "{{ host }}"
 #   cloudflare_records:
 #     - { name: plex, type: CNAME, content: '{{ host }}', proxied: false }
 cloudflare_records: []
+
+# Additional app-owned zones managed with the same token. Example:
+#   cloudflare_additional_zones:
+#     - name: example.app
+#       records:
+#         - { name: '@', type: CNAME, content: 'ddns.example.net', proxied: true }
+cloudflare_additional_zones: []

@@ -1,0 +1,46 @@
+---
+- name: "Look up Cloudflare zone ID for {{ cloudflare_managed_zone.name }}"
+  delegate_to: localhost
+  become: no
+  uri:
+    url: "https://api.cloudflare.com/client/v4/zones?name={{ cloudflare_managed_zone.name | urlencode }}"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ cloudflare_dns_token }}"
+      Content-Type: "application/json"
+    return_content: yes
+    status_code: 200
+  register: cloudflare_zone_response
+  no_log: true
+
+- name: "Require exactly one visible Cloudflare zone for {{ cloudflare_managed_zone.name }}"
+  assert:
+    that:
+      - cloudflare_zone_response.json.success | bool
+      - cloudflare_zone_response.json.result | length == 1
+    fail_msg: >-
+      Cloudflare token cannot see exactly one zone named
+      {{ cloudflare_managed_zone.name }}. Ensure the token has Zone DNS Edit
+      access to this zone.
+
+- name: "Fetch existing DNS records for {{ cloudflare_managed_zone.name }}"
+  delegate_to: localhost
+  become: no
+  uri:
+    url: >-
+      https://api.cloudflare.com/client/v4/zones/{{ cloudflare_zone_response.json.result[0].id }}/dns_records?per_page=200
+    method: GET
+    headers:
+      Authorization: "Bearer {{ cloudflare_dns_token }}"
+      Content-Type: "application/json"
+    return_content: yes
+    status_code: 200
+  register: cloudflare_records_response
+  no_log: true
+
+- name: "Manage DNS records for {{ cloudflare_managed_zone.name }}"
+  include_tasks: record.yml
+  loop: "{{ cloudflare_managed_zone.records }}"
+  loop_control:
+    loop_var: cloudflare_dns_record
+    label: "{{ cloudflare_dns_record.name }} ({{ cloudflare_dns_record.type }})"
