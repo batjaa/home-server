@@ -11,10 +11,10 @@ Credits: [notthebee](https://github.com/notthebee) & [geerlingguy](https://githu
 | `andromon` | x86_64 i5-11600K (Ubuntu 22.04) | `192.168.50.20` | SWAG, Home Assistant, Plex, Jellyfin, Stash, Immich, Nextcloud, *arr stack (Prowlarr/Radarr/Sonarr/Whisparr/SABnzbd/Bazarr/Seerr/Decluttarr), Paperless, monitoring (Prometheus/Grafana/cAdvisor/node_exporter), storage |
 | `tentomon` | Raspberry Pi 4 4GB (Flirc case) | `192.168.50.10` | Pi-hole DNS, Cloudflare DDNS, Cloudflare DNS records, Uptime Kuma, node_exporter |
 | `greymon` | x86_64 ASUS (Windows) | `192.168.50.30` | LLM inference, image/video generation pipeline, gaming. Not Ansible-managed. |
-| `wormmon` | x86_64 ASUS AMD *(planned)* | `192.168.50.40` | Web app hosting (Coolify) for side projects. Admin at `deploy.batjaa.site` via SWAG on `andromon`, previews under `*.preview.batjaa.site`, SSH stays on `22` for Coolify localhost management. |
+| `wormmon` | x86_64 ASUS AMD (Ubuntu 26.04) | `192.168.50.40` | Web app hosting (Coolify) for side projects. Admin at `deploy.batjaa.site` via SWAG on `andromon`, previews under `*.preview.batjaa.site`, SSH stays on `22` for Coolify localhost management. |
 | `kvm.andromon` | PiKVM | `192.168.50.21` | Out-of-band recovery for `andromon` |
 | `kvm.greymon` | PiKVM | `192.168.50.31` | Out-of-band recovery for `greymon` |
-| `kvm.wormmon` | PiKVM (older Pi 4) | `192.168.50.41` | Out-of-band recovery for `wormmon` (planned) |
+| `kvm.wormmon` | PiKVM (older Pi 4) | `192.168.50.41` | Out-of-band recovery for `wormmon` |
 
 ### MAC Addresses
 
@@ -48,8 +48,8 @@ MikroTik CRS326-24G-2S+RM ← managed switch
     ├── kvm.andromon   (192.168.50.21)  PiKVM — andromon OOB
     ├── greymon        (192.168.50.30)  ASUS Windows — LLM / image-video / gaming
     ├── kvm.greymon    (192.168.50.31)  PiKVM — greymon OOB
-    ├── wormmon        (192.168.50.40)  ASUS AMD — web hosting (planned)
-    ├── kvm.wormmon    (192.168.50.41)  PiKVM — wormmon OOB (planned)
+    ├── wormmon        (192.168.50.40)  ASUS AMD — Coolify web hosting
+    ├── kvm.wormmon    (192.168.50.41)  PiKVM — wormmon OOB
     └── other devices
 ```
 

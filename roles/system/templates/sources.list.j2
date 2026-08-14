@@ -1,5 +1,5 @@
-{% set codename = version | default(ansible_lsb.codename) %}
-{% set mirror = apt_mirror | default('http://ports.ubuntu.com/ubuntu-ports' if ansible_architecture == 'aarch64' else 'http://archive.ubuntu.com/ubuntu') %}
+{% set codename = ansible_facts['lsb']['codename'] %}
+{% set mirror = apt_mirror | default('http://ports.ubuntu.com/ubuntu-ports' if ansible_facts['architecture'] == 'aarch64' else 'http://archive.ubuntu.com/ubuntu') %}
 deb {{ mirror }} {{ codename }} main restricted
 
 deb {{ mirror }} {{ codename }}-updates main restricted

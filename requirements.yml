@@ -1,6 +1,10 @@
 ---
 roles:
     - name: geerlingguy.security
+      version: 3.0.2
     - name: geerlingguy.ntp
+      version: 4.0.0
     - name: geerlingguy.node_exporter
+      version: 2.2.0
     - name: chriswayg.msmtp-mailer
+      version: master
