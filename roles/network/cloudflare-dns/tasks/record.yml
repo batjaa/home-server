@@ -8,6 +8,26 @@
         else cloudflare_dns_record.name ~ '.' ~ cloudflare_managed_zone.name
       }}
 
+- name: Find address records eligible for conversion to CNAME
+  set_fact:
+    cloudflare_cname_predecessors: >-
+      {{
+        cloudflare_records_response.json.result
+        | selectattr('name', 'equalto', cloudflare_record_fqdn)
+        | selectattr('type', 'in', ['A', 'AAAA'])
+        | list
+        if cloudflare_dns_record.type == 'CNAME'
+        else []
+      }}
+
+- name: Require an unambiguous CNAME conversion
+  assert:
+    that:
+      - cloudflare_cname_predecessors | length <= 1
+    fail_msg: >-
+      Multiple address records exist for {{ cloudflare_record_fqdn }}.
+      Resolve them before converting this hostname to a CNAME.
+
 - name: Find existing Cloudflare DNS record
   set_fact:
     cloudflare_existing_record: >-
@@ -16,7 +36,7 @@
         | selectattr('name', 'equalto', cloudflare_record_fqdn)
         | selectattr('type', 'equalto', cloudflare_dns_record.type)
         | first
-        | default({})
+        | default(cloudflare_cname_predecessors | first | default({}))
       }}
 
 - name: "Converge {{ cloudflare_record_fqdn }} ({{ cloudflare_dns_record.type }})"
@@ -39,6 +59,7 @@
     status_code: 200
   when: >-
     cloudflare_existing_record.id is not defined
+    or cloudflare_existing_record.type != cloudflare_dns_record.type
     or cloudflare_existing_record.content != cloudflare_dns_record.content
     or (cloudflare_existing_record.proxied | bool) != (cloudflare_dns_record.proxied | default(false) | bool)
     or (cloudflare_existing_record.ttl | int) != (cloudflare_dns_record.ttl | default(1) | int)

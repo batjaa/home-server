@@ -166,6 +166,28 @@ Example preview app:
 - SWAG on `andromon`: wildcard/regex proxy to `wormmon:80`
 - Coolify preview domain: `plotling.preview.batjaa.site`
 
+## Plotling production domain (`plotling.app`)
+
+Plotling runs in Coolify application `g111a4eausi813qdtzbsgfrf`, project
+`xv5yhvdunkvljj16nyvh32wg`, production environment, from `batjaa/plotling` `main`.
+Its Compose stack includes the web app, two queue workers, MySQL, Neo4j, and
+Nightwatch. R2 remains the media store. Coolify's application stop grace period
+is 960 seconds to allow long story jobs to finish; its default 30 seconds
+overrides Compose's grace period during deployments. Workers use SIGTERM and
+a container init process for graceful shutdown.
+
+The route is Cloudflare → andromon/SWAG → wormmon/Traefik → Plotling. The
+`plotling-app.subdomain.conf.j2` template handles the apex and redirects `www`.
+The local host variables declare apex and `www` CNAMEs, split DNS, and certificate
+coverage for both names. Those host-variable files remain gitignored by this
+repository's existing convention. Apply with the `swag`, `cloudflare-dns`, and
+`pihole` tags; `/up` is the application's health endpoint.
+
+The migration source is `/home/forge/plotling.app/current` on `tinker-box`.
+Preserve its maintenance mode and disabled worker after cutover. Its database is
+then a rollback snapshot, not an active replica; copy new writes back before any
+rollback. Production keeps the same app key and service credentials.
+
 ## Groove production domain (`usegroove.app`)
 
 `usegroove.app` is a Cloudflare Registrar zone routed through the existing
