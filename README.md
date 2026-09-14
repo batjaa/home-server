@@ -707,7 +707,7 @@ These are systemd timers that periodically write `*.prom` files into the textfil
 |---|---|---|
 | **SWAG** | andromon | Reverse proxy (nginx) + Let's Encrypt wildcard cert via Cloudflare DNS-01. Terminates `*.batjaa.site` on `:443`, routes by subdomain. |
 | **Pi-hole** | tentomon | DNS resolver + ad blocking. Local records for `*.home.local`, split DNS for `*.batjaa.site` so internal clients skip hairpin NAT. Router DHCP points at it. |
-| **Cloudflare DDNS** | tentomon | Keeps the apex `batjaa.site` A record pointed at the home public IP. |
+| **Cloudflare DDNS** | tentomon | Maintained `favonia/cloudflare-ddns` updater keeps `ddns.batjaa.site` pointed at the home public IPv4 address; existing service CNAMEs follow it. |
 | **Cloudflare DNS records** | tentomon | Manages public subdomain CNAMEs from `host_vars/tentomon/vars.yml`. |
 | **PiKVM** | (out of band) | Remote KVM per host: `kvm.andromon.home.local` (.21), `kvm.greymon.home.local` (.31), `kvm.wormmon.home.local` (.41 — planned). Factory image, not Ansible-managed — the rescue line. |
 | **msmtp** | andromon | SMTP relay through Postmark. SMART, btrfs scrub, and (eventually) Alertmanager email out via `alerts@batjaa.site`. |

@@ -1,2 +1,6 @@
 ---
 container_name: cloudflare-ddns
+cloudflare_ddns_image: "favonia/cloudflare-ddns:1.17.0"
+cloudflare_ddns_domains:
+  - "ddns.{{ host }}"
+cloudflare_ddns_update_cron: "@every 5m"

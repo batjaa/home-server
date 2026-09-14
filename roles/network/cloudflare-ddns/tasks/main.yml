@@ -1,32 +1,44 @@
 ---
-- name: Make sure the {{ container_name }} container is created and running
+- name: Validate Cloudflare updater configuration
+  assert:
+    that:
+      - cloudflare_dns_token | default('') | length > 0
+      - cloudflare_ddns_domains | length > 0
+    quiet: true
+  no_log: true
+
+# Pull before replacing the old updater so a registry failure leaves it running.
+- name: Pull the pinned Cloudflare updater image
+  docker_image:
+    name: "{{ cloudflare_ddns_image }}"
+    source: pull
+
+# Keep the existing container name, role, feature flag, and Ansible tag. Replacing
+# the container stops the archived oznu updater before its successor starts.
+- name: Run the maintained Cloudflare DNS updater
   docker_container:
     name: "{{ container_name }}"
-    image: "oznu/cloudflare-ddns:latest"
-    pull: yes
-    state: 'started'
+    image: "{{ cloudflare_ddns_image }}"
+    pull: no
+    state: started
+    network_mode: bridge
+    user: "{{ guid }}:{{ guid }}"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opts:
+      - "no-new-privileges:true"
     env:
-      "PUID": "{{ guid }}"
-      "PGID": "{{ guid }}"
-      "TZ": "{{ timezone }}"
-      "API_KEY": "{{ cloudflare_dns_token }}"
-      "ZONE": "{{ host }}"
-      "PROXIED": "false"
-      "SUBDOMAIN": "ddns"
+      TZ: "{{ timezone }}"
+      CLOUDFLARE_API_TOKEN: "{{ cloudflare_dns_token }}"
+      DOMAINS: "{{ cloudflare_ddns_domains | join(',') }}"
+      # The previous updater managed only A records. Do not introduce AAAA
+      # records that would bypass the existing IPv4 ingress path.
+      IP6_PROVIDER: "none"
+      PROXIED: "false"
+      UPDATE_CRON: "{{ cloudflare_ddns_update_cron }}"
+      UPDATE_ON_START: "true"
+      # Existing records must survive restarts, replacement, and rollback.
+      DELETE_ON_STOP: "false"
     restart_policy: unless-stopped
-
-# - name: Make sure the {{ container_name }} container is created and running
-#   when: enable_wireguard | default(False)
-#   docker_container:
-#     name: "{{ container_name }}_vpn"
-#     image: "oznu/cloudflare-ddns:latest"
-#     pull: yes
-#     state: 'started'
-#     env:
-#       "PUID": "{{ guid }}"
-#       "PGID": "{{ guid }}"
-#       "TZ": "{{ timezone }}"
-#       "API_KEY": "{{ cloudflare_dns_token }}"
-#       "ZONE": "{{ vpn_host }}"
-#       "PROXIED": "false"
-#     restart_policy: unless-stopped
+  no_log: true

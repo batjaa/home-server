@@ -97,8 +97,26 @@ ansible -m debug -a "var=<key>" <host>
 
 **Auth:** `cloudflare_dns_token` in `host_vars/tentomon/secret.yml`
 
-**Auto-configured:** updates `ddns.batjaa.site` to current public IP every
-few minutes via the `oznu/cloudflare-ddns` container.
+**Auto-configured:** `favonia/cloudflare-ddns:1.17.0` updates the IPv4 A record
+for `ddns.batjaa.site` at startup and every five minutes. It replaces the archived
+`oznu/cloudflare-ddns` image while keeping the `cloudflare-ddns` container name,
+Ansible role/tag, and `enable_cloudflare_ddns` flag. Service CNAMEs remain intact.
+
+The updater uses `CLOUDFLARE_API_TOKEN` from the existing vault token and runs
+without root, writable container storage, or Linux capabilities. IPv6 discovery
+is disabled (`IP6_PROVIDER=none`), existing record TTL/proxy settings are retained,
+and `DELETE_ON_STOP=false` preserves DNS when the container stops.
+
+Change the pinned image, managed names, or schedule via `cloudflare_ddns_image`,
+`cloudflare_ddns_domains`, and `cloudflare_ddns_update_cron`, then deploy:
+
+```bash
+ansible-playbook main.yml -l tentomon --tags cloudflare-ddns
+```
+
+This service is stateless. For an emergency rollback, restore the previous role
+from Git and rerun the same tag; its vault token and old local Docker image are
+retained. Verify the Cloudflare A record and public resolution after either path.
 
 **Manual:** none. The Cloudflare token must have `Zone.DNS:Edit` on the
 `batjaa.site` zone. Generate at
