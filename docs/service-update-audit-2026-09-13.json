@@ -1,0 +1,4751 @@
+{
+  "audit_date_local": "2026-09-13",
+  "timezone": "America/Los_Angeles",
+  "scope": "Read-only service/version audit; initial running-container snapshot around 19:01 PDT. Concurrent Coolify deployments observed.",
+  "counts": {
+    "Matches tag": 27,
+    "New image on tag": 33,
+    "Custom build; unverified": 39
+  },
+  "containers": [
+    {
+      "host": "andromon",
+      "name": "swag",
+      "image": "ghcr.io/linuxserver/swag:latest",
+      "id": "sha256:999988789ec2e945ac3e1ea870e3579a795e3ad8786dbb337c06d6efbaea1d0e",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:35:30.747686384Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/linuxserver/swag@sha256:10518530b4f6b78f1a08e445bd345178b1260abd6904b30c6f233c5f89926f94"
+        ],
+        "tags": [
+          "ghcr.io/linuxserver/swag:latest"
+        ],
+        "created": "2026-09-12T07:58:59.028456506Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "5.8.0-ls484",
+        "source": "https://github.com/linuxserver/docker-swag"
+      },
+      "registry": {
+        "ref": "ghcr.io/linuxserver/swag:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:999988789ec2e945ac3e1ea870e3579a795e3ad8786dbb337c06d6efbaea1d0e",
+        "index_digest": "sha256:10518530b4f6b78f1a08e445bd345178b1260abd6904b30c6f233c5f89926f94",
+        "created": "2026-09-12T07:58:59.028456506Z",
+        "version": "5.8.0-ls484",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/linuxserver/swag/manifests/latest",
+        "queried_ref": "ghcr.io/linuxserver/swag:latest"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "andromon",
+      "name": "prowlarr",
+      "image": "lscr.io/linuxserver/prowlarr:latest",
+      "id": "sha256:48cd1d7e2a8b73178829c03e0606b8c820d067d6f7d7d92328573eb311e3e521",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.430475074Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "lscr.io/linuxserver/prowlarr@sha256:91844fa2c927ad6ede5630127183cc7868b175f6223e83e6a5da1fffea2aa782"
+        ],
+        "tags": [
+          "lscr.io/linuxserver/prowlarr:latest"
+        ],
+        "created": "2026-09-02T08:12:21.962021259Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "2.5.2.5491-ls158",
+        "source": "https://github.com/linuxserver/docker-prowlarr"
+      },
+      "registry": {
+        "ref": "lscr.io/linuxserver/prowlarr:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:7ebd7399b8fb23972bcd0cd73e929d62c855361e62feff6531e0feee6b4e38fa",
+        "index_digest": "sha256:c7502a75b021d964481c129c84590b9cbc40f83aadd4e553f173871bc0deaa3c",
+        "created": "2026-09-09T08:33:27.224659637Z",
+        "version": "2.5.2.5491-ls159",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/linuxserver/prowlarr/manifests/latest",
+        "queried_ref": "ghcr.io/linuxserver/prowlarr:latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "decluttarr",
+      "image": "ghcr.io/manimatter/decluttarr:latest",
+      "id": "sha256:8f991829c2258178d6dae5ffe93cd4b82088c874933872428a6f71997959a8b0",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-10T06:01:28.892458023Z",
+      "restarts": 1,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/manimatter/decluttarr@sha256:c06d48426b612b845f2406c2d045f266468a6390faf87aea796d497a2935ec95"
+        ],
+        "tags": [
+          "ghcr.io/manimatter/decluttarr:latest"
+        ],
+        "created": "2026-05-10T18:01:07.066701874Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "v2.1.0",
+        "source": "https://github.com/ManiMatter/decluttarr"
+      },
+      "registry": {
+        "ref": "ghcr.io/manimatter/decluttarr:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:8f991829c2258178d6dae5ffe93cd4b82088c874933872428a6f71997959a8b0",
+        "index_digest": "sha256:c06d48426b612b845f2406c2d045f266468a6390faf87aea796d497a2935ec95",
+        "created": "2026-05-10T18:01:07.066701874Z",
+        "version": "v2.1.0",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/manimatter/decluttarr/manifests/latest"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "andromon",
+      "name": "seerr",
+      "image": "ghcr.io/seerr-team/seerr:latest",
+      "id": "sha256:8921315d8f128b2c159abadee7733ec63dc16f46c2e6f56d9a57d7db3470f36a",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.475333788Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/seerr-team/seerr@sha256:f4768de5f616248d723e05891f3345a1402123775d03bf0890dbfedc0831bda1"
+        ],
+        "tags": [
+          "ghcr.io/seerr-team/seerr:latest"
+        ],
+        "created": "2026-07-30T09:24:48Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "v3.4.1",
+        "source": "https://github.com/seerr-team/seerr"
+      },
+      "registry": {
+        "ref": "ghcr.io/seerr-team/seerr:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:8921315d8f128b2c159abadee7733ec63dc16f46c2e6f56d9a57d7db3470f36a",
+        "index_digest": "sha256:f4768de5f616248d723e05891f3345a1402123775d03bf0890dbfedc0831bda1",
+        "created": "2026-07-30T09:24:48Z",
+        "version": "v3.4.1",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/seerr-team/seerr/manifests/latest"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "andromon",
+      "name": "bazarr",
+      "image": "lscr.io/linuxserver/bazarr:latest",
+      "id": "sha256:f6cffb4bd2cf62d1f6eb7fb2307a557196ca424b439f0fd2a5c824fb4c6b511a",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.409672312Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "lscr.io/linuxserver/bazarr@sha256:e464484e7e6cff8ee189036c9ba96977ab054104ea18067ecf6171d0f3f3f8f2"
+        ],
+        "tags": [
+          "lscr.io/linuxserver/bazarr:latest"
+        ],
+        "created": "2026-08-04T22:25:49.927647056Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "v1.6.0-ls357",
+        "source": "https://github.com/linuxserver/docker-bazarr"
+      },
+      "registry": {
+        "ref": "lscr.io/linuxserver/bazarr:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:b2c739fed2a223406d66ca04255a7748384e68163dbcca4b86b882cee04612a1",
+        "index_digest": "sha256:84b6f05a7a4194fafe5a0bec062d32f6ae9ea74db33d43d678cb9a3191f31c24",
+        "created": "2026-09-08T23:32:20.248310183Z",
+        "version": "v1.6.0-ls363",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/linuxserver/bazarr/manifests/latest",
+        "queried_ref": "ghcr.io/linuxserver/bazarr:latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "whisparr",
+      "image": "ghcr.io/hotio/whisparr:v3",
+      "id": "sha256:aaf44e712cd91407b819d74e187767a47e740eab7f185cf0210ed59717253fb1",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.530648434Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/hotio/whisparr@sha256:93db4f70e19bb8f8dfa8860f8ef6b3bc3102e21089764d1e3cdbc04b6c901714"
+        ],
+        "tags": [
+          "ghcr.io/hotio/whisparr:v3"
+        ],
+        "created": "2026-07-28T17:16:58.391260016Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "3.3.7-release.979",
+        "source": "https://github.com/hotio/whisparr/tree/v3"
+      },
+      "registry": {
+        "ref": "ghcr.io/hotio/whisparr:v3",
+        "arch": "amd64",
+        "config_digest": "sha256:84e00db1ed91367d435ef05529c22138f0af2a44e10118beecc87b77786d43d8",
+        "index_digest": "sha256:b18ba2049123f1480a557b23954f1055b86f2625436f0bc51ccaa012030d9ba3",
+        "created": "2026-09-10T15:32:10.4464628Z",
+        "version": "3.5.0-release.1585",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/hotio/whisparr/manifests/v3"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "sonarr",
+      "image": "lscr.io/linuxserver/sonarr:latest",
+      "id": "sha256:de227c8e8683b49316e91ee85b8af32a3cccd7345be1178cba065f546fe8cebd",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.581913351Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "lscr.io/linuxserver/sonarr@sha256:373159ba768e23a3a1c497d9f2b936addf8fd5b1fdce7dd6a14080ac928bfda0"
+        ],
+        "tags": [
+          "lscr.io/linuxserver/sonarr:latest"
+        ],
+        "created": "2026-08-07T23:57:23.268703248Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "4.0.19.2979-ls321",
+        "source": "https://github.com/linuxserver/docker-sonarr"
+      },
+      "registry": {
+        "ref": "lscr.io/linuxserver/sonarr:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:eadaf56275e3aaff19428815f22ab68a9cae4e11e7eb368c96087aae7501529a",
+        "index_digest": "sha256:82172b363f9eddc02aca544f880a044f2ceb9aaf190bc87e4454e2f705eb91d0",
+        "created": "2026-09-12T01:24:26.222784082Z",
+        "version": "4.0.19.2979-ls324",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/linuxserver/sonarr/manifests/latest",
+        "queried_ref": "ghcr.io/linuxserver/sonarr:latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "radarr",
+      "image": "lscr.io/linuxserver/radarr:latest",
+      "id": "sha256:5a29acd9cee5afd4ef094d9d62297454b2c3b759478381aeb4fe89d93577c9c7",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.49866561Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "lscr.io/linuxserver/radarr@sha256:a45b5ab0f850f39edb4cc9c95bbd967b52ddc3d4574a4dfb45561177db6c88f4"
+        ],
+        "tags": [
+          "lscr.io/linuxserver/radarr:latest"
+        ],
+        "created": "2026-08-02T17:51:32.857291273Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "6.3.0.10514-ls313",
+        "source": "https://github.com/linuxserver/docker-radarr"
+      },
+      "registry": {
+        "ref": "lscr.io/linuxserver/radarr:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:468d65ccb066f7cf2c655a7306073cb52fbdfc84b12d091472b5bd7954295d64",
+        "index_digest": "sha256:fe051413dfd91b383ba04910552e83fb0306895fefee275c48dafe7bb90807dc",
+        "created": "2026-09-13T19:06:50.06265643Z",
+        "version": "6.3.0.10514-ls316",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/linuxserver/radarr/manifests/latest",
+        "queried_ref": "ghcr.io/linuxserver/radarr:latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "sabnzbd",
+      "image": "lscr.io/linuxserver/sabnzbd:latest",
+      "id": "sha256:b3dc9106a675decbbb65f0e78b5bd9241449ca27e204bb65f79ba2de9dd79abb",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.337622786Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "lscr.io/linuxserver/sabnzbd@sha256:b0f9755d795913bd26ae3f3a12805668ab0681ab847a7624568559c573fc7cae"
+        ],
+        "tags": [
+          "lscr.io/linuxserver/sabnzbd:latest"
+        ],
+        "created": "2026-08-10T11:48:56.089416195Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "5.1.0-ls266",
+        "source": "https://github.com/linuxserver/docker-sabnzbd"
+      },
+      "registry": {
+        "ref": "lscr.io/linuxserver/sabnzbd:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:422aad846426b97dfab41cbbee25be18adbfd82499831ae28e20515c506cf4c7",
+        "index_digest": "sha256:948ea3dc45d68943ec14b33ba37ffa1488da3e9837bf3ca0f75621e971614d85",
+        "created": "2026-09-10T04:46:18.938740062Z",
+        "version": "5.1.3-ls273",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/linuxserver/sabnzbd/manifests/latest",
+        "queried_ref": "ghcr.io/linuxserver/sabnzbd:latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "beets",
+      "image": "lscr.io/linuxserver/beets:latest",
+      "id": "sha256:6083f0f5703dc7291f76e1704896567b3e51208588fb46864bdbde68ec90eeb5",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.568161809Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "lscr.io/linuxserver/beets@sha256:844c91ba922fdb77826c09da12c0666783ffd63f9c3107e7465b0cb6774b25df"
+        ],
+        "tags": [
+          "lscr.io/linuxserver/beets:latest"
+        ],
+        "created": "2026-08-07T19:33:25.819204054Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "2.13.1-ls346",
+        "source": "https://github.com/linuxserver/docker-beets"
+      },
+      "registry": {
+        "ref": "lscr.io/linuxserver/beets:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:5293460adab350da30b375267ecfc318d1845c03ac7b1468af8666f41bcd4c26",
+        "index_digest": "sha256:748b6fcdece5f3142cb555a4219b52ad9b9352763db02329ebe4dc3e21bce74d",
+        "created": "2026-09-11T21:11:57.208587914Z",
+        "version": "2.14.0-ls352",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/linuxserver/beets/manifests/latest",
+        "queried_ref": "ghcr.io/linuxserver/beets:latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "tautulli",
+      "image": "lscr.io/linuxserver/tautulli:latest",
+      "id": "sha256:c2989a9258fbcb2a122fb8d1a3d7ec4f45dcfaaa96ace414775a407e76756911",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.274173236Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "lscr.io/linuxserver/tautulli@sha256:5a6501710790b545693de2938bdfd279d52291f986b6f7273716783b2b080cc6"
+        ],
+        "tags": [
+          "lscr.io/linuxserver/tautulli:latest"
+        ],
+        "created": "2026-08-07T01:49:32.598994398Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "v2.17.2-ls239",
+        "source": "https://github.com/linuxserver/docker-tautulli"
+      },
+      "registry": {
+        "ref": "lscr.io/linuxserver/tautulli:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:49d18e5dcc6fe8dbc1a1d0ea4262f5c421c7c858766280911d32bc4c4497a7c8",
+        "index_digest": "sha256:e35570d636471f8aabfac7044057712679f954844a763ba735baa9659ea142b5",
+        "created": "2026-09-11T01:19:23.291064178Z",
+        "version": "v2.18.1-ls244",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/linuxserver/tautulli/manifests/latest",
+        "queried_ref": "ghcr.io/linuxserver/tautulli:latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "jellyfin",
+      "image": "lscr.io/linuxserver/jellyfin:latest",
+      "id": "sha256:32cc24a646a477f76299aa814dead08f3f08dc19402707976e208fa0dacc9ac2",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.604187104Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "lscr.io/linuxserver/jellyfin@sha256:0dd18f8de37c7cfbe76877a8b928943b3588beb9678fb223121914ec9a3cdf7c"
+        ],
+        "tags": [
+          "lscr.io/linuxserver/jellyfin:latest"
+        ],
+        "created": "2026-08-11T13:47:14.581211344Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "10.11.11ubu2604-ls44",
+        "source": "https://github.com/linuxserver/docker-jellyfin"
+      },
+      "registry": {
+        "ref": "lscr.io/linuxserver/jellyfin:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:c5d83b1bb2daf8c0c516d6704983f28ef4d679e22088fe7001fc895c5e30c3ad",
+        "index_digest": "sha256:0f42497a69fa0441bfd5f9d6bba8694f2a656ec984e571d0ac04c6dd91250039",
+        "created": "2026-09-08T02:30:49.633477467Z",
+        "version": "12.0ubu2604-ls48",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/linuxserver/jellyfin/manifests/latest",
+        "queried_ref": "ghcr.io/linuxserver/jellyfin:latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "immich-server",
+      "image": "ghcr.io/immich-app/immich-server:release",
+      "id": "sha256:8c6b230769c61601016067d898e76271a27069d42c51b4aa708fce8ef7c865e7",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-10T06:00:56.63567293Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/immich-app/immich-server@sha256:b434cb9287eea1471c9974845914d4dd328c9c2d652e446ed4930f99944f0ceb"
+        ],
+        "tags": [
+          "ghcr.io/immich-app/immich-server:release"
+        ],
+        "created": "2026-07-29T14:25:43.334912945Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "v3.1.0",
+        "source": "https://github.com/immich-app/immich"
+      },
+      "registry": {
+        "ref": "ghcr.io/immich-app/immich-server:release",
+        "arch": "amd64",
+        "config_digest": "sha256:fa3dd90e8ab63ca4385691ad80e960671f1b11eea788244eab80da003727c59b",
+        "index_digest": "sha256:ae13784ffcfcce8f4178113eb6661602a1fd1912f3d539880b8ac0dd95fc8ac2",
+        "created": "2026-09-10T16:04:02.904137762Z",
+        "version": "v3.2.0",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/immich-app/immich-server/manifests/release",
+        "queried_ref": "ghcr.io/immich-app/immich-server:release"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "immich-machine-learning",
+      "image": "ghcr.io/immich-app/immich-machine-learning:release",
+      "id": "sha256:0d63f0a93ac4993eb55f7e06920bc84522eed7b560259a5bef0027cd846c5e29",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-10T06:00:56.37961542Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/immich-app/immich-machine-learning@sha256:5a0839dc5303cd7215bcd2180a26aed3af41675aefb3e75e5157e9f10ad16e6e"
+        ],
+        "tags": [
+          "ghcr.io/immich-app/immich-machine-learning:release"
+        ],
+        "created": "2026-07-27T18:23:15.714046218Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "v3.1.0",
+        "source": "https://github.com/immich-app/immich"
+      },
+      "registry": {
+        "ref": "ghcr.io/immich-app/immich-machine-learning:release",
+        "arch": "amd64",
+        "config_digest": "sha256:265c928cf20dc9b27f2bff336690af5869849e7b358155f757c52703b1c1a687",
+        "index_digest": "sha256:f8b2869891c861a58dde969d86e7ea8a186e6059a55886632ee3249e51fb574a",
+        "created": "2026-09-10T16:02:04.665426615Z",
+        "version": "v3.2.0",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/immich-app/immich-machine-learning/manifests/release"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "immich-redis",
+      "image": "docker.io/redis:6.2-alpine",
+      "id": "sha256:c09cfd71b4b8924db442d175cffa414b9ca6666fa605b72b2e3fd585b1a75b91",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.620295152Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "redis@sha256:ec5e187c913d422cdf60f4216a5fdfb95246792c6de6fe21ff5bed75cbfc8c23"
+        ],
+        "tags": [
+          "redis:6.2-alpine"
+        ],
+        "created": "2026-07-24T17:12:09.356444076Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "docker.io/redis:6.2-alpine",
+        "arch": "amd64",
+        "config_digest": "sha256:230747c6e7997406741497c085ccbfd1bdddff5c9c478f1ad4c3d7bfbc5caedd",
+        "index_digest": "sha256:d0c875bdacfb5c4d2c2d9124de3f53cee1dc9ceff8936bd459fabc135cb33015",
+        "created": "2026-08-18T16:58:05.660794029Z",
+        "version": "",
+        "version_env": {
+          "REDIS_VERSION": "6.2.24"
+        },
+        "url": "https://registry-1.docker.io/v2/library/redis/manifests/6.2-alpine"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "plex",
+      "image": "lscr.io/linuxserver/plex:latest",
+      "id": "sha256:4cdce157b9cf86c238d38c89ad403101754d4ea29ebe08e1295335efda4789c4",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.521771831Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "lscr.io/linuxserver/plex@sha256:d5ee6068a20ae57f95060038eaef292cdfd4285efb213ea4daaccdc184e45d1b"
+        ],
+        "tags": [
+          "lscr.io/linuxserver/plex:latest"
+        ],
+        "created": "2026-08-10T10:25:15.112894998Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "1.43.3.10861-07dfddaeb-ls319",
+        "source": "https://github.com/linuxserver/docker-plex"
+      },
+      "registry": {
+        "ref": "lscr.io/linuxserver/plex:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:00678fc20e3c19a5683f488dbaf99b08949db1b7ddb5caa4aa8795d86b36cd73",
+        "index_digest": "sha256:1f6f97d76e7bdb013789e94c838f2d9133b01ee4b2d4194148e492c4e4f12d90",
+        "created": "2026-09-10T19:49:01.10765761Z",
+        "version": "1.43.4.10903-e5521bd8c-ls324",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/linuxserver/plex/manifests/latest",
+        "queried_ref": "ghcr.io/linuxserver/plex:latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "movie-agent",
+      "image": "agents/movie-agent:dev",
+      "id": "sha256:2d872b6180c2272d6f6f3d9f88a28898d6608cca864241cbedd6e592ed9272c6",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.631643165Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [],
+        "tags": [
+          "agents/movie-agent:dev"
+        ],
+        "created": "2026-05-16T18:22:24.062218091Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "andromon",
+      "name": "open-webui",
+      "image": "ghcr.io/open-webui/open-webui:main",
+      "id": "sha256:e97bf95319168ab7fdfc5bd1e869f6a1cf6349bdf6d3e8fe16c733d2ca473491",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-10T06:00:56.655772311Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/open-webui/open-webui@sha256:6a773e5c3a246b65cbe74ce942b294292c0e5f81c138f703d111bc162f7d7c3d"
+        ],
+        "tags": [
+          "ghcr.io/open-webui/open-webui:main"
+        ],
+        "created": "2026-07-27T10:51:11.119670997Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "main",
+        "source": "https://github.com/open-webui/open-webui"
+      },
+      "registry": {
+        "ref": "ghcr.io/open-webui/open-webui:main",
+        "arch": "amd64",
+        "config_digest": "sha256:254411b60f37fcd5cb1386bd0dfa19ea29ee0dc2a058a3d876c9f791c2b26957",
+        "index_digest": "sha256:1a6399d237dc392a2313e0ca826020b3fd5d22536357840eb63393d18dc8b924",
+        "created": "2026-09-04T23:47:30.833326625Z",
+        "version": "main",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/open-webui/open-webui/manifests/main"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "paperless",
+      "image": "ghcr.io/paperless-ngx/paperless-ngx:latest",
+      "id": "sha256:5d67c341796eb698e1a2bb6a3943afd5eb1d52850bf542179d9b081f4d497edd",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-10T06:00:56.638966145Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/paperless-ngx/paperless-ngx@sha256:65a4cabf0169ea7fbd90ab7bb28ba3f8b5909613635acda1a03ad606f34b456b"
+        ],
+        "tags": [
+          "ghcr.io/paperless-ngx/paperless-ngx:latest"
+        ],
+        "created": "2026-08-01T21:46:18.171765001Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "3.0.5",
+        "source": "https://github.com/paperless-ngx/paperless-ngx"
+      },
+      "registry": {
+        "ref": "ghcr.io/paperless-ngx/paperless-ngx:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:04be29c9a534e0f83c9df8131eb48990a2527e47b997ab4ba40ce0d9bce770e5",
+        "index_digest": "sha256:aa810a36942c63d4ee70d00eda7236cd3d6acfb7eb3f7987fb568ed14df8817a",
+        "created": "2026-09-04T02:58:02.236545698Z",
+        "version": "3.1.3",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/paperless-ngx/paperless-ngx/manifests/latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "paperless-redis",
+      "image": "docker.io/library/redis:7-alpine",
+      "id": "sha256:2a51817f79255c8b69f86a974459c2e0359aff81417d80158f2b9e541e6f4b33",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.572011016Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "redis@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2"
+        ],
+        "tags": [
+          "redis:7-alpine"
+        ],
+        "created": "2026-07-26T04:42:13.95278683Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "docker.io/library/redis:7-alpine",
+        "arch": "amd64",
+        "config_digest": "sha256:5509c0097c6064aa8a3b1df58f1d950e67090fffa6678ae8f3f1dc2385f12deb",
+        "index_digest": "sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf",
+        "created": "2026-08-18T16:56:46.926554149Z",
+        "version": "",
+        "version_env": {
+          "REDIS_VERSION": "7.4.11"
+        },
+        "url": "https://registry-1.docker.io/v2/library/redis/manifests/7-alpine"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "paperless-db",
+      "image": "docker.io/library/postgres:16",
+      "id": "sha256:8a4b045886180c64f518ca6a4b0791b15fb997f3b3b619bd5ee141914668db55",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.624843916Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "postgres@sha256:95206741a5b214807675e14165369d05b93a9cf692223b616d07cca227e74b0b"
+        ],
+        "tags": [
+          "postgres:16"
+        ],
+        "created": "2026-08-05T00:36:57.970209645Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "docker.io/library/postgres:16",
+        "arch": "amd64",
+        "config_digest": "sha256:80f4c7a5e91618546dce5b4fe60cf03b14c0f9efa7e40157278d122772ced8d2",
+        "index_digest": "sha256:f1c3376c26f2609ab9f29f71f824103fe2fcd8ee0346485cb6122a4f93df6f94",
+        "created": "2026-08-25T00:42:01.8414474Z",
+        "version": "",
+        "version_env": {
+          "PG_VERSION": "16.15-1.pgdg13+2"
+        },
+        "url": "https://registry-1.docker.io/v2/library/postgres/manifests/16"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "nextcloud",
+      "image": "nextcloud:stable",
+      "id": "sha256:e879978daf70ae11ddec952e2c3c692b8f43fecfe082eaa77e281f971bbc6e8e",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.56580069Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "nextcloud@sha256:d7666d54d87c58d52869ddda36d1acbd4a7f53faf8ab6b91293daf204f3434e8"
+        ],
+        "tags": [
+          "nextcloud:stable"
+        ],
+        "created": "2026-08-05T01:46:09.279072451Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "nextcloud:stable",
+        "arch": "amd64",
+        "config_digest": "sha256:94abf59f8e799025ee10b315b8419270f09e73cf410a54c0812debfc4aefefa7",
+        "index_digest": "sha256:0c74fb931e7e5115c833b3cab8d1eb2a4894ff95cd5fa2e84124ac9d3e1fea09",
+        "created": "2026-09-11T23:21:36.323884602Z",
+        "version": "",
+        "version_env": {
+          "NEXTCLOUD_VERSION": "34.0.4"
+        },
+        "url": "https://registry-1.docker.io/v2/library/nextcloud/manifests/stable"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "nextcloud-db",
+      "image": "mariadb:11",
+      "id": "sha256:6ae88e359ad5f5304005f83dbdba9f402b3b75327f3a576ad2ffb291e708b399",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.486992545Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "mariadb@sha256:d9f7eb2637296652f24b484afd5d246f759f49f5babcadc6a9e344c9acb75fbf"
+        ],
+        "tags": [
+          "mariadb:11"
+        ],
+        "created": "2026-08-04T01:42:00.638044026Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "11.8.8",
+        "source": "https://github.com/MariaDB/mariadb-docker"
+      },
+      "registry": {
+        "ref": "mariadb:11",
+        "arch": "amd64",
+        "config_digest": "sha256:2f2521bbf6784049fa90445cae9e299e09d4ea083461b59f8fe17399094b6afb",
+        "index_digest": "sha256:2d2f4095530294735a857cfe22bb101e19b0849b416911c796ec4aa81b164a62",
+        "created": "2026-09-09T02:33:38.761319992Z",
+        "version": "11.8.9",
+        "version_env": {
+          "MARIADB_VERSION": "1:11.8.9+maria~ubu2404"
+        },
+        "url": "https://registry-1.docker.io/v2/library/mariadb/manifests/11"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "homeassistant",
+      "image": "ghcr.io/home-assistant/home-assistant:stable",
+      "id": "sha256:b80c4cee5cbc06c736342814261df6b9fdd302426d8c6f5783b8d960a68816b3",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.557624846Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/home-assistant/home-assistant@sha256:6340a3de3917a9b19368e767310a96dd090f6a19aca8aeadf87fd1145cec9682"
+        ],
+        "tags": [
+          "ghcr.io/home-assistant/home-assistant:stable"
+        ],
+        "created": "2026-08-07T18:14:50.20806507Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "2026.8.1",
+        "source": "https://github.com/home-assistant/core"
+      },
+      "registry": {
+        "ref": "ghcr.io/home-assistant/home-assistant:stable",
+        "arch": "amd64",
+        "config_digest": "sha256:0fafae2139c2d143085e56a205d7c5603d20188f9ac2cfa4b8e1da1e57f28145",
+        "index_digest": "sha256:a1bc133af84ee6505fe2c266d9805b7c75b780dfdc188edfee3b11e8f3cd8efe",
+        "created": "2026-09-11T19:46:43.850311957Z",
+        "version": "2026.9.2",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/home-assistant/home-assistant/manifests/stable"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "grafana",
+      "image": "grafana/grafana:latest",
+      "id": "sha256:8b5e93ab63f515a9d1d0eea03d99e5896b09074996164c6a500fc713c1d2d451",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.652828851Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "grafana/grafana@sha256:ab5cb380e3ff3172d6c8bd2e7cfd31cce977d2881b260e1f5bc089bf0b759b43"
+        ],
+        "tags": [
+          "grafana/grafana:latest"
+        ],
+        "created": "2026-08-07T00:43:24Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": "https://github.com/grafana/grafana"
+      },
+      "registry": {
+        "ref": "grafana/grafana:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:8400f365c39767b0d0df30e3aeb0796f873c3acf89b28089745bfafd88d83c7c",
+        "index_digest": "sha256:f772d434e8fab0049deb2b1b30abd43342bcfca1537614aa8d36080232cf4283",
+        "created": "2026-08-28T16:39:41Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/grafana/grafana/manifests/latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "prometheus",
+      "image": "prom/prometheus:latest",
+      "id": "sha256:8da6d95a8747c08872fbffa86d35a9c39433cbe908ce8e5939ad34087cceac86",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.652652964Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "prom/prometheus@sha256:508729e0e2d18e11fd742a5a5ca70e557b940a93948c3c95fd0123a6fd538b69"
+        ],
+        "tags": [
+          "prom/prometheus:latest"
+        ],
+        "created": "2026-07-30T12:01:58.514082203Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": "https://github.com/prometheus/prometheus"
+      },
+      "registry": {
+        "ref": "prom/prometheus:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:31c1e0aacb3a1914563c4e9b1e8d0a55095bf433aa43c1b0fe695959742845bd",
+        "index_digest": "sha256:5ce7540c3c00ef4ab0c9d2c995c6a5b9c421f44b4a115d97a2c7af3b1c21cbb0",
+        "created": "2026-08-18T07:38:26.045520047Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/prom/prometheus/manifests/latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "navidrome",
+      "image": "deluan/navidrome:latest",
+      "id": "sha256:77d6b6e11ce8406f4a1474b0bd95fd8a982d202ff97ac0d3bcb8d60bb20e6f56",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.515954825Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "deluan/navidrome@sha256:9012939114fbb1bb641b81cf96dec5ded15f0aafefe8d47a511d7cb919658e40"
+        ],
+        "tags": [
+          "deluan/navidrome:latest"
+        ],
+        "created": "2026-07-11T13:35:52.333409893Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "0.63.2",
+        "source": "https://github.com/navidrome/navidrome"
+      },
+      "registry": {
+        "ref": "deluan/navidrome:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:082c198a14c9f2c36bb714830e1e3bf5ec785c36f384c6b982cb24c5a88da555",
+        "index_digest": "sha256:a384948b81bd1529986c5960169e7fc4fa00f46bde6bd517971a4c36671db2af",
+        "created": "2026-09-12T18:23:49.355538463Z",
+        "version": "0.64.0",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/deluan/navidrome/manifests/latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "stash",
+      "image": "stashapp/stash:latest",
+      "id": "sha256:51b0703b2f20d88af7881ef5c182b0f26a0f87f599e911d533c13971f66c6875",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.543449122Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "stashapp/stash@sha256:df744af5a0c976e2ec671052ecc1f8a9aa757fa12b8f9930b59910b7295f0da6"
+        ],
+        "tags": [
+          "stashapp/stash:latest"
+        ],
+        "created": "2026-04-13T01:48:22.993776808Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": "https://github.com/stashapp/stash"
+      },
+      "registry": {
+        "ref": "stashapp/stash:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:51b0703b2f20d88af7881ef5c182b0f26a0f87f599e911d533c13971f66c6875",
+        "index_digest": "sha256:df744af5a0c976e2ec671052ecc1f8a9aa757fa12b8f9930b59910b7295f0da6",
+        "created": "2026-04-13T01:48:22.993776808Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/stashapp/stash/manifests/latest"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "andromon",
+      "name": "homepage",
+      "image": "ghcr.io/gethomepage/homepage:latest",
+      "id": "sha256:6b93c79b827f3891dd0c50e4b092b4f243026418965ae144a6d5c4a570127c3b",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-10T06:00:56.509894039Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/gethomepage/homepage@sha256:a0b71c8e757298d02560186bab9fbe3fc2d375c523a62cc1019177b37e48aa28"
+        ],
+        "tags": [
+          "ghcr.io/gethomepage/homepage:latest"
+        ],
+        "created": "2026-06-09T18:03:58.755406401Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "v1.13.2",
+        "source": "https://github.com/gethomepage/homepage"
+      },
+      "registry": {
+        "ref": "ghcr.io/gethomepage/homepage:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:6d698a5e36f48f745af2a1c0e6e8db1b1aef7ccb27e88f943d703ab67288e564",
+        "index_digest": "sha256:f820276654539cdc2cf0169f28188d135919a7984fad76d83d8d5ff1383f3705",
+        "created": "2026-09-09T21:55:48.870331426Z",
+        "version": "v2.3.0",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/gethomepage/homepage/manifests/latest"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "andromon",
+      "name": "chartdb",
+      "image": "ghcr.io/chartdb/chartdb:latest",
+      "id": "sha256:eea96c11b7403b7c339ec875df8c7e25b632a3b661d496d0c61ce3d6e550dce2",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:56.527755956Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/chartdb/chartdb@sha256:9385f1a72174a2cdba27036127a98474a0c941c3c795dcc15149884c09834460"
+        ],
+        "tags": [
+          "ghcr.io/chartdb/chartdb:latest"
+        ],
+        "created": "2026-04-07T14:47:13.791005942Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "1.20.1",
+        "source": "https://github.com/chartdb/chartdb"
+      },
+      "registry": {
+        "ref": "ghcr.io/chartdb/chartdb:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:eea96c11b7403b7c339ec875df8c7e25b632a3b661d496d0c61ce3d6e550dce2",
+        "index_digest": "sha256:9385f1a72174a2cdba27036127a98474a0c941c3c795dcc15149884c09834460",
+        "created": "2026-04-07T14:47:13.791005942Z",
+        "version": "1.20.1",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/chartdb/chartdb/manifests/latest"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "andromon",
+      "name": "immich-db",
+      "image": "ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0",
+      "id": "sha256:178719aeb38df6f0ce8edc1d8320008379fcf04eb3444e76419cc98d9861e331",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-10T06:00:56.297734232Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/immich-app/postgres@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23"
+        ],
+        "tags": [
+          "ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0"
+        ],
+        "created": "2025-10-07T12:09:13.605869304Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "14-vectorchord0.4.3-pgvector0.8.1-pgvectors0.2.0",
+        "source": "https://github.com/immich-app/base-images"
+      },
+      "registry": {
+        "ref": "ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0",
+        "arch": "amd64",
+        "config_digest": "sha256:178719aeb38df6f0ce8edc1d8320008379fcf04eb3444e76419cc98d9861e331",
+        "index_digest": "sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23",
+        "created": "2025-10-07T12:09:13.605869304Z",
+        "version": "14-vectorchord0.4.3-pgvector0.8.1-pgvectors0.2.0",
+        "version_env": {
+          "PG_VERSION": "14.19-1.pgdg12+1"
+        },
+        "url": "https://ghcr.io/v2/immich-app/postgres/manifests/14-vectorchord0.4.3-pgvectors0.2.0",
+        "queried_ref": "ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "andromon",
+      "name": "immich-import",
+      "image": "ghcr.io/immich-app/immich-cli:latest",
+      "id": "sha256:c9329c721c9d4bec954cddb02e2960870ef3e7fa254ed32a96ade024e034ff7c",
+      "status": "exited",
+      "health": "none",
+      "started": "2026-04-28T21:02:04.441033654Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/immich-app/immich-cli@sha256:b7cedec5ed2875e47eaa6a291fc017d3de8d358f5cc26bb8cca9b072a72c419a"
+        ],
+        "tags": [
+          "ghcr.io/immich-app/immich-cli:latest"
+        ],
+        "created": "2026-04-13T14:29:20.497957476Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "2.7.5",
+        "source": "https://github.com/immich-app/immich"
+      },
+      "registry": {},
+      "comparison": "Stopped"
+    },
+    {
+      "host": "andromon",
+      "name": "photoprism",
+      "image": "photoprism/photoprism:latest",
+      "id": "sha256:ba939bd73bb1abb31ab2553b7809badf6a9147cdc8718a531aa17f2c4e5a2892",
+      "status": "exited",
+      "health": "none",
+      "started": "2026-04-27T22:25:05.06826272Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "photoprism/photoprism@sha256:5229f68bce0293320547f35c733de584d7c2d5725a0efbddb68d7a118a8fc21c"
+        ],
+        "tags": [
+          "photoprism/photoprism:latest"
+        ],
+        "created": "2026-03-05T20:18:59.662688411Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "25.10",
+        "source": "https://github.com/photoprism/photoprism"
+      },
+      "registry": {},
+      "comparison": "Stopped"
+    },
+    {
+      "host": "andromon",
+      "name": "cadvisor",
+      "image": "gcr.io/cadvisor/cadvisor:latest",
+      "id": "sha256:a31688ab1366110140c0f79c130f9f6381386f1a8d9901e7d0cb41aa7bb45838",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-10T06:00:56.62786585Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "gcr.io/cadvisor/cadvisor@sha256:3de2bd5203120b866d74a9b283b2ffb8ec382fbf9dc321814700c6ea6f44ec57"
+        ],
+        "tags": [
+          "gcr.io/cadvisor/cadvisor:latest"
+        ],
+        "created": "2025-12-25T00:34:28.940288058Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "gcr.io/cadvisor/cadvisor:latest",
+        "arch": "amd64",
+        "config_digest": "sha256:a31688ab1366110140c0f79c130f9f6381386f1a8d9901e7d0cb41aa7bb45838",
+        "index_digest": "sha256:3de2bd5203120b866d74a9b283b2ffb8ec382fbf9dc321814700c6ea6f44ec57",
+        "created": "2025-12-25T00:34:28.940288058Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://gcr.io/v2/cadvisor/cadvisor/manifests/latest"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "andromon",
+      "name": "photoprism-mariadb",
+      "image": "mariadb:11",
+      "id": "sha256:93ce7a2426de5b25c7c16a0506a677b8ef0dceb024bf30464165cb5e751af043",
+      "status": "exited",
+      "health": "none",
+      "started": "2026-04-27T17:29:42.245829468Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "mariadb@sha256:78a5047d3ba33975f183f183c2464cc7f1eab13ec8667e57cc9a5821d6da7577"
+        ],
+        "tags": [],
+        "created": "2026-04-15T20:45:01.454771613Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "11.8.6",
+        "source": "https://github.com/MariaDB/mariadb-docker"
+      },
+      "registry": {
+        "ref": "mariadb:11",
+        "arch": "amd64",
+        "config_digest": "sha256:2f2521bbf6784049fa90445cae9e299e09d4ea083461b59f8fe17399094b6afb",
+        "index_digest": "sha256:2d2f4095530294735a857cfe22bb101e19b0849b416911c796ec4aa81b164a62",
+        "created": "2026-09-09T02:33:38.761319992Z",
+        "version": "11.8.9",
+        "version_env": {
+          "MARIADB_VERSION": "1:11.8.9+maria~ubu2404"
+        },
+        "url": "https://registry-1.docker.io/v2/library/mariadb/manifests/11"
+      },
+      "comparison": "Stopped"
+    },
+    {
+      "host": "tentomon",
+      "name": "pihole",
+      "image": "pihole/pihole:latest",
+      "id": "sha256:f7d1be836e3bc608b56d82fc9904f5a831cdfbc0dc9c6d58f94e4c985c70038b",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:50:07.613430333Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "pihole/pihole@sha256:f7d1be836e3bc608b56d82fc9904f5a831cdfbc0dc9c6d58f94e4c985c70038b"
+        ],
+        "tags": [
+          "pihole/pihole:latest"
+        ],
+        "created": "2026-07-07T09:16:20.171323931Z",
+        "arch": "arm64",
+        "os": "linux",
+        "version": "2026.07.2",
+        "source": "https://github.com/pi-hole/docker-pi-hole"
+      },
+      "registry": {
+        "ref": "pihole/pihole:latest",
+        "arch": "arm64",
+        "config_digest": "sha256:8f360b798da52d46cf9061282084c4e35a1c73d9678b8a888b55c193051a752d",
+        "index_digest": "sha256:f7d1be836e3bc608b56d82fc9904f5a831cdfbc0dc9c6d58f94e4c985c70038b",
+        "created": "2026-07-07T09:16:20.171323931Z",
+        "version": "2026.07.2",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/pihole/pihole/manifests/latest"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "tentomon",
+      "name": "uptime-kuma",
+      "image": "louislam/uptime-kuma:1",
+      "id": "sha256:3d632903e6af34139a37f18055c4f1bfd9b7205ae1138f1e5e8940ddc1d176f9",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-07-27T20:44:22.052473817Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "louislam/uptime-kuma@sha256:3d632903e6af34139a37f18055c4f1bfd9b7205ae1138f1e5e8940ddc1d176f9"
+        ],
+        "tags": [
+          "louislam/uptime-kuma:1"
+        ],
+        "created": "2025-10-20T17:59:14.059310455Z",
+        "arch": "arm64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "louislam/uptime-kuma:1",
+        "arch": "arm64",
+        "config_digest": "sha256:9cf30f324f2c140fd1a99abc6c104ae273bd99577c92fbacb084eeb10a469474",
+        "index_digest": "sha256:3d632903e6af34139a37f18055c4f1bfd9b7205ae1138f1e5e8940ddc1d176f9",
+        "created": "2025-10-20T17:59:14.059310455Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/louislam/uptime-kuma/manifests/1"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "tentomon",
+      "name": "cloudflare-ddns",
+      "image": "oznu/cloudflare-ddns:latest",
+      "id": "sha256:19bd73d8aea9641dc329ec18ae693b2b9c33ff7cdc007f368266ce584446f995",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-10T06:00:57.062779339Z",
+      "restarts": 1,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "oznu/cloudflare-ddns@sha256:19bd73d8aea9641dc329ec18ae693b2b9c33ff7cdc007f368266ce584446f995"
+        ],
+        "tags": [
+          "oznu/cloudflare-ddns:latest"
+        ],
+        "created": "2021-03-01T13:12:32.688717427Z",
+        "arch": "arm64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "oznu/cloudflare-ddns:latest",
+        "arch": "arm64",
+        "config_digest": "sha256:dda6053be1f2608837fdf46c7cfea5dd0f3d0dac5b6e318e81f90a1d4980fc2f",
+        "index_digest": "sha256:19bd73d8aea9641dc329ec18ae693b2b9c33ff7cdc007f368266ce584446f995",
+        "created": "2021-03-01T13:12:32.688717427Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/oznu/cloudflare-ddns/manifests/latest"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "ie57nwlru5y2jlw26ogbtmn9",
+      "image": "ghcr.io/coollabsio/coolify-helper:1.0.14",
+      "id": "sha256:5dd461dcc5dbb96733e3b68294440e6465ce104de6230586151e7976783b7d60",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:59:35.351154503Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/coollabsio/coolify-helper@sha256:5dd461dcc5dbb96733e3b68294440e6465ce104de6230586151e7976783b7d60"
+        ],
+        "tags": [
+          "ghcr.io/coollabsio/coolify-helper:1.0.14"
+        ],
+        "created": "2026-07-20T10:56:48.667597625Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "ghcr.io/coollabsio/coolify-helper:1.0.14",
+        "arch": "amd64",
+        "config_digest": "sha256:0a05ffd6580a4d6c05814dd622c1fdb21e3ce2cbb5d413c15205c672319b522c",
+        "index_digest": "sha256:5dd461dcc5dbb96733e3b68294440e6465ce104de6230586151e7976783b7d60",
+        "created": "2026-07-20T10:56:48.667597625Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/coollabsio/coolify-helper/manifests/1.0.14"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "app-vhp4p1uln07720ek290bbl6a-014644776176",
+      "image": "vhp4p1uln07720ek290bbl6a_app:adfed6e1580b2002c64f015f4def6b48fb5cae55",
+      "id": "sha256:0f72b7230f64a50428199702a74f446aa97aa7175b793b9911978b7e58f3fce0",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:47:03.888139529Z",
+      "restarts": 0,
+      "project": "tsas-production",
+      "service": "app",
+      "local_image": {
+        "digests": [
+          "vhp4p1uln07720ek290bbl6a_app@sha256:0f72b7230f64a50428199702a74f446aa97aa7175b793b9911978b7e58f3fce0"
+        ],
+        "tags": [
+          "vhp4p1uln07720ek290bbl6a_app:adfed6e1580b2002c64f015f4def6b48fb5cae55"
+        ],
+        "created": "2026-09-14T01:46:51.2302483Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-vhp4p1uln07720ek290bbl6a-014644815070",
+      "image": "mysql:8.0",
+      "id": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:46:58.276426179Z",
+      "restarts": 0,
+      "project": "tsas-production",
+      "service": "db",
+      "local_image": {
+        "digests": [
+          "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+        ],
+        "tags": [
+          "mysql:8.0"
+        ],
+        "created": "2026-05-04T23:01:20.676190479Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "mysql:8.0",
+        "arch": "amd64",
+        "config_digest": "sha256:6cd09145362dfe6831b14545de3d5fd6cc75c37cfd6ef8561429c1fc73518b39",
+        "index_digest": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+        "created": "2026-05-04T23:01:20.676190479Z",
+        "version": "",
+        "version_env": {
+          "MYSQL_VERSION": "8.0.46-1.el9"
+        },
+        "url": "https://registry-1.docker.io/v2/library/mysql/manifests/8.0"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "worker-y2ergzwl15qlokzip3vzyxo6-014459377277",
+      "image": "y2ergzwl15qlokzip3vzyxo6_worker:ca4d0d40d6c2a7f64b6eb919901583b0bcb728b6",
+      "id": "sha256:75f953282f60d83cdbde133e5e0e38492a0a37218f5f7e5d66b0cb113304ae09",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:46:45.382089253Z",
+      "restarts": 0,
+      "project": "tendies",
+      "service": "worker",
+      "local_image": {
+        "digests": [
+          "y2ergzwl15qlokzip3vzyxo6_worker@sha256:75f953282f60d83cdbde133e5e0e38492a0a37218f5f7e5d66b0cb113304ae09"
+        ],
+        "tags": [
+          "y2ergzwl15qlokzip3vzyxo6_worker:ca4d0d40d6c2a7f64b6eb919901583b0bcb728b6"
+        ],
+        "created": "2026-09-14T01:46:24.479822332Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "nightwatch-y2ergzwl15qlokzip3vzyxo6-014459408584",
+      "image": "y2ergzwl15qlokzip3vzyxo6_nightwatch:ca4d0d40d6c2a7f64b6eb919901583b0bcb728b6",
+      "id": "sha256:fdf9b76f31f350821bbcdbb1a130d00c4691988e8b634c6b727cc9930f4e1733",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:46:45.381310504Z",
+      "restarts": 0,
+      "project": "tendies",
+      "service": "nightwatch",
+      "local_image": {
+        "digests": [
+          "y2ergzwl15qlokzip3vzyxo6_nightwatch@sha256:fdf9b76f31f350821bbcdbb1a130d00c4691988e8b634c6b727cc9930f4e1733"
+        ],
+        "tags": [
+          "y2ergzwl15qlokzip3vzyxo6_nightwatch:ca4d0d40d6c2a7f64b6eb919901583b0bcb728b6"
+        ],
+        "created": "2026-09-14T01:46:24.479822332Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "app-y2ergzwl15qlokzip3vzyxo6-014459340207",
+      "image": "y2ergzwl15qlokzip3vzyxo6_app:ca4d0d40d6c2a7f64b6eb919901583b0bcb728b6",
+      "id": "sha256:99edb02a84d523c345b7a63471d811ce070edf6e2ebb900e9ce7663ba8f38ad6",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:46:39.771739655Z",
+      "restarts": 0,
+      "project": "tendies",
+      "service": "app",
+      "local_image": {
+        "digests": [
+          "y2ergzwl15qlokzip3vzyxo6_app@sha256:99edb02a84d523c345b7a63471d811ce070edf6e2ebb900e9ce7663ba8f38ad6"
+        ],
+        "tags": [
+          "y2ergzwl15qlokzip3vzyxo6_app:ca4d0d40d6c2a7f64b6eb919901583b0bcb728b6"
+        ],
+        "created": "2026-09-14T01:46:24.479822332Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-y2ergzwl15qlokzip3vzyxo6-014459440600",
+      "image": "mysql:8.0",
+      "id": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:46:34.165231892Z",
+      "restarts": 0,
+      "project": "tendies",
+      "service": "db",
+      "local_image": {
+        "digests": [
+          "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+        ],
+        "tags": [
+          "mysql:8.0"
+        ],
+        "created": "2026-05-04T23:01:20.676190479Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "mysql:8.0",
+        "arch": "amd64",
+        "config_digest": "sha256:6cd09145362dfe6831b14545de3d5fd6cc75c37cfd6ef8561429c1fc73518b39",
+        "index_digest": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+        "created": "2026-05-04T23:01:20.676190479Z",
+        "version": "",
+        "version_env": {
+          "MYSQL_VERSION": "8.0.46-1.el9"
+        },
+        "url": "https://registry-1.docker.io/v2/library/mysql/manifests/8.0"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "worker-wbhhkr2li3zwxlswy11hoesx-014447802575",
+      "image": "wbhhkr2li3zwxlswy11hoesx_worker:ec46f0bdff45477ded57d8e45e205f4c4f0dda53",
+      "id": "sha256:82b8e7dd34dd5a113393c2de9ddeb3003cbb8078941dbf8127e4dd83e7a44d1d",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:46:33.385826084Z",
+      "restarts": 0,
+      "project": "heyanda-production",
+      "service": "worker",
+      "local_image": {
+        "digests": [
+          "wbhhkr2li3zwxlswy11hoesx_worker@sha256:82b8e7dd34dd5a113393c2de9ddeb3003cbb8078941dbf8127e4dd83e7a44d1d"
+        ],
+        "tags": [
+          "wbhhkr2li3zwxlswy11hoesx_worker:ec46f0bdff45477ded57d8e45e205f4c4f0dda53"
+        ],
+        "created": "2026-09-14T01:46:03.12215078Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "app-wbhhkr2li3zwxlswy11hoesx-014447770228",
+      "image": "wbhhkr2li3zwxlswy11hoesx_app:ec46f0bdff45477ded57d8e45e205f4c4f0dda53",
+      "id": "sha256:5e85b4b98ab4da2b902fd5312964d7eb238fb1f2bc3cfc968cedcff9fbcb2aab",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:46:27.759811002Z",
+      "restarts": 0,
+      "project": "heyanda-production",
+      "service": "app",
+      "local_image": {
+        "digests": [
+          "wbhhkr2li3zwxlswy11hoesx_app@sha256:5e85b4b98ab4da2b902fd5312964d7eb238fb1f2bc3cfc968cedcff9fbcb2aab"
+        ],
+        "tags": [
+          "wbhhkr2li3zwxlswy11hoesx_app:ec46f0bdff45477ded57d8e45e205f4c4f0dda53"
+        ],
+        "created": "2026-09-14T01:46:03.12215078Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-wbhhkr2li3zwxlswy11hoesx-014447838280",
+      "image": "mysql:8.0",
+      "id": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:46:17.12154593Z",
+      "restarts": 0,
+      "project": "heyanda-production",
+      "service": "db",
+      "local_image": {
+        "digests": [
+          "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+        ],
+        "tags": [
+          "mysql:8.0"
+        ],
+        "created": "2026-05-04T23:01:20.676190479Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "mysql:8.0",
+        "arch": "amd64",
+        "config_digest": "sha256:6cd09145362dfe6831b14545de3d5fd6cc75c37cfd6ef8561429c1fc73518b39",
+        "index_digest": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+        "created": "2026-05-04T23:01:20.676190479Z",
+        "version": "",
+        "version_env": {
+          "MYSQL_VERSION": "8.0.46-1.el9"
+        },
+        "url": "https://registry-1.docker.io/v2/library/mysql/manifests/8.0"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "neo4j-wbhhkr2li3zwxlswy11hoesx-014447844028",
+      "image": "neo4j:5.26.23-community",
+      "id": "sha256:40bf5ae9282213087e4d6036aab3ec443fe9c974d3dd4f14a11892c63157238f",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:46:17.120744107Z",
+      "restarts": 0,
+      "project": "heyanda-production",
+      "service": "neo4j",
+      "local_image": {
+        "digests": [
+          "neo4j@sha256:40bf5ae9282213087e4d6036aab3ec443fe9c974d3dd4f14a11892c63157238f"
+        ],
+        "tags": [
+          "neo4j:5.26.23-community"
+        ],
+        "created": "2026-03-18T23:11:48.481234888Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "neo4j:5.26.23-community",
+        "arch": "amd64",
+        "config_digest": "sha256:d02f6152628fbb97a913da84e496e3f7a3a9e683ab6fd759d77896027cc97398",
+        "index_digest": "sha256:40bf5ae9282213087e4d6036aab3ec443fe9c974d3dd4f14a11892c63157238f",
+        "created": "2026-03-18T23:11:48.481234888Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/library/neo4j/manifests/5.26.23-community"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "worker-g111giq31kxpt4aaniq1z1bh-014332696164",
+      "image": "g111giq31kxpt4aaniq1z1bh_worker:233d4d12860ff4c5f1643bed9f06e7cd4d3dc397",
+      "id": "sha256:09d7f6d092c3693192639b09938a6d4ec0c953a26db2660c7f2a6d9a7e2bb644",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:44:00.086274605Z",
+      "restarts": 0,
+      "project": "fotopass",
+      "service": "worker",
+      "local_image": {
+        "digests": [
+          "g111giq31kxpt4aaniq1z1bh_worker@sha256:09d7f6d092c3693192639b09938a6d4ec0c953a26db2660c7f2a6d9a7e2bb644"
+        ],
+        "tags": [
+          "g111giq31kxpt4aaniq1z1bh_worker:233d4d12860ff4c5f1643bed9f06e7cd4d3dc397"
+        ],
+        "created": "2026-09-14T01:43:39.934289623Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "nightwatch-g111giq31kxpt4aaniq1z1bh-014332776783",
+      "image": "g111giq31kxpt4aaniq1z1bh_nightwatch:233d4d12860ff4c5f1643bed9f06e7cd4d3dc397",
+      "id": "sha256:44a72c4edeb50530e77ca3d7206efde7ba17dca254f2eac08761f5b0bbb4a006",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:44:00.085458615Z",
+      "restarts": 0,
+      "project": "fotopass",
+      "service": "nightwatch",
+      "local_image": {
+        "digests": [
+          "g111giq31kxpt4aaniq1z1bh_nightwatch@sha256:44a72c4edeb50530e77ca3d7206efde7ba17dca254f2eac08761f5b0bbb4a006"
+        ],
+        "tags": [
+          "g111giq31kxpt4aaniq1z1bh_nightwatch:233d4d12860ff4c5f1643bed9f06e7cd4d3dc397"
+        ],
+        "created": "2026-09-14T01:43:39.934289623Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "scheduler-g111giq31kxpt4aaniq1z1bh-014332734213",
+      "image": "g111giq31kxpt4aaniq1z1bh_scheduler:233d4d12860ff4c5f1643bed9f06e7cd4d3dc397",
+      "id": "sha256:722fe983579fe46bbb4d9a984d5a629a6b8eedb5732b6b6bf5ba7e4f8ea7c3e3",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:44:00.082725833Z",
+      "restarts": 0,
+      "project": "fotopass",
+      "service": "scheduler",
+      "local_image": {
+        "digests": [
+          "g111giq31kxpt4aaniq1z1bh_scheduler@sha256:722fe983579fe46bbb4d9a984d5a629a6b8eedb5732b6b6bf5ba7e4f8ea7c3e3"
+        ],
+        "tags": [
+          "g111giq31kxpt4aaniq1z1bh_scheduler:233d4d12860ff4c5f1643bed9f06e7cd4d3dc397"
+        ],
+        "created": "2026-09-14T01:43:39.934289623Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "app-g111giq31kxpt4aaniq1z1bh-014332666962",
+      "image": "g111giq31kxpt4aaniq1z1bh_app:233d4d12860ff4c5f1643bed9f06e7cd4d3dc397",
+      "id": "sha256:4095526def0aabdf1f217eb4a06cd0e6d911caffe748218dabf81bf8f8f39f9e",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:43:54.462036836Z",
+      "restarts": 0,
+      "project": "fotopass",
+      "service": "app",
+      "local_image": {
+        "digests": [
+          "g111giq31kxpt4aaniq1z1bh_app@sha256:4095526def0aabdf1f217eb4a06cd0e6d911caffe748218dabf81bf8f8f39f9e"
+        ],
+        "tags": [
+          "g111giq31kxpt4aaniq1z1bh_app:233d4d12860ff4c5f1643bed9f06e7cd4d3dc397"
+        ],
+        "created": "2026-09-14T01:43:39.934289623Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-g111giq31kxpt4aaniq1z1bh-014332815878",
+      "image": "mysql:8.0",
+      "id": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:43:48.853321864Z",
+      "restarts": 0,
+      "project": "fotopass",
+      "service": "db",
+      "local_image": {
+        "digests": [
+          "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+        ],
+        "tags": [
+          "mysql:8.0"
+        ],
+        "created": "2026-05-04T23:01:20.676190479Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "mysql:8.0",
+        "arch": "amd64",
+        "config_digest": "sha256:6cd09145362dfe6831b14545de3d5fd6cc75c37cfd6ef8561429c1fc73518b39",
+        "index_digest": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+        "created": "2026-05-04T23:01:20.676190479Z",
+        "version": "",
+        "version_env": {
+          "MYSQL_VERSION": "8.0.46-1.el9"
+        },
+        "url": "https://registry-1.docker.io/v2/library/mysql/manifests/8.0"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "nightwatch-ki28yxwbb9q09llpda5ip3eo-014141095546",
+      "image": "ki28yxwbb9q09llpda5ip3eo_nightwatch:faf238792dea7b58fdfb416b24a1a0fec0b2a7ed",
+      "id": "sha256:c6dbdc00ed3a627378c861127a8b377ac46ea9b6a06bac5b695485e8e95c30b6",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:42:01.760749817Z",
+      "restarts": 0,
+      "project": "tech-nomads",
+      "service": "nightwatch",
+      "local_image": {
+        "digests": [
+          "ki28yxwbb9q09llpda5ip3eo_nightwatch@sha256:c6dbdc00ed3a627378c861127a8b377ac46ea9b6a06bac5b695485e8e95c30b6"
+        ],
+        "tags": [
+          "ki28yxwbb9q09llpda5ip3eo_nightwatch:faf238792dea7b58fdfb416b24a1a0fec0b2a7ed"
+        ],
+        "created": "2026-09-14T01:41:45.43460922Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "app-ki28yxwbb9q09llpda5ip3eo-014141070606",
+      "image": "ki28yxwbb9q09llpda5ip3eo_app:faf238792dea7b58fdfb416b24a1a0fec0b2a7ed",
+      "id": "sha256:5eabda15eda05298e90165fe9fca25f7cd139c286471c042652e5abd9fcd789c",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:41:56.157977776Z",
+      "restarts": 0,
+      "project": "tech-nomads",
+      "service": "app",
+      "local_image": {
+        "digests": [
+          "ki28yxwbb9q09llpda5ip3eo_app@sha256:5eabda15eda05298e90165fe9fca25f7cd139c286471c042652e5abd9fcd789c"
+        ],
+        "tags": [
+          "ki28yxwbb9q09llpda5ip3eo_app:faf238792dea7b58fdfb416b24a1a0fec0b2a7ed"
+        ],
+        "created": "2026-09-14T01:41:45.43460922Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-ki28yxwbb9q09llpda5ip3eo-014141119832",
+      "image": "mysql:8.0",
+      "id": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:41:50.556362167Z",
+      "restarts": 0,
+      "project": "tech-nomads",
+      "service": "db",
+      "local_image": {
+        "digests": [
+          "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+        ],
+        "tags": [
+          "mysql:8.0"
+        ],
+        "created": "2026-05-04T23:01:20.676190479Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "mysql:8.0",
+        "arch": "amd64",
+        "config_digest": "sha256:6cd09145362dfe6831b14545de3d5fd6cc75c37cfd6ef8561429c1fc73518b39",
+        "index_digest": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+        "created": "2026-05-04T23:01:20.676190479Z",
+        "version": "",
+        "version_env": {
+          "MYSQL_VERSION": "8.0.46-1.el9"
+        },
+        "url": "https://registry-1.docker.io/v2/library/mysql/manifests/8.0"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "worker-zzz1yuz6otbp14gwwvbipeya-011935246269",
+      "image": "zzz1yuz6otbp14gwwvbipeya_worker:0a185bbf28091e456e996c406bf8e7752de588e1",
+      "id": "sha256:54ae6257ab6bbbbc85a9d5a07730b1b5f865f489f258e7141b3a296b2005b8d9",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:20:28.375998856Z",
+      "restarts": 0,
+      "project": "groove",
+      "service": "worker",
+      "local_image": {
+        "digests": [
+          "zzz1yuz6otbp14gwwvbipeya_worker@sha256:54ae6257ab6bbbbc85a9d5a07730b1b5f865f489f258e7141b3a296b2005b8d9"
+        ],
+        "tags": [
+          "zzz1yuz6otbp14gwwvbipeya_worker:0a185bbf28091e456e996c406bf8e7752de588e1"
+        ],
+        "created": "2026-09-14T01:19:44.464377012Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "scheduler-zzz1yuz6otbp14gwwvbipeya-011935259493",
+      "image": "zzz1yuz6otbp14gwwvbipeya_scheduler:0a185bbf28091e456e996c406bf8e7752de588e1",
+      "id": "sha256:05577583645e62ed1041b8f21a17aa68e458dbacf825626153d36c587a7ec047",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:20:28.373697673Z",
+      "restarts": 0,
+      "project": "groove",
+      "service": "scheduler",
+      "local_image": {
+        "digests": [
+          "zzz1yuz6otbp14gwwvbipeya_scheduler@sha256:05577583645e62ed1041b8f21a17aa68e458dbacf825626153d36c587a7ec047"
+        ],
+        "tags": [
+          "zzz1yuz6otbp14gwwvbipeya_scheduler:0a185bbf28091e456e996c406bf8e7752de588e1"
+        ],
+        "created": "2026-09-14T01:19:44.464377012Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "app-zzz1yuz6otbp14gwwvbipeya-011935226016",
+      "image": "zzz1yuz6otbp14gwwvbipeya_app:0a185bbf28091e456e996c406bf8e7752de588e1",
+      "id": "sha256:2ee5ca62e1c0bc9bf572216e64e6d763ba8f1158edca8737825c85d9cf7e4e88",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:20:28.375267054Z",
+      "restarts": 0,
+      "project": "groove",
+      "service": "app",
+      "local_image": {
+        "digests": [
+          "zzz1yuz6otbp14gwwvbipeya_app@sha256:2ee5ca62e1c0bc9bf572216e64e6d763ba8f1158edca8737825c85d9cf7e4e88"
+        ],
+        "tags": [
+          "zzz1yuz6otbp14gwwvbipeya_app:0a185bbf28091e456e996c406bf8e7752de588e1"
+        ],
+        "created": "2026-09-14T01:19:44.464377012Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-zzz1yuz6otbp14gwwvbipeya-011935274608",
+      "image": "postgres:16-alpine",
+      "id": "sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T01:20:17.762734087Z",
+      "restarts": 0,
+      "project": "groove",
+      "service": "db",
+      "local_image": {
+        "digests": [
+          "postgres@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777"
+        ],
+        "tags": [
+          "postgres:16-alpine"
+        ],
+        "created": "2026-07-07T17:47:20.839800572Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "postgres:16-alpine",
+        "arch": "amd64",
+        "config_digest": "sha256:75f5a96988cdf694a215073c3e9c001b706b371e2f94df3967f2efdec2787f6b",
+        "index_digest": "sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685",
+        "created": "2026-08-13T19:18:09.513955733Z",
+        "version": "",
+        "version_env": {
+          "PG_VERSION": "16.15"
+        },
+        "url": "https://registry-1.docker.io/v2/library/postgres/manifests/16-alpine"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "worker-g111a4eausi813qdtzbsgfrf-000223502153",
+      "image": "g111a4eausi813qdtzbsgfrf_worker:dc20af764cead6dc3c3848d9b710441391dd86c5",
+      "id": "sha256:8c063fbef25da69a78f0cc5001a00aa630e9254b1be35d8ec697ff0245dab3ce",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:04:36.506637386Z",
+      "restarts": 1,
+      "project": "plotling",
+      "service": "worker",
+      "local_image": {
+        "digests": [
+          "g111a4eausi813qdtzbsgfrf_worker@sha256:8c063fbef25da69a78f0cc5001a00aa630e9254b1be35d8ec697ff0245dab3ce"
+        ],
+        "tags": [
+          "g111a4eausi813qdtzbsgfrf_worker:dc20af764cead6dc3c3848d9b710441391dd86c5"
+        ],
+        "created": "2026-09-14T00:03:42.868284339Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "worker-secondary-g111a4eausi813qdtzbsgfrf-000223527037",
+      "image": "g111a4eausi813qdtzbsgfrf_worker-secondary:dc20af764cead6dc3c3848d9b710441391dd86c5",
+      "id": "sha256:143d34c0479b545a11f52712733956c3dc728ecd57b373da4911b7cf26269ad3",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T01:04:36.332338964Z",
+      "restarts": 1,
+      "project": "plotling",
+      "service": "worker-secondary",
+      "local_image": {
+        "digests": [
+          "g111a4eausi813qdtzbsgfrf_worker-secondary@sha256:143d34c0479b545a11f52712733956c3dc728ecd57b373da4911b7cf26269ad3"
+        ],
+        "tags": [
+          "g111a4eausi813qdtzbsgfrf_worker-secondary:dc20af764cead6dc3c3848d9b710441391dd86c5"
+        ],
+        "created": "2026-09-14T00:03:42.868284339Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "nightwatch-g111a4eausi813qdtzbsgfrf-000223552694",
+      "image": "g111a4eausi813qdtzbsgfrf_nightwatch:dc20af764cead6dc3c3848d9b710441391dd86c5",
+      "id": "sha256:582fad04e86a865e8a919186f8ed21930e191e782392992e2085ae309c17299a",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-14T00:04:21.07389368Z",
+      "restarts": 0,
+      "project": "plotling",
+      "service": "nightwatch",
+      "local_image": {
+        "digests": [
+          "g111a4eausi813qdtzbsgfrf_nightwatch@sha256:582fad04e86a865e8a919186f8ed21930e191e782392992e2085ae309c17299a"
+        ],
+        "tags": [
+          "g111a4eausi813qdtzbsgfrf_nightwatch:dc20af764cead6dc3c3848d9b710441391dd86c5"
+        ],
+        "created": "2026-09-14T00:03:42.868284339Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "app-g111a4eausi813qdtzbsgfrf-000223475437",
+      "image": "g111a4eausi813qdtzbsgfrf_app:dc20af764cead6dc3c3848d9b710441391dd86c5",
+      "id": "sha256:c4b47382295fd8dd6fc1cc3372747ef3dd05459273455b57a71470f115832e7b",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T00:04:15.466744716Z",
+      "restarts": 0,
+      "project": "plotling",
+      "service": "app",
+      "local_image": {
+        "digests": [
+          "g111a4eausi813qdtzbsgfrf_app@sha256:c4b47382295fd8dd6fc1cc3372747ef3dd05459273455b57a71470f115832e7b"
+        ],
+        "tags": [
+          "g111a4eausi813qdtzbsgfrf_app:dc20af764cead6dc3c3848d9b710441391dd86c5"
+        ],
+        "created": "2026-09-14T00:03:42.868284339Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-g111a4eausi813qdtzbsgfrf-000223577960",
+      "image": "mysql:8.0",
+      "id": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T00:04:04.853591748Z",
+      "restarts": 0,
+      "project": "plotling",
+      "service": "db",
+      "local_image": {
+        "digests": [
+          "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+        ],
+        "tags": [
+          "mysql:8.0"
+        ],
+        "created": "2026-05-04T23:01:20.676190479Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "mysql:8.0",
+        "arch": "amd64",
+        "config_digest": "sha256:6cd09145362dfe6831b14545de3d5fd6cc75c37cfd6ef8561429c1fc73518b39",
+        "index_digest": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+        "created": "2026-05-04T23:01:20.676190479Z",
+        "version": "",
+        "version_env": {
+          "MYSQL_VERSION": "8.0.46-1.el9"
+        },
+        "url": "https://registry-1.docker.io/v2/library/mysql/manifests/8.0"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "neo4j-g111a4eausi813qdtzbsgfrf-000223584483",
+      "image": "neo4j:5.26.23-community",
+      "id": "sha256:40bf5ae9282213087e4d6036aab3ec443fe9c974d3dd4f14a11892c63157238f",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-14T00:04:04.854372842Z",
+      "restarts": 0,
+      "project": "plotling",
+      "service": "neo4j",
+      "local_image": {
+        "digests": [
+          "neo4j@sha256:40bf5ae9282213087e4d6036aab3ec443fe9c974d3dd4f14a11892c63157238f"
+        ],
+        "tags": [
+          "neo4j:5.26.23-community"
+        ],
+        "created": "2026-03-18T23:11:48.481234888Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "neo4j:5.26.23-community",
+        "arch": "amd64",
+        "config_digest": "sha256:d02f6152628fbb97a913da84e496e3f7a3a9e683ab6fd759d77896027cc97398",
+        "index_digest": "sha256:40bf5ae9282213087e4d6036aab3ec443fe9c974d3dd4f14a11892c63157238f",
+        "created": "2026-03-18T23:11:48.481234888Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/library/neo4j/manifests/5.26.23-community"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "app-vnzp4ezavo7et9x4qeddtq4l-231713627091",
+      "image": "vnzp4ezavo7et9x4qeddtq4l_app:88ecad7adf441aeca5c54166e18a7485c59d3224",
+      "id": "sha256:f04b06e15082a9735a23c0ecbc57327efb9014a2cfd9d9a78a043ab61ffb001a",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-13T23:19:42.936809894Z",
+      "restarts": 0,
+      "project": "otor",
+      "service": "app",
+      "local_image": {
+        "digests": [
+          "vnzp4ezavo7et9x4qeddtq4l_app@sha256:f04b06e15082a9735a23c0ecbc57327efb9014a2cfd9d9a78a043ab61ffb001a"
+        ],
+        "tags": [
+          "vnzp4ezavo7et9x4qeddtq4l_app:88ecad7adf441aeca5c54166e18a7485c59d3224"
+        ],
+        "created": "2026-09-13T23:19:10.328253834Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "grafana-vnzp4ezavo7et9x4qeddtq4l-231713640541",
+      "image": "vnzp4ezavo7et9x4qeddtq4l_grafana:88ecad7adf441aeca5c54166e18a7485c59d3224",
+      "id": "sha256:eb5555fb8924bfdbe6b8cbbe876f009492ae9a904d9c982bec587b7f1125f591",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-13T23:19:42.937590347Z",
+      "restarts": 0,
+      "project": "otor",
+      "service": "grafana",
+      "local_image": {
+        "digests": [
+          "vnzp4ezavo7et9x4qeddtq4l_grafana@sha256:eb5555fb8924bfdbe6b8cbbe876f009492ae9a904d9c982bec587b7f1125f591"
+        ],
+        "tags": [
+          "vnzp4ezavo7et9x4qeddtq4l_grafana:88ecad7adf441aeca5c54166e18a7485c59d3224"
+        ],
+        "created": "2026-09-13T23:17:16.081837716Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": "https://github.com/grafana/grafana"
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-vnzp4ezavo7et9x4qeddtq4l-231713635616",
+      "image": "postgres:16-alpine",
+      "id": "sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-13T23:19:32.331317704Z",
+      "restarts": 0,
+      "project": "otor",
+      "service": "db",
+      "local_image": {
+        "digests": [
+          "postgres@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777"
+        ],
+        "tags": [
+          "postgres:16-alpine"
+        ],
+        "created": "2026-07-07T17:47:20.839800572Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "postgres:16-alpine",
+        "arch": "amd64",
+        "config_digest": "sha256:75f5a96988cdf694a215073c3e9c001b706b371e2f94df3967f2efdec2787f6b",
+        "index_digest": "sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685",
+        "created": "2026-08-13T19:18:09.513955733Z",
+        "version": "",
+        "version_env": {
+          "PG_VERSION": "16.15"
+        },
+        "url": "https://registry-1.docker.io/v2/library/postgres/manifests/16-alpine"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "coolify-sentinel",
+      "image": "ghcr.io/coollabsio/sentinel:0.0.22",
+      "id": "sha256:275644b8fb14ed1323c6d79e54f42a48de1b65397f8341b614accd7aa489a4a2",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:01:02.984289956Z",
+      "restarts": 0,
+      "project": "",
+      "service": "",
+      "local_image": {
+        "digests": [
+          "ghcr.io/coollabsio/sentinel@sha256:275644b8fb14ed1323c6d79e54f42a48de1b65397f8341b614accd7aa489a4a2"
+        ],
+        "tags": [
+          "ghcr.io/coollabsio/sentinel:0.0.22"
+        ],
+        "created": "2026-07-19T19:37:14.910075529Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "ghcr.io/coollabsio/sentinel:0.0.22",
+        "arch": "amd64",
+        "config_digest": "sha256:59b45ee5d12165ee0a12e0ff66c0bb55f7a1dbfabcacb2b525950803356a33b6",
+        "index_digest": "sha256:275644b8fb14ed1323c6d79e54f42a48de1b65397f8341b614accd7aa489a4a2",
+        "created": "2026-07-19T19:37:14.910075529Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/coollabsio/sentinel/manifests/0.0.22"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "proxy-j9oghs1fqm90qqy6eomrxtss-193446908980",
+      "image": "j9oghs1fqm90qqy6eomrxtss_proxy:6ffda67e3d7d403ca29c4ec2862d66ab3e969099",
+      "id": "sha256:9e235f3ef87f99bab38b8320a3e8261231c003a2538c71ac3fcbee4b8df1a739",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.0928122Z",
+      "restarts": 0,
+      "project": "kedge",
+      "service": "proxy",
+      "local_image": {
+        "digests": [
+          "j9oghs1fqm90qqy6eomrxtss_proxy@sha256:9e235f3ef87f99bab38b8320a3e8261231c003a2538c71ac3fcbee4b8df1a739"
+        ],
+        "tags": [
+          "j9oghs1fqm90qqy6eomrxtss_proxy:6ffda67e3d7d403ca29c4ec2862d66ab3e969099"
+        ],
+        "created": "2026-08-25T17:07:20.004028584Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "v2.11.4",
+        "source": "https://github.com/caddyserver/caddy-docker"
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "worker-j9oghs1fqm90qqy6eomrxtss-193446931627",
+      "image": "j9oghs1fqm90qqy6eomrxtss_worker:6ffda67e3d7d403ca29c4ec2862d66ab3e969099",
+      "id": "sha256:4d79404484e96037ef24f994ad304d4ed8d51070b6c8b3d64d0aed39d43af0e4",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.178833005Z",
+      "restarts": 0,
+      "project": "kedge",
+      "service": "worker",
+      "local_image": {
+        "digests": [
+          "j9oghs1fqm90qqy6eomrxtss_worker@sha256:4d79404484e96037ef24f994ad304d4ed8d51070b6c8b3d64d0aed39d43af0e4"
+        ],
+        "tags": [
+          "j9oghs1fqm90qqy6eomrxtss_worker:6ffda67e3d7d403ca29c4ec2862d66ab3e969099"
+        ],
+        "created": "2026-08-25T19:34:51.601179553Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "scheduler-j9oghs1fqm90qqy6eomrxtss-193446946147",
+      "image": "j9oghs1fqm90qqy6eomrxtss_scheduler:6ffda67e3d7d403ca29c4ec2862d66ab3e969099",
+      "id": "sha256:2332522b6ce7a3a864c3e04c775b787ce593291b3cf4950aabdd32fc3743956e",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.179720327Z",
+      "restarts": 0,
+      "project": "kedge",
+      "service": "scheduler",
+      "local_image": {
+        "digests": [
+          "j9oghs1fqm90qqy6eomrxtss_scheduler@sha256:2332522b6ce7a3a864c3e04c775b787ce593291b3cf4950aabdd32fc3743956e"
+        ],
+        "tags": [
+          "j9oghs1fqm90qqy6eomrxtss_scheduler:6ffda67e3d7d403ca29c4ec2862d66ab3e969099"
+        ],
+        "created": "2026-08-25T19:34:51.601179553Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "web-j9oghs1fqm90qqy6eomrxtss-193446960766",
+      "image": "j9oghs1fqm90qqy6eomrxtss_web:6ffda67e3d7d403ca29c4ec2862d66ab3e969099",
+      "id": "sha256:c5ed8be859f4c07842d0bc2c7916a85d23882549f749339024e83c94a6560bb5",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.111759966Z",
+      "restarts": 0,
+      "project": "kedge",
+      "service": "web",
+      "local_image": {
+        "digests": [
+          "j9oghs1fqm90qqy6eomrxtss_web@sha256:c5ed8be859f4c07842d0bc2c7916a85d23882549f749339024e83c94a6560bb5"
+        ],
+        "tags": [
+          "j9oghs1fqm90qqy6eomrxtss_web:6ffda67e3d7d403ca29c4ec2862d66ab3e969099"
+        ],
+        "created": "2026-08-25T19:36:03.74773801Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "kroki-j9oghs1fqm90qqy6eomrxtss-193446963432",
+      "image": "yuzutech/kroki:0.31.0",
+      "id": "sha256:c16303ecd8ae840a6e3a76efa53468836c6297eeb7b7316845c3b24e8dbd0398",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.22254675Z",
+      "restarts": 0,
+      "project": "kedge",
+      "service": "kroki",
+      "local_image": {
+        "digests": [
+          "yuzutech/kroki@sha256:c16303ecd8ae840a6e3a76efa53468836c6297eeb7b7316845c3b24e8dbd0398"
+        ],
+        "tags": [
+          "yuzutech/kroki:0.31.0"
+        ],
+        "created": "2026-06-11T17:07:10.372154874Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "24.04",
+        "source": "https://github.com/yuzutech/kroki"
+      },
+      "registry": {
+        "ref": "yuzutech/kroki:0.31.0",
+        "arch": "amd64",
+        "config_digest": "sha256:bc710d891a3b971b3c905d409adbb46c581046bb6956f2ae5e4430cbd8107e24",
+        "index_digest": "sha256:c16303ecd8ae840a6e3a76efa53468836c6297eeb7b7316845c3b24e8dbd0398",
+        "created": "2026-06-11T17:07:10.372154874Z",
+        "version": "24.04",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/yuzutech/kroki/manifests/0.31.0"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "api-j9oghs1fqm90qqy6eomrxtss-193446911715",
+      "image": "j9oghs1fqm90qqy6eomrxtss_api:6ffda67e3d7d403ca29c4ec2862d66ab3e969099",
+      "id": "sha256:ba7b32929be09b1ce8752ac6f38e5c53a69166f5780631f82c637dff2f624424",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:00:48.177965048Z",
+      "restarts": 0,
+      "project": "kedge",
+      "service": "api",
+      "local_image": {
+        "digests": [
+          "j9oghs1fqm90qqy6eomrxtss_api@sha256:ba7b32929be09b1ce8752ac6f38e5c53a69166f5780631f82c637dff2f624424"
+        ],
+        "tags": [
+          "j9oghs1fqm90qqy6eomrxtss_api:6ffda67e3d7d403ca29c4ec2862d66ab3e969099"
+        ],
+        "created": "2026-08-25T19:34:51.601179553Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-j9oghs1fqm90qqy6eomrxtss-193446970613",
+      "image": "postgres:16-alpine",
+      "id": "sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:00:48.128573984Z",
+      "restarts": 0,
+      "project": "kedge",
+      "service": "db",
+      "local_image": {
+        "digests": [
+          "postgres@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777"
+        ],
+        "tags": [
+          "postgres:16-alpine"
+        ],
+        "created": "2026-07-07T17:47:20.839800572Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "postgres:16-alpine",
+        "arch": "amd64",
+        "config_digest": "sha256:75f5a96988cdf694a215073c3e9c001b706b371e2f94df3967f2efdec2787f6b",
+        "index_digest": "sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685",
+        "created": "2026-08-13T19:18:09.513955733Z",
+        "version": "",
+        "version_env": {
+          "PG_VERSION": "16.15"
+        },
+        "url": "https://registry-1.docker.io/v2/library/postgres/manifests/16-alpine"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "kroki-mermaid-j9oghs1fqm90qqy6eomrxtss-193446965287",
+      "image": "yuzutech/kroki-mermaid:0.31.0",
+      "id": "sha256:26fb7f5e67a0e6005a3fdc9407dc81e1a6f9ce50972de6d193a1bb4b0d72e5d0",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.203097574Z",
+      "restarts": 0,
+      "project": "kedge",
+      "service": "kroki-mermaid",
+      "local_image": {
+        "digests": [
+          "yuzutech/kroki-mermaid@sha256:26fb7f5e67a0e6005a3fdc9407dc81e1a6f9ce50972de6d193a1bb4b0d72e5d0"
+        ],
+        "tags": [
+          "yuzutech/kroki-mermaid:0.31.0"
+        ],
+        "created": "2026-06-11T17:05:47.207567325Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": "https://github.com/yuzutech/kroki"
+      },
+      "registry": {
+        "ref": "yuzutech/kroki-mermaid:0.31.0",
+        "arch": "amd64",
+        "config_digest": "sha256:a6ed0885eccd863bf528fd3d115ef71151e697c060b6501b4e8a6e503fc07b49",
+        "index_digest": "sha256:26fb7f5e67a0e6005a3fdc9407dc81e1a6f9ce50972de6d193a1bb4b0d72e5d0",
+        "created": "2026-06-11T17:05:47.207567325Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/yuzutech/kroki-mermaid/manifests/0.31.0"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "kroki-excalidraw-j9oghs1fqm90qqy6eomrxtss-193446968859",
+      "image": "yuzutech/kroki-excalidraw:0.31.0",
+      "id": "sha256:fb35dc7a0dbe95b5398d5e39b0e9e35be350b4a7d5859d59c1bccfbc73f80e9c",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.193277492Z",
+      "restarts": 0,
+      "project": "kedge",
+      "service": "kroki-excalidraw",
+      "local_image": {
+        "digests": [
+          "yuzutech/kroki-excalidraw@sha256:fb35dc7a0dbe95b5398d5e39b0e9e35be350b4a7d5859d59c1bccfbc73f80e9c"
+        ],
+        "tags": [
+          "yuzutech/kroki-excalidraw:0.31.0"
+        ],
+        "created": "2026-06-11T17:03:09.185322933Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": "https://github.com/yuzutech/kroki"
+      },
+      "registry": {
+        "ref": "yuzutech/kroki-excalidraw:0.31.0",
+        "arch": "amd64",
+        "config_digest": "sha256:c02ac4c09cb4d1aebd9b675a163bb97e890dd3f2eac8fcd60aee32c506d1136b",
+        "index_digest": "sha256:fb35dc7a0dbe95b5398d5e39b0e9e35be350b4a7d5859d59c1bccfbc73f80e9c",
+        "created": "2026-06-11T17:03:09.185322933Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/yuzutech/kroki-excalidraw/manifests/0.31.0"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "kroki-bpmn-j9oghs1fqm90qqy6eomrxtss-193446967121",
+      "image": "yuzutech/kroki-bpmn:0.31.0",
+      "id": "sha256:323ce4e676ae3f8acd837486fe9b190bafe5628ec11c788781401d5d1f99fa35",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.19469578Z",
+      "restarts": 0,
+      "project": "kedge",
+      "service": "kroki-bpmn",
+      "local_image": {
+        "digests": [
+          "yuzutech/kroki-bpmn@sha256:323ce4e676ae3f8acd837486fe9b190bafe5628ec11c788781401d5d1f99fa35"
+        ],
+        "tags": [
+          "yuzutech/kroki-bpmn:0.31.0"
+        ],
+        "created": "2026-06-11T17:02:28.571141962Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": "https://github.com/yuzutech/kroki"
+      },
+      "registry": {
+        "ref": "yuzutech/kroki-bpmn:0.31.0",
+        "arch": "amd64",
+        "config_digest": "sha256:db98093d9d86d3dd441842ef514dd368c61c6d07fb1d8089d08060a20c4915a9",
+        "index_digest": "sha256:323ce4e676ae3f8acd837486fe9b190bafe5628ec11c788781401d5d1f99fa35",
+        "created": "2026-06-11T17:02:28.571141962Z",
+        "version": "",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/yuzutech/kroki-bpmn/manifests/0.31.0"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "scheduler-jwyb54pf2w2tzwpqvx7zr600-151636008729",
+      "image": "jwyb54pf2w2tzwpqvx7zr600_scheduler:90fb6d41940134d55f1c5d5f6d63b348246b1621",
+      "id": "sha256:d308820572d5198362f45c2851710d7b84732474ba53b534f99e172d73c0f412",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.225516234Z",
+      "restarts": 0,
+      "project": "tipped",
+      "service": "scheduler",
+      "local_image": {
+        "digests": [
+          "jwyb54pf2w2tzwpqvx7zr600_scheduler@sha256:d308820572d5198362f45c2851710d7b84732474ba53b534f99e172d73c0f412"
+        ],
+        "tags": [
+          "jwyb54pf2w2tzwpqvx7zr600_scheduler:90fb6d41940134d55f1c5d5f6d63b348246b1621"
+        ],
+        "created": "2026-07-30T15:18:20.31097028Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "worker-jwyb54pf2w2tzwpqvx7zr600-151635981872",
+      "image": "jwyb54pf2w2tzwpqvx7zr600_worker:90fb6d41940134d55f1c5d5f6d63b348246b1621",
+      "id": "sha256:dd710b9bc7b44851fe527aec6fba448c2e50521f6319df8678e87fcf68ef641b",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.227811606Z",
+      "restarts": 0,
+      "project": "tipped",
+      "service": "worker",
+      "local_image": {
+        "digests": [
+          "jwyb54pf2w2tzwpqvx7zr600_worker@sha256:dd710b9bc7b44851fe527aec6fba448c2e50521f6319df8678e87fcf68ef641b"
+        ],
+        "tags": [
+          "jwyb54pf2w2tzwpqvx7zr600_worker:90fb6d41940134d55f1c5d5f6d63b348246b1621"
+        ],
+        "created": "2026-07-30T15:18:20.31097028Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "app-jwyb54pf2w2tzwpqvx7zr600-151635953816",
+      "image": "jwyb54pf2w2tzwpqvx7zr600_app:90fb6d41940134d55f1c5d5f6d63b348246b1621",
+      "id": "sha256:09a81494e0640e3b5f420a069586fce74994cc2742f6047f28203dd13b3f1679",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:00:48.226876764Z",
+      "restarts": 0,
+      "project": "tipped",
+      "service": "app",
+      "local_image": {
+        "digests": [
+          "jwyb54pf2w2tzwpqvx7zr600_app@sha256:09a81494e0640e3b5f420a069586fce74994cc2742f6047f28203dd13b3f1679"
+        ],
+        "tags": [
+          "jwyb54pf2w2tzwpqvx7zr600_app:90fb6d41940134d55f1c5d5f6d63b348246b1621"
+        ],
+        "created": "2026-07-30T15:18:20.31097028Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-jwyb54pf2w2tzwpqvx7zr600-151636039382",
+      "image": "postgis/postgis:16-3.4-alpine",
+      "id": "sha256:681931a625df344215e9b8998bf34daf146b6a395ceacee4439eb9c85869239f",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:00:48.195570589Z",
+      "restarts": 0,
+      "project": "tipped",
+      "service": "db",
+      "local_image": {
+        "digests": [
+          "postgis/postgis@sha256:681931a625df344215e9b8998bf34daf146b6a395ceacee4439eb9c85869239f"
+        ],
+        "tags": [
+          "postgis/postgis:16-3.4-alpine"
+        ],
+        "created": "2024-10-14T05:32:06.536917052Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": "https://github.com/postgis/docker-postgis"
+      },
+      "registry": {
+        "ref": "postgis/postgis:16-3.4-alpine",
+        "arch": "amd64",
+        "config_digest": "sha256:6405cb2a4c546c138458a1641556c286156e668c01dd2c86819e2a84905489a9",
+        "index_digest": "sha256:681931a625df344215e9b8998bf34daf146b6a395ceacee4439eb9c85869239f",
+        "created": "2024-10-14T05:32:06.536917052Z",
+        "version": "",
+        "version_env": {
+          "PG_VERSION": "16.4"
+        },
+        "url": "https://registry-1.docker.io/v2/postgis/postgis/manifests/16-3.4-alpine"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "coolify",
+      "image": "ghcr.io/coollabsio/coolify:4.1.2",
+      "id": "sha256:3a27ba5f7f98ff7763a0a4d6715ec36e564f9622eea8f492c46f90716ea2525f",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:00:48.228888694Z",
+      "restarts": 0,
+      "project": "",
+      "service": "coolify",
+      "local_image": {
+        "digests": [
+          "ghcr.io/coollabsio/coolify@sha256:3a27ba5f7f98ff7763a0a4d6715ec36e564f9622eea8f492c46f90716ea2525f"
+        ],
+        "tags": [
+          "ghcr.io/coollabsio/coolify:4.1.2"
+        ],
+        "created": "2026-06-04T07:54:35.941614288Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "v4.4.1-26811289757",
+        "source": "https://github.com/serversideup/docker-php"
+      },
+      "registry": {
+        "ref": "ghcr.io/coollabsio/coolify:4.1.2",
+        "arch": "amd64",
+        "config_digest": "sha256:b87e985771e662d1608cd25dd63413f428726be45301928eeeac9fbe9b4e7ee9",
+        "index_digest": "sha256:3a27ba5f7f98ff7763a0a4d6715ec36e564f9622eea8f492c46f90716ea2525f",
+        "created": "2026-06-04T07:54:35.941614288Z",
+        "version": "v4.4.1-26811289757",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/coollabsio/coolify/manifests/4.1.2"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "coolify-redis",
+      "image": "redis:7-alpine",
+      "id": "sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:00:48.097935681Z",
+      "restarts": 0,
+      "project": "",
+      "service": "redis",
+      "local_image": {
+        "digests": [
+          "redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99"
+        ],
+        "tags": [
+          "redis:7-alpine"
+        ],
+        "created": "2026-05-07T17:34:49.043581139Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "redis:7-alpine",
+        "arch": "amd64",
+        "config_digest": "sha256:5509c0097c6064aa8a3b1df58f1d950e67090fffa6678ae8f3f1dc2385f12deb",
+        "index_digest": "sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf",
+        "created": "2026-08-18T16:56:46.926554149Z",
+        "version": "",
+        "version_env": {
+          "REDIS_VERSION": "7.4.11"
+        },
+        "url": "https://registry-1.docker.io/v2/library/redis/manifests/7-alpine"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "coolify-db",
+      "image": "postgres:15-alpine",
+      "id": "sha256:3d0f7584ed7d04e27fa050d6683a74746608faf21f202be78460d679cc56461f",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:00:48.123058378Z",
+      "restarts": 0,
+      "project": "",
+      "service": "postgres",
+      "local_image": {
+        "digests": [
+          "postgres@sha256:3d0f7584ed7d04e27fa050d6683a74746608faf21f202be78460d679cc56461f"
+        ],
+        "tags": [
+          "postgres:15-alpine"
+        ],
+        "created": "2026-07-07T17:48:31.147411401Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "postgres:15-alpine",
+        "arch": "amd64",
+        "config_digest": "sha256:aad6289ca337b3ce76896f2e7e61480490152886c7828120371fb28e6b779e1d",
+        "index_digest": "sha256:fe0737ba566a2c5b2a28f34433c0a423261900ec17b9bf7ad115e1aae7e57f1b",
+        "created": "2026-08-13T19:19:07.097478906Z",
+        "version": "",
+        "version_env": {
+          "PG_VERSION": "15.19"
+        },
+        "url": "https://registry-1.docker.io/v2/library/postgres/manifests/15-alpine"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "coolify-realtime",
+      "image": "ghcr.io/coollabsio/coolify-realtime:1.0.16",
+      "id": "sha256:b5bb9d1c95d9b4ca59773b82d1e1a2bf4ccac5fbed33be19b9b3906574db3629",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:00:48.189421576Z",
+      "restarts": 0,
+      "project": "",
+      "service": "soketi",
+      "local_image": {
+        "digests": [
+          "ghcr.io/coollabsio/coolify-realtime@sha256:b5bb9d1c95d9b4ca59773b82d1e1a2bf4ccac5fbed33be19b9b3906574db3629"
+        ],
+        "tags": [
+          "ghcr.io/coollabsio/coolify-realtime:1.0.16"
+        ],
+        "created": "2026-07-20T10:56:55.842851273Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "1.6.1-16-alpine",
+        "source": "https://github.com/soketi/soketi"
+      },
+      "registry": {
+        "ref": "ghcr.io/coollabsio/coolify-realtime:1.0.16",
+        "arch": "amd64",
+        "config_digest": "sha256:9afcc08cb165d9ffc9cdd3859fbdd7fba77ff1337ac8e7c4f2ae7fdb1a757229",
+        "index_digest": "sha256:b5bb9d1c95d9b4ca59773b82d1e1a2bf4ccac5fbed33be19b9b3906574db3629",
+        "created": "2026-07-20T10:56:55.842851273Z",
+        "version": "1.6.1-16-alpine",
+        "version_env": {},
+        "url": "https://ghcr.io/v2/coollabsio/coolify-realtime/manifests/1.0.16"
+      },
+      "comparison": "Matches tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "coolify-proxy",
+      "image": "traefik:v3.6",
+      "id": "sha256:f5dba1e65167778cd5f8d1b463fc5d200f49d40c6458fc9f4b391a68ebfb9534",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:00:48.109661484Z",
+      "restarts": 0,
+      "project": "",
+      "service": "traefik",
+      "local_image": {
+        "digests": [
+          "traefik@sha256:f5dba1e65167778cd5f8d1b463fc5d200f49d40c6458fc9f4b391a68ebfb9534"
+        ],
+        "tags": [
+          "traefik:v3.6"
+        ],
+        "created": "2026-07-08T17:05:08.491320926Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "v3.6.23",
+        "source": "https://github.com/traefik/traefik"
+      },
+      "registry": {
+        "ref": "traefik:v3.6",
+        "arch": "amd64",
+        "config_digest": "sha256:ee0b3aaa56c3f593da2c7d67ebbdbc600155bf6be2c3cece8f7870db29714a88",
+        "index_digest": "sha256:31267173a15b4944e797a76ffd9c419707c8d8b32fe5b610f80cd0cfa05f372d",
+        "created": "2026-07-31T21:02:58.889730321Z",
+        "version": "v3.6.25",
+        "version_env": {},
+        "url": "https://registry-1.docker.io/v2/library/traefik/manifests/v3.6"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "app-i12r2humxznbixj6zei73m86-190041211870",
+      "image": "i12r2humxznbixj6zei73m86_app:ca3cfc7c1beddfa90b669c92e275409f500386b2",
+      "id": "sha256:6f77a5461656138c3c934d75d53cfaca1b74d5c699776f6b8647b25715a86676",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.188629032Z",
+      "restarts": 0,
+      "project": "bet-mn",
+      "service": "app",
+      "local_image": {
+        "digests": [
+          "i12r2humxznbixj6zei73m86_app@sha256:6f77a5461656138c3c934d75d53cfaca1b74d5c699776f6b8647b25715a86676"
+        ],
+        "tags": [
+          "i12r2humxznbixj6zei73m86_app:ca3cfc7c1beddfa90b669c92e275409f500386b2"
+        ],
+        "created": "2026-06-23T19:02:28.667249619Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "worker-i12r2humxznbixj6zei73m86-190041221918",
+      "image": "i12r2humxznbixj6zei73m86_worker:ca3cfc7c1beddfa90b669c92e275409f500386b2",
+      "id": "sha256:f37247c77ab2942adad97f1a1b57444cd652f73fda834adab8e64ee3036e4147",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.186841081Z",
+      "restarts": 0,
+      "project": "bet-mn",
+      "service": "worker",
+      "local_image": {
+        "digests": [
+          "i12r2humxznbixj6zei73m86_worker@sha256:f37247c77ab2942adad97f1a1b57444cd652f73fda834adab8e64ee3036e4147"
+        ],
+        "tags": [
+          "i12r2humxznbixj6zei73m86_worker:ca3cfc7c1beddfa90b669c92e275409f500386b2"
+        ],
+        "created": "2026-06-23T19:02:28.667249619Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "scheduler-i12r2humxznbixj6zei73m86-190041230799",
+      "image": "i12r2humxznbixj6zei73m86_scheduler:ca3cfc7c1beddfa90b669c92e275409f500386b2",
+      "id": "sha256:bcafa7cfe625b7f40b724e8301c8571a4fd7e4b28c4d47a3e7c1b8747f655b80",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.187691976Z",
+      "restarts": 0,
+      "project": "bet-mn",
+      "service": "scheduler",
+      "local_image": {
+        "digests": [
+          "i12r2humxznbixj6zei73m86_scheduler@sha256:bcafa7cfe625b7f40b724e8301c8571a4fd7e4b28c4d47a3e7c1b8747f655b80"
+        ],
+        "tags": [
+          "i12r2humxznbixj6zei73m86_scheduler:ca3cfc7c1beddfa90b669c92e275409f500386b2"
+        ],
+        "created": "2026-06-23T19:02:28.667249619Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-i12r2humxznbixj6zei73m86-190041239764",
+      "image": "postgres:16-alpine",
+      "id": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:00:48.122000145Z",
+      "restarts": 0,
+      "project": "bet-mn",
+      "service": "db",
+      "local_image": {
+        "digests": [],
+        "tags": [],
+        "created": "2026-04-21T23:10:13.026446405Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "postgres:16-alpine",
+        "arch": "amd64",
+        "config_digest": "sha256:75f5a96988cdf694a215073c3e9c001b706b371e2f94df3967f2efdec2787f6b",
+        "index_digest": "sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685",
+        "created": "2026-08-13T19:18:09.513955733Z",
+        "version": "",
+        "version_env": {
+          "PG_VERSION": "16.15"
+        },
+        "url": "https://registry-1.docker.io/v2/library/postgres/manifests/16-alpine"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "app-gltfk35o2ruzm9cd078wge21-012704176484",
+      "image": "gltfk35o2ruzm9cd078wge21_app:c208b668db5854f205e0690fb00169d8ca093032",
+      "id": "sha256:b78f303425461b50a8e400254474bd60515a4cb80a51a285de739de6cf948da4",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.2180055Z",
+      "restarts": 0,
+      "project": "summit-todo",
+      "service": "app",
+      "local_image": {
+        "digests": [
+          "gltfk35o2ruzm9cd078wge21_app@sha256:b78f303425461b50a8e400254474bd60515a4cb80a51a285de739de6cf948da4"
+        ],
+        "tags": [
+          "gltfk35o2ruzm9cd078wge21_app:c208b668db5854f205e0690fb00169d8ca093032"
+        ],
+        "created": "2026-05-21T01:28:48.830733631Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "scheduler-gltfk35o2ruzm9cd078wge21-012704194475",
+      "image": "gltfk35o2ruzm9cd078wge21_scheduler:c208b668db5854f205e0690fb00169d8ca093032",
+      "id": "sha256:8a601f816a78f5877222e79425c1296db9b704c947c40a82a1769cfca9003b92",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.209351313Z",
+      "restarts": 0,
+      "project": "summit-todo",
+      "service": "scheduler",
+      "local_image": {
+        "digests": [
+          "gltfk35o2ruzm9cd078wge21_scheduler@sha256:8a601f816a78f5877222e79425c1296db9b704c947c40a82a1769cfca9003b92"
+        ],
+        "tags": [
+          "gltfk35o2ruzm9cd078wge21_scheduler:c208b668db5854f205e0690fb00169d8ca093032"
+        ],
+        "created": "2026-05-21T01:28:48.830733631Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "worker-gltfk35o2ruzm9cd078wge21-012704186012",
+      "image": "gltfk35o2ruzm9cd078wge21_worker:c208b668db5854f205e0690fb00169d8ca093032",
+      "id": "sha256:8990832a63a10176ec0d3a8a1ee921ed432e1e0b7a3dc05f820596361d9e96e4",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.212183721Z",
+      "restarts": 0,
+      "project": "summit-todo",
+      "service": "worker",
+      "local_image": {
+        "digests": [
+          "gltfk35o2ruzm9cd078wge21_worker@sha256:8990832a63a10176ec0d3a8a1ee921ed432e1e0b7a3dc05f820596361d9e96e4"
+        ],
+        "tags": [
+          "gltfk35o2ruzm9cd078wge21_worker:c208b668db5854f205e0690fb00169d8ca093032"
+        ],
+        "created": "2026-05-21T01:28:48.830733631Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-gltfk35o2ruzm9cd078wge21-012704202956",
+      "image": "postgres:16-alpine",
+      "id": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:00:48.133797953Z",
+      "restarts": 0,
+      "project": "summit-todo",
+      "service": "db",
+      "local_image": {
+        "digests": [],
+        "tags": [],
+        "created": "2026-04-21T23:10:13.026446405Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "postgres:16-alpine",
+        "arch": "amd64",
+        "config_digest": "sha256:75f5a96988cdf694a215073c3e9c001b706b371e2f94df3967f2efdec2787f6b",
+        "index_digest": "sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685",
+        "created": "2026-08-13T19:18:09.513955733Z",
+        "version": "",
+        "version_env": {
+          "PG_VERSION": "16.15"
+        },
+        "url": "https://registry-1.docker.io/v2/library/postgres/manifests/16-alpine"
+      },
+      "comparison": "New image on tag"
+    },
+    {
+      "host": "wormmon",
+      "name": "scheduler-kdico0rsiftf02rnxl3edgg6-185725173268",
+      "image": "kdico0rsiftf02rnxl3edgg6_scheduler:71116e226b9cc56eb0c51c4a75fb9e8dd4b1d320",
+      "id": "sha256:65a5367fb4ddcb0a7a8789ee74cb34ef0cda8692d98cc9cfff4512578981f506",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.213153829Z",
+      "restarts": 0,
+      "project": "demo",
+      "service": "scheduler",
+      "local_image": {
+        "digests": [
+          "kdico0rsiftf02rnxl3edgg6_scheduler@sha256:65a5367fb4ddcb0a7a8789ee74cb34ef0cda8692d98cc9cfff4512578981f506"
+        ],
+        "tags": [
+          "kdico0rsiftf02rnxl3edgg6_scheduler:71116e226b9cc56eb0c51c4a75fb9e8dd4b1d320"
+        ],
+        "created": "2026-05-12T18:57:31.695882241Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "app-kdico0rsiftf02rnxl3edgg6-185725155738",
+      "image": "kdico0rsiftf02rnxl3edgg6_app:71116e226b9cc56eb0c51c4a75fb9e8dd4b1d320",
+      "id": "sha256:05a882d0f01ea8fce20302428ab62c3ee280ef96bbfa0cae4c898dd3a963042e",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.208515647Z",
+      "restarts": 0,
+      "project": "demo",
+      "service": "app",
+      "local_image": {
+        "digests": [
+          "kdico0rsiftf02rnxl3edgg6_app@sha256:05a882d0f01ea8fce20302428ab62c3ee280ef96bbfa0cae4c898dd3a963042e"
+        ],
+        "tags": [
+          "kdico0rsiftf02rnxl3edgg6_app:71116e226b9cc56eb0c51c4a75fb9e8dd4b1d320"
+        ],
+        "created": "2026-05-12T18:57:31.695882241Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "worker-kdico0rsiftf02rnxl3edgg6-185725165088",
+      "image": "kdico0rsiftf02rnxl3edgg6_worker:71116e226b9cc56eb0c51c4a75fb9e8dd4b1d320",
+      "id": "sha256:03ef1e01a8de4db489e3793a5a27c769786a0be48f02391ba6d5d4f7906161d2",
+      "status": "running",
+      "health": "none",
+      "started": "2026-09-09T23:00:48.206073791Z",
+      "restarts": 0,
+      "project": "demo",
+      "service": "worker",
+      "local_image": {
+        "digests": [
+          "kdico0rsiftf02rnxl3edgg6_worker@sha256:03ef1e01a8de4db489e3793a5a27c769786a0be48f02391ba6d5d4f7906161d2"
+        ],
+        "tags": [
+          "kdico0rsiftf02rnxl3edgg6_worker:71116e226b9cc56eb0c51c4a75fb9e8dd4b1d320"
+        ],
+        "created": "2026-05-12T18:57:31.695882241Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": null,
+      "comparison": "Custom build; unverified"
+    },
+    {
+      "host": "wormmon",
+      "name": "db-kdico0rsiftf02rnxl3edgg6-185725181405",
+      "image": "postgres:16-alpine",
+      "id": "sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50",
+      "status": "running",
+      "health": "healthy",
+      "started": "2026-09-09T23:00:48.147101242Z",
+      "restarts": 0,
+      "project": "demo",
+      "service": "db",
+      "local_image": {
+        "digests": [],
+        "tags": [],
+        "created": "2026-04-21T23:10:13.026446405Z",
+        "arch": "amd64",
+        "os": "linux",
+        "version": "",
+        "source": ""
+      },
+      "registry": {
+        "ref": "postgres:16-alpine",
+        "arch": "amd64",
+        "config_digest": "sha256:75f5a96988cdf694a215073c3e9c001b706b371e2f94df3967f2efdec2787f6b",
+        "index_digest": "sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685",
+        "created": "2026-08-13T19:18:09.513955733Z",
+        "version": "",
+        "version_env": {
+          "PG_VERSION": "16.15"
+        },
+        "url": "https://registry-1.docker.io/v2/library/postgres/manifests/16-alpine"
+      },
+      "comparison": "New image on tag"
+    }
+  ],
+  "hosts": {
+    "andromon": {
+      "os": "PRETTY_NAME=\"Ubuntu 22.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"22.04\"\nVERSION=\"22.04.5 LTS (Jammy Jellyfish)\"\nVERSION_CODENAME=jammy\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=jammy",
+      "kernel": "5.15.0-191-generic",
+      "reboot_required": false,
+      "failed_units": "UNIT LOAD ACTIVE SUB DESCRIPTION\n0 loaded units listed.",
+      "held_packages": "",
+      "apt_indexes": {
+        "/var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy-updates_InRelease": 1789293619.0,
+        "/var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy-security_InRelease": 1789293493.0,
+        "/var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy_InRelease": 1650561399.0,
+        "/var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy-backports_InRelease": 1789293663.0,
+        "/var/lib/apt/lists/download.docker.com_linux_ubuntu_dists_jammy_InRelease": 1789164502.0
+      },
+      "upgrades": [
+        {
+          "name": "containerd.io",
+          "installed": "2.3.3-1~ubuntu.22.04~jammy",
+          "candidate": "2.3.5-1~ubuntu.22.04~jammy",
+          "origins": [
+            {
+              "origin": "Docker",
+              "archive": "jammy"
+            }
+          ]
+        },
+        {
+          "name": "docker-buildx-plugin",
+          "installed": "0.36.1-1~ubuntu.22.04~jammy",
+          "candidate": "0.37.1-1~ubuntu.22.04~jammy",
+          "origins": [
+            {
+              "origin": "Docker",
+              "archive": "jammy"
+            }
+          ]
+        },
+        {
+          "name": "docker-ce",
+          "installed": "5:29.7.2-1~ubuntu.22.04~jammy",
+          "candidate": "5:29.8.0-1~ubuntu.22.04~jammy",
+          "origins": [
+            {
+              "origin": "Docker",
+              "archive": "jammy"
+            }
+          ]
+        },
+        {
+          "name": "docker-ce-cli",
+          "installed": "5:29.7.2-1~ubuntu.22.04~jammy",
+          "candidate": "5:29.8.0-1~ubuntu.22.04~jammy",
+          "origins": [
+            {
+              "origin": "Docker",
+              "archive": "jammy"
+            }
+          ]
+        },
+        {
+          "name": "docker-ce-rootless-extras",
+          "installed": "5:29.7.2-1~ubuntu.22.04~jammy",
+          "candidate": "5:29.8.0-1~ubuntu.22.04~jammy",
+          "origins": [
+            {
+              "origin": "Docker",
+              "archive": "jammy"
+            }
+          ]
+        },
+        {
+          "name": "docker-compose-plugin",
+          "installed": "5.4.0-1~ubuntu.22.04~jammy",
+          "candidate": "5.5.1-1~ubuntu.22.04~jammy",
+          "origins": [
+            {
+              "origin": "Docker",
+              "archive": "jammy"
+            }
+          ]
+        },
+        {
+          "name": "snapd",
+          "installed": "2.76+ubuntu22.04.1",
+          "candidate": "2.76.3+ubuntu22.04",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "jammy-updates"
+            }
+          ]
+        }
+      ],
+      "runtime_versions": {
+        "docker": {
+          "code": 0,
+          "output": "{\"Platform\":{\"Name\":\"Docker Engine - Community\"},\"Version\":\"29.7.2\",\"ApiVersion\":\"1.55\",\"MinAPIVersion\":\"1.40\",\"Os\":\"linux\",\"Arch\":\"amd64\",\"Components\":[{\"Name\":\"Engine\",\"Version\":\"29.7.2\",\"Details\":{\"ApiVersion\":\"1.55\",\"Arch\":\"amd64\",\"BuildTime\":\"Wed Aug  5 18:28:48 2026\",\"Experimental\":\"false\",\"GitCommit\":\"6a43e3d\",\"GoVersion\":\"go1.26.5\",\"KernelVersion\":\"5.15.0-191-generic\",\"MinAPIVersion\":\"1.40\",\"Module\":\"github.com/moby/moby/v2\",\"ModuleVersion\":\"v2.0.0+unknown\",\"Os\":\"linux\"}},{\"Name\":\"containerd\",\"Version\":\"v2.3.3\",\"Details\":{\"GitCommit\":\"aad11006b869517fcd3009450b6f82da282e1a9b\"}},{\"Name\":\"runc\",\"Version\":\"1.4.3\",\"Details\":{\"GitCommit\":\"v1.4.3-0-gbb14dabe\"}},{\"Name\":\"docker-init\",\"Version\":\"0.19.0\",\"Details\":{\"GitCommit\":\"de40ad0\"}}],\"GitCommit\":\"6a43e3d\",\"GoVersion\":\"go1.26.5\",\"KernelVersion\":\"5.15.0-191-generic\",\"BuildTime\":\"2026-08-05T18:28:48.000000000+00:00\"}"
+        },
+        "packages": {
+          "code": 0,
+          "output": "containerd\t2.2.1-0ubuntu1~22.04.1\ncontainerd.io\t2.3.3-1~ubuntu.22.04~jammy\ndocker-buildx-plugin\t0.36.1-1~ubuntu.22.04~jammy\ndocker-ce\t5:29.7.2-1~ubuntu.22.04~jammy\ndocker-ce-cli\t5:29.7.2-1~ubuntu.22.04~jammy\ndocker-ce-rootless-extras\t5:29.7.2-1~ubuntu.22.04~jammy\ndocker-compose\t1.29.2-1\ndocker-compose-plugin\t5.4.0-1~ubuntu.22.04~jammy\ndocker.io\t29.1.3-0ubuntu3~22.04.1\nfail2ban\t0.11.2-6\nlinux-image-5.15.0-176-generic\t5.15.0-176.186\nlinux-image-5.15.0-186-generic\t5.15.0-186.196\nlinux-image-5.15.0-187-generic\t5.15.0-187.197\nlinux-image-5.15.0-190-generic\t5.15.0-190.200\nlinux-image-5.15.0-191-generic\t5.15.0-191.201\nlinux-image-5.15.0-58-generic\t5.15.0-58.64\nlinux-image-5.15.0-60-generic\t5.15.0-60.66\nlinux-image-5.15.0-67-generic\t5.15.0-67.74\nlinux-image-5.4.0-128-generic\t5.4.0-128.144\nlinux-image-5.4.0-135-generic\t5.4.0-135.152\nlinux-image-5.4.0-137-generic\t5.4.0-137.154\nlinux-image-generic\t5.15.0.191.169\nmergerfs\t2.33.3-1\nntpsec\t1.2.1+dfsg1-4\nopenssh-server\t1:8.9p1-3ubuntu0.17\nopenssl\t3.0.2-0ubuntu1.29\nsnapd\t2.76+ubuntu22.04.1"
+        },
+        "node": {
+          "code": 0,
+          "output": "node_exporter, version 1.12.1 (branch: HEAD, revision: 6044da783597cc3b57aef7580ddcdcff58a4ee99)"
+        },
+        "user_services": {
+          "code": 0,
+          "output": ""
+        },
+        "immich-redis": {
+          "code": 0,
+          "output": "Redis server v=6.2.23 sha=00000000:0 malloc=jemalloc-5.1.0 bits=64 build=a365bf734ec25f99"
+        },
+        "open-webui": {
+          "code": 0,
+          "output": "0.11.0",
+          "method": "GET http://127.0.0.1:3014/api/version"
+        },
+        "paperless-redis": {
+          "code": 0,
+          "output": "Redis server v=7.4.10 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=d70b7db78d693e15"
+        },
+        "paperless-db": {
+          "code": 0,
+          "output": "postgres (PostgreSQL) 16.14 (Debian 16.14-1.pgdg13+1)"
+        },
+        "nextcloud": {
+          "code": 0,
+          "output": "34.0.2"
+        },
+        "grafana": {
+          "code": 0,
+          "output": "grafana version 13.1.3"
+        },
+        "prometheus": {
+          "code": 0,
+          "output": "prometheus, version 3.13.2 (branch: HEAD, revision: bb5dff00cf8fdfbf5c65e0531aa835fa238a43a2)\n  build user:       root@56a9973e8bdd\n  build date:       20260730-11:31:39\n  go version:       go1.26.5\n  platform:         linux/amd64\n  tags:             netgo,builtinassets"
+        },
+        "stash": {
+          "code": 0,
+          "output": "v0.31.1 (4de2351e) - Official Build - 2026-04-13 01:44:30"
+        },
+        "immich-db": {
+          "code": 0,
+          "output": "postgres (PostgreSQL) 14.19 (Debian 14.19-1.pgdg12+1)"
+        },
+        "cadvisor": {
+          "code": 0,
+          "output": "cAdvisor version v0.55.1 (f5bec374)"
+        }
+      }
+    },
+    "tentomon": {
+      "os": "PRETTY_NAME=\"Ubuntu 26.04 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"26.04\"\nVERSION=\"26.04 LTS (Resolute Raccoon)\"\nVERSION_CODENAME=resolute\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=resolute\nLOGO=ubuntu-logo",
+      "kernel": "7.0.0-1017-raspi",
+      "reboot_required": false,
+      "failed_units": "UNIT LOAD ACTIVE SUB DESCRIPTION\n\n0 loaded units listed.",
+      "held_packages": "",
+      "apt_indexes": {
+        "/var/lib/apt/lists/ports.ubuntu.com_ubuntu-ports_dists_resolute-updates_InRelease": 1789293266.0,
+        "/var/lib/apt/lists/ports.ubuntu.com_ubuntu-ports_dists_resolute-backports_InRelease": 1789293282.0,
+        "/var/lib/apt/lists/ports.ubuntu.com_ubuntu-ports_dists_resolute-security_InRelease": 1789293249.0,
+        "/var/lib/apt/lists/ports.ubuntu.com_ubuntu-ports_dists_resolute_InRelease": 1776964050.0,
+        "/var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_resolute_InRelease": 1776964050.0,
+        "/var/lib/apt/lists/download.docker.com_linux_ubuntu_dists_resolute_InRelease": 1789164624.0,
+        "/var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_resolute-security_InRelease": 1789293249.0
+      },
+      "upgrades": [
+        {
+          "name": "base-files",
+          "installed": "14ubuntu6.1",
+          "candidate": "14ubuntu6.2",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "console-setup",
+          "installed": "1.237ubuntu3",
+          "candidate": "1.237ubuntu3.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "console-setup-linux",
+          "installed": "1.237ubuntu3",
+          "candidate": "1.237ubuntu3.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "dmidecode",
+          "installed": "3.6-2build1",
+          "candidate": "3.6-2ubuntu1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "flashrom",
+          "installed": "1.6.0-2ubuntu1",
+          "candidate": "1.6.0-2ubuntu1.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "gir1.2-packagekitglib-1.0",
+          "installed": "1.3.4-3ubuntu1.1",
+          "candidate": "1.3.4-3ubuntu1.2",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "keyboard-configuration",
+          "installed": "1.237ubuntu3",
+          "candidate": "1.237ubuntu3.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "libaudit-common",
+          "installed": "1:4.1.2-1build1",
+          "candidate": "1:4.1.2-1ubuntu0.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "libaudit1",
+          "installed": "1:4.1.2-1build1",
+          "candidate": "1:4.1.2-1ubuntu0.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "libflashrom1",
+          "installed": "1.6.0-2ubuntu1",
+          "candidate": "1.6.0-2ubuntu1.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "libpackagekit-glib2-18",
+          "installed": "1.3.4-3ubuntu1.1",
+          "candidate": "1.3.4-3ubuntu1.2",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "linux-firmware-misc",
+          "installed": "20260319.git217ca6e4-0ubuntu2",
+          "candidate": "20260319.git217ca6e4-0ubuntu2.2",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "mdadm",
+          "installed": "4.5-5ubuntu1",
+          "candidate": "4.5-5ubuntu1.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "motd-news-config",
+          "installed": "14ubuntu6.1",
+          "candidate": "14ubuntu6.2",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "packagekit",
+          "installed": "1.3.4-3ubuntu1.1",
+          "candidate": "1.3.4-3ubuntu1.2",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "python-apt-common",
+          "installed": "3.1.0ubuntu1",
+          "candidate": "3.1.0ubuntu1.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "python3-apt",
+          "installed": "3.1.0ubuntu1",
+          "candidate": "3.1.0ubuntu1.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "python3-distupgrade",
+          "installed": "1:26.04.22",
+          "candidate": "1:26.04.23",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "python3-software-properties",
+          "installed": "0.120",
+          "candidate": "0.120.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "snapd",
+          "installed": "2.76+ubuntu26.04.3",
+          "candidate": "2.76.3+ubuntu26.04",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "software-properties-common",
+          "installed": "0.120",
+          "candidate": "0.120.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "sos",
+          "installed": "4.10.2-1",
+          "candidate": "4.11.2-0ubuntu0.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "ubuntu-minimal",
+          "installed": "1.570.2",
+          "candidate": "1.570.3",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "ubuntu-release-upgrader-core",
+          "installed": "1:26.04.22",
+          "candidate": "1:26.04.23",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "ubuntu-server",
+          "installed": "1.570.2",
+          "candidate": "1.570.3",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "ubuntu-server-raspi",
+          "installed": "1.570.2",
+          "candidate": "1.570.3",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "ubuntu-standard",
+          "installed": "1.570.2",
+          "candidate": "1.570.3",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        }
+      ],
+      "runtime_versions": {
+        "docker": {
+          "code": 0,
+          "output": "{\"Platform\":{\"Name\":\"\"},\"Version\":\"29.1.3\",\"ApiVersion\":\"1.52\",\"MinAPIVersion\":\"1.44\",\"Os\":\"linux\",\"Arch\":\"arm64\",\"Components\":[{\"Name\":\"Engine\",\"Version\":\"29.1.3\",\"Details\":{\"ApiVersion\":\"1.52\",\"Arch\":\"arm64\",\"BuildTime\":\"Wed Apr 29 16:40:20 2026\",\"Experimental\":\"false\",\"GitCommit\":\"29.1.3-0ubuntu4.1\",\"GoVersion\":\"go1.24.13\",\"KernelVersion\":\"7.0.0-1017-raspi\",\"MinAPIVersion\":\"1.44\",\"Os\":\"linux\"}},{\"Name\":\"containerd\",\"Version\":\"2.2.2\",\"Details\":{\"GitCommit\":\"\"}},{\"Name\":\"runc\",\"Version\":\"1.4.0-0ubuntu1\",\"Details\":{\"GitCommit\":\"\"}},{\"Name\":\"docker-init\",\"Version\":\"0.19.0\",\"Details\":{\"GitCommit\":\"\"}}],\"GitCommit\":\"29.1.3-0ubuntu4.1\",\"GoVersion\":\"go1.24.13\",\"KernelVersion\":\"7.0.0-1017-raspi\",\"BuildTime\":\"2026-04-29T16:40:20.000000000+00:00\"}"
+        },
+        "packages": {
+          "code": 0,
+          "output": "chrony\t4.8-2ubuntu1\ncontainerd\t2.2.2-0ubuntu1.1\ndocker-compose-v2\t2.40.3+ds1-0ubuntu1\ndocker.io\t29.1.3-0ubuntu4.1\nfail2ban\t1.1.0-9\nlinux-image-7.0.0-1009-raspi\t7.0.0-1009.9\nlinux-image-7.0.0-1014-raspi\t7.0.0-1014.14\nlinux-image-7.0.0-1016-raspi\t7.0.0-1016.16\nlinux-image-7.0.0-1017-raspi\t7.0.0-1017.17\nlinux-image-raspi\t7.0.0-1017.17\nntpsec\t1.2.3+dfsg1-8ubuntu2\nopenssh-server\t1:10.2p1-2ubuntu3.6\nopenssl\t3.5.5-1ubuntu3.5\nopenssl-provider-legacy\t3.5.5-1ubuntu3.5\nsnapd\t2.76+ubuntu26.04.3"
+        },
+        "node": {
+          "code": 0,
+          "output": "node_exporter, version 1.11.1 (branch: HEAD, revision: 0dd664dece3f8319f6bec5a221acd2c7ad13a23d)"
+        },
+        "user_services": {
+          "code": 0,
+          "output": ""
+        },
+        "pihole": {
+          "code": 0,
+          "output": "Core version is v6.4.3 (Latest: v6.4.3)\nWeb version is v6.6 (Latest: v6.6)\nFTL version is v6.7 (Latest: v6.7)"
+        },
+        "uptime-kuma": {
+          "code": 0,
+          "output": "1.23.17"
+        }
+      }
+    },
+    "wormmon": {
+      "os": "PRETTY_NAME=\"Ubuntu 26.04 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"26.04\"\nVERSION=\"26.04 LTS (Resolute Raccoon)\"\nVERSION_CODENAME=resolute\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=resolute\nLOGO=ubuntu-logo",
+      "kernel": "7.0.0-31-generic",
+      "reboot_required": false,
+      "failed_units": "UNIT LOAD ACTIVE SUB DESCRIPTION\n\n0 loaded units listed.",
+      "held_packages": "",
+      "apt_indexes": {
+        "/var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_resolute-backports_InRelease": 1789257423.0,
+        "/var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_resolute-security_InRelease": 1789201223.0,
+        "/var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_resolute_InRelease": 1776964050.0,
+        "/var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_resolute-updates_InRelease": 1789241207.0,
+        "/var/lib/apt/lists/download.docker.com_linux_ubuntu_dists_resolute_InRelease": 1789164624.0,
+        "/var/lib/apt/lists/security.ubuntu.com_ubuntu_dists_resolute-security_InRelease": 1789201223.0
+      },
+      "upgrades": [
+        {
+          "name": "base-files",
+          "installed": "14ubuntu6.1",
+          "candidate": "14ubuntu6.2",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "console-setup",
+          "installed": "1.237ubuntu3",
+          "candidate": "1.237ubuntu3.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "console-setup-linux",
+          "installed": "1.237ubuntu3",
+          "candidate": "1.237ubuntu3.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "containerd.io",
+          "installed": "2.3.3-1~ubuntu.26.04~resolute",
+          "candidate": "2.3.5-1~ubuntu.26.04~resolute",
+          "origins": [
+            {
+              "origin": "Docker",
+              "archive": "resolute"
+            }
+          ]
+        },
+        {
+          "name": "dmidecode",
+          "installed": "3.6-2build1",
+          "candidate": "3.6-2ubuntu1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "docker-buildx-plugin",
+          "installed": "0.36.1-1~ubuntu.26.04~resolute",
+          "candidate": "0.37.1-1~ubuntu.26.04~resolute",
+          "origins": [
+            {
+              "origin": "Docker",
+              "archive": "resolute"
+            }
+          ]
+        },
+        {
+          "name": "docker-ce",
+          "installed": "5:29.7.2-1~ubuntu.26.04~resolute",
+          "candidate": "5:29.8.0-1~ubuntu.26.04~resolute",
+          "origins": [
+            {
+              "origin": "Docker",
+              "archive": "resolute"
+            }
+          ]
+        },
+        {
+          "name": "docker-ce-cli",
+          "installed": "5:29.7.2-1~ubuntu.26.04~resolute",
+          "candidate": "5:29.8.0-1~ubuntu.26.04~resolute",
+          "origins": [
+            {
+              "origin": "Docker",
+              "archive": "resolute"
+            }
+          ]
+        },
+        {
+          "name": "docker-ce-rootless-extras",
+          "installed": "5:29.7.2-1~ubuntu.26.04~resolute",
+          "candidate": "5:29.8.0-1~ubuntu.26.04~resolute",
+          "origins": [
+            {
+              "origin": "Docker",
+              "archive": "resolute"
+            }
+          ]
+        },
+        {
+          "name": "docker-compose-plugin",
+          "installed": "5.4.0-1~ubuntu.26.04~resolute",
+          "candidate": "5.5.1-1~ubuntu.26.04~resolute",
+          "origins": [
+            {
+              "origin": "Docker",
+              "archive": "resolute"
+            }
+          ]
+        },
+        {
+          "name": "gir1.2-packagekitglib-1.0",
+          "installed": "1.3.4-3ubuntu1.1",
+          "candidate": "1.3.4-3ubuntu1.2",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "keyboard-configuration",
+          "installed": "1.237ubuntu3",
+          "candidate": "1.237ubuntu3.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "libaudit-common",
+          "installed": "1:4.1.2-1build1",
+          "candidate": "1:4.1.2-1ubuntu0.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "libaudit1",
+          "installed": "1:4.1.2-1build1",
+          "candidate": "1:4.1.2-1ubuntu0.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "libflashrom1",
+          "installed": "1.6.0-2ubuntu1",
+          "candidate": "1.6.0-2ubuntu1.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "libpackagekit-glib2-18",
+          "installed": "1.3.4-3ubuntu1.1",
+          "candidate": "1.3.4-3ubuntu1.2",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "linux-firmware-misc",
+          "installed": "20260319.git217ca6e4-0ubuntu2",
+          "candidate": "20260319.git217ca6e4-0ubuntu2.2",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "mdadm",
+          "installed": "4.5-5ubuntu1",
+          "candidate": "4.5-5ubuntu1.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "motd-news-config",
+          "installed": "14ubuntu6.1",
+          "candidate": "14ubuntu6.2",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "packagekit",
+          "installed": "1.3.4-3ubuntu1.1",
+          "candidate": "1.3.4-3ubuntu1.2",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "python-apt-common",
+          "installed": "3.1.0ubuntu1",
+          "candidate": "3.1.0ubuntu1.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "python3-apt",
+          "installed": "3.1.0ubuntu1",
+          "candidate": "3.1.0ubuntu1.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "python3-distupgrade",
+          "installed": "1:26.04.22",
+          "candidate": "1:26.04.23",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "python3-software-properties",
+          "installed": "0.120",
+          "candidate": "0.120.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "snapd",
+          "installed": "2.76+ubuntu26.04.3",
+          "candidate": "2.76.3+ubuntu26.04",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "software-properties-common",
+          "installed": "0.120",
+          "candidate": "0.120.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "sos",
+          "installed": "4.10.2-1",
+          "candidate": "4.11.2-0ubuntu0.1",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "ubuntu-kernel-accessories",
+          "installed": "1.570.2",
+          "candidate": "1.570.3",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "ubuntu-minimal",
+          "installed": "1.570.2",
+          "candidate": "1.570.3",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "ubuntu-release-upgrader-core",
+          "installed": "1:26.04.22",
+          "candidate": "1:26.04.23",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "ubuntu-server",
+          "installed": "1.570.2",
+          "candidate": "1.570.3",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "ubuntu-server-minimal",
+          "installed": "1.570.2",
+          "candidate": "1.570.3",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        },
+        {
+          "name": "ubuntu-standard",
+          "installed": "1.570.2",
+          "candidate": "1.570.3",
+          "origins": [
+            {
+              "origin": "Ubuntu",
+              "archive": "resolute-updates"
+            }
+          ]
+        }
+      ],
+      "runtime_versions": {
+        "docker": {
+          "code": 0,
+          "output": "{\"Platform\":{\"Name\":\"Docker Engine - Community\"},\"Version\":\"29.7.2\",\"ApiVersion\":\"1.55\",\"MinAPIVersion\":\"1.40\",\"Os\":\"linux\",\"Arch\":\"amd64\",\"Components\":[{\"Name\":\"Engine\",\"Version\":\"29.7.2\",\"Details\":{\"ApiVersion\":\"1.55\",\"Arch\":\"amd64\",\"BuildTime\":\"Wed Aug  5 18:28:40 2026\",\"Experimental\":\"false\",\"GitCommit\":\"6a43e3d\",\"GoVersion\":\"go1.26.5\",\"KernelVersion\":\"7.0.0-31-generic\",\"MinAPIVersion\":\"1.40\",\"Module\":\"github.com/moby/moby/v2\",\"ModuleVersion\":\"v2.0.0+unknown\",\"Os\":\"linux\"}},{\"Name\":\"containerd\",\"Version\":\"v2.3.3\",\"Details\":{\"GitCommit\":\"aad11006b869517fcd3009450b6f82da282e1a9b\"}},{\"Name\":\"runc\",\"Version\":\"1.4.3\",\"Details\":{\"GitCommit\":\"v1.4.3-0-gbb14dabe\"}},{\"Name\":\"docker-init\",\"Version\":\"0.19.0\",\"Details\":{\"GitCommit\":\"de40ad0\"}}],\"GitCommit\":\"6a43e3d\",\"GoVersion\":\"go1.26.5\",\"KernelVersion\":\"7.0.0-31-generic\",\"BuildTime\":\"2026-08-05T18:28:40.000000000+00:00\"}"
+        },
+        "packages": {
+          "code": 0,
+          "output": "chrony\t4.8-2ubuntu1\ncontainerd.io\t2.3.3-1~ubuntu.26.04~resolute\ndocker-buildx-plugin\t0.36.1-1~ubuntu.26.04~resolute\ndocker-ce\t5:29.7.2-1~ubuntu.26.04~resolute\ndocker-ce-cli\t5:29.7.2-1~ubuntu.26.04~resolute\ndocker-ce-rootless-extras\t5:29.7.2-1~ubuntu.26.04~resolute\ndocker-compose-plugin\t5.4.0-1~ubuntu.26.04~resolute\nfail2ban\t1.1.0-9\nlinux-image-7.0.0-15-generic\t7.0.0-15.15\nlinux-image-7.0.0-28-generic\t7.0.0-28.28\nlinux-image-7.0.0-29-generic\t7.0.0-29.29\nlinux-image-7.0.0-30-generic\t7.0.0-30.30\nlinux-image-7.0.0-31-generic\t7.0.0-31.31\nlinux-image-generic\t7.0.0-31.31\nlinux-image-unsigned-7.0.0-14-generic\t7.0.0-14.14\nopenssh-server\t1:10.2p1-2ubuntu3.6\nopenssl\t3.5.5-1ubuntu3.5\nopenssl-provider-legacy\t3.5.5-1ubuntu3.5\nsnapd\t2.76+ubuntu26.04.3"
+        },
+        "node": {
+          "code": 0,
+          "output": "node_exporter, version 1.11.1 (branch: HEAD, revision: 0dd664dece3f8319f6bec5a221acd2c7ad13a23d)"
+        },
+        "user_services": {
+          "code": 0,
+          "output": ""
+        },
+        "db-vhp4p1uln07720ek290bbl6a-014644815070": {
+          "code": 0,
+          "output": "/usr/sbin/mysqld  Ver 8.0.46 for Linux on x86_64 (MySQL Community Server - GPL)"
+        },
+        "db-y2ergzwl15qlokzip3vzyxo6-014459440600": {
+          "code": 0,
+          "output": "/usr/sbin/mysqld  Ver 8.0.46 for Linux on x86_64 (MySQL Community Server - GPL)"
+        },
+        "db-wbhhkr2li3zwxlswy11hoesx-014447838280": {
+          "code": 0,
+          "output": "/usr/sbin/mysqld  Ver 8.0.46 for Linux on x86_64 (MySQL Community Server - GPL)"
+        },
+        "neo4j-wbhhkr2li3zwxlswy11hoesx-014447844028": {
+          "code": 0,
+          "output": "5.26.23"
+        },
+        "db-g111giq31kxpt4aaniq1z1bh-014332815878": {
+          "code": 0,
+          "output": "/usr/sbin/mysqld  Ver 8.0.46 for Linux on x86_64 (MySQL Community Server - GPL)"
+        },
+        "db-ki28yxwbb9q09llpda5ip3eo-014141119832": {
+          "code": 0,
+          "output": "/usr/sbin/mysqld  Ver 8.0.46 for Linux on x86_64 (MySQL Community Server - GPL)"
+        },
+        "db-g111a4eausi813qdtzbsgfrf-000223577960": {
+          "code": 0,
+          "output": "/usr/sbin/mysqld  Ver 8.0.46 for Linux on x86_64 (MySQL Community Server - GPL)"
+        },
+        "neo4j-g111a4eausi813qdtzbsgfrf-000223584483": {
+          "code": 0,
+          "output": "5.26.23"
+        },
+        "db-vnzp4ezavo7et9x4qeddtq4l-231713635616": {
+          "code": 0,
+          "output": "postgres (PostgreSQL) 16.14"
+        },
+        "db-j9oghs1fqm90qqy6eomrxtss-193446970613": {
+          "code": 0,
+          "output": "postgres (PostgreSQL) 16.14"
+        },
+        "db-jwyb54pf2w2tzwpqvx7zr600-151636039382": {
+          "code": 0,
+          "output": "postgres (PostgreSQL) 16.4"
+        },
+        "coolify": {
+          "code": 0,
+          "output": "4.1.2",
+          "method": "config/constants.php application version"
+        },
+        "coolify-redis": {
+          "code": 0,
+          "output": "Redis server v=7.4.9 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=b4acab9aea09546d"
+        },
+        "coolify-db": {
+          "code": 0,
+          "output": "postgres (PostgreSQL) 15.18"
+        },
+        "coolify-proxy": {
+          "code": 0,
+          "output": "Version:      3.6.23\nCodename:     ramequin\nGo version:   go1.26.5\nBuilt:        2026-07-08T14:24:00Z\nOS/Arch:      linux/amd64"
+        },
+        "db-i12r2humxznbixj6zei73m86-190041239764": {
+          "code": 0,
+          "output": "postgres (PostgreSQL) 16.13"
+        },
+        "db-gltfk35o2ruzm9cd078wge21-012704202956": {
+          "code": 0,
+          "output": "postgres (PostgreSQL) 16.13"
+        },
+        "db-kdico0rsiftf02rnxl3edgg6-185725181405": {
+          "code": 0,
+          "output": "postgres (PostgreSQL) 16.13"
+        }
+      }
+    }
+  },
+  "upstream_releases": {
+    "home-assistant/core": {
+      "tag_name": "2026.9.2",
+      "html_url": "https://github.com/home-assistant/core/releases/tag/2026.9.2",
+      "published_at": "2026-09-11T19:40:36Z"
+    },
+    "immich-app/immich": {
+      "tag_name": "v3.2.0",
+      "html_url": "https://github.com/immich-app/immich/releases/tag/v3.2.0",
+      "published_at": "2026-09-10T16:00:52Z"
+    },
+    "nextcloud/server": {
+      "tag_name": "v32.0.15",
+      "html_url": "https://github.com/nextcloud/server/releases/tag/v32.0.15",
+      "published_at": "2026-09-10T13:54:33Z"
+    },
+    "paperless-ngx/paperless-ngx": {
+      "tag_name": "v3.1.3",
+      "html_url": "https://github.com/paperless-ngx/paperless-ngx/releases/tag/v3.1.3",
+      "published_at": "2026-09-04T03:12:42Z"
+    },
+    "grafana/grafana": {
+      "tag_name": "v13.2.1",
+      "html_url": "https://github.com/grafana/grafana/releases/tag/v13.2.1",
+      "published_at": "2026-09-02T07:00:31Z"
+    },
+    "prometheus/prometheus": {
+      "tag_name": "v3.14.0",
+      "html_url": "https://github.com/prometheus/prometheus/releases/tag/v3.14.0",
+      "published_at": "2026-08-18T08:49:40Z"
+    },
+    "prometheus/node_exporter": {
+      "tag_name": "v1.12.1",
+      "html_url": "https://github.com/prometheus/node_exporter/releases/tag/v1.12.1",
+      "published_at": "2026-07-14T12:34:45Z"
+    },
+    "google/cadvisor": {
+      "tag_name": "v0.60.5",
+      "html_url": "https://github.com/google/cadvisor/releases/tag/v0.60.5",
+      "published_at": "2026-07-11T05:08:18Z"
+    },
+    "louislam/uptime-kuma": {
+      "tag_name": "2.5.4",
+      "html_url": "https://github.com/louislam/uptime-kuma/releases/tag/2.5.4",
+      "published_at": "2026-09-11T10:09:10Z"
+    },
+    "pi-hole/docker-pi-hole": {
+      "tag_name": "2026.07.2",
+      "html_url": "https://github.com/pi-hole/docker-pi-hole/releases/tag/2026.07.2",
+      "published_at": "2026-07-07T09:14:56Z"
+    },
+    "oznu/docker-cloudflare-ddns": {
+      "html_url": "https://github.com/oznu/docker-cloudflare-ddns",
+      "archived": true
+    },
+    "favonia/cloudflare-ddns": {
+      "tag_name": "v1.17.0",
+      "html_url": "https://github.com/favonia/cloudflare-ddns/releases/tag/v1.17.0",
+      "published_at": "2026-07-28T08:22:05Z"
+    },
+    "coollabsio/coolify": {
+      "tag_name": "v4.3.19",
+      "html_url": "https://github.com/coollabsio/coolify/releases/tag/v4.3.19",
+      "published_at": "2026-09-10T15:50:14Z"
+    },
+    "coollabsio/coolify-realtime": {},
+    "coollabsio/sentinel": {
+      "tag_name": "v1.0.1",
+      "html_url": "https://github.com/coollabsio/sentinel/releases/tag/v1.0.1",
+      "published_at": "2026-09-08T12:11:32Z"
+    },
+    "traefik/traefik": {
+      "tag_name": "v3.7.13",
+      "html_url": "https://github.com/traefik/traefik/releases/tag/v3.7.13",
+      "published_at": "2026-09-04T12:40:17Z"
+    },
+    "yuzutech/kroki": {
+      "tag_name": "v0.32.1",
+      "html_url": "https://github.com/yuzutech/kroki/releases/tag/v0.32.1",
+      "published_at": "2026-08-12T08:16:33Z"
+    },
+    "neo4j/neo4j": {
+      "tag_name": "3.2.0-alpha08",
+      "html_url": "https://github.com/neo4j/neo4j/releases/tag/3.2.0-alpha08",
+      "published_at": "2017-04-11T08:47:47Z"
+    },
+    "stashapp/stash": {
+      "tag_name": "v0.31.1",
+      "html_url": "https://github.com/stashapp/stash/releases/tag/v0.31.1",
+      "published_at": "2026-04-13T01:48:00Z"
+    },
+    "open-webui/open-webui": {
+      "tag_name": "v0.11.3",
+      "html_url": "https://github.com/open-webui/open-webui/releases/tag/v0.11.3",
+      "published_at": "2026-08-31T14:55:53Z"
+    },
+    "gethomepage/homepage": {
+      "tag_name": "v2.3.0",
+      "html_url": "https://github.com/gethomepage/homepage/releases/tag/v2.3.0",
+      "published_at": "2026-09-09T21:54:02Z"
+    },
+    "chartdb/chartdb": {
+      "tag_name": "v1.20.1",
+      "html_url": "https://github.com/chartdb/chartdb/releases/tag/v1.20.1",
+      "published_at": "2026-04-07T14:40:49Z"
+    },
+    "navidrome/navidrome": {
+      "tag_name": "v0.64.0",
+      "html_url": "https://github.com/navidrome/navidrome/releases/tag/v0.64.0",
+      "published_at": "2026-09-12T20:56:20Z"
+    },
+    "seerr-team/seerr": {
+      "tag_name": "v3.4.1",
+      "html_url": "https://github.com/seerr-team/seerr/releases/tag/v3.4.1",
+      "published_at": "2026-07-30T09:35:12Z"
+    },
+    "ManiMatter/decluttarr": {},
+    "Prowlarr/Prowlarr": {
+      "tag_name": "v2.5.2.5491",
+      "html_url": "https://github.com/Prowlarr/Prowlarr/releases/tag/v2.5.2.5491",
+      "published_at": "2026-07-22T11:54:42Z"
+    },
+    "Radarr/Radarr": {
+      "tag_name": "v6.3.0.10514",
+      "html_url": "https://github.com/Radarr/Radarr/releases/tag/v6.3.0.10514",
+      "published_at": "2026-07-12T16:54:55Z"
+    },
+    "Sonarr/Sonarr": {
+      "tag_name": "v4.0.19.2979",
+      "html_url": "https://github.com/Sonarr/Sonarr/releases/tag/v4.0.19.2979",
+      "published_at": "2026-06-26T17:23:48Z"
+    },
+    "Whisparr/Whisparr": {
+      "tag_name": "v2.2.0-release.231",
+      "html_url": "https://github.com/Whisparr/Whisparr/releases/tag/v2.2.0-release.231",
+      "published_at": "2026-08-27T00:09:56Z"
+    },
+    "morpheus65535/bazarr": {
+      "tag_name": "v1.6.0",
+      "html_url": "https://github.com/morpheus65535/bazarr/releases/tag/v1.6.0",
+      "published_at": "2026-07-04T12:43:35Z"
+    },
+    "sabnzbd/sabnzbd": {
+      "tag_name": "5.1.3",
+      "html_url": "https://github.com/sabnzbd/sabnzbd/releases/tag/5.1.3",
+      "published_at": "2026-09-08T10:02:10Z"
+    },
+    "beetbox/beets": {
+      "tag_name": "v2.14.0",
+      "html_url": "https://github.com/beetbox/beets/releases/tag/v2.14.0",
+      "published_at": "2026-09-07T20:25:08Z"
+    },
+    "Tautulli/Tautulli": {
+      "tag_name": "v2.18.1",
+      "html_url": "https://github.com/Tautulli/Tautulli/releases/tag/v2.18.1",
+      "published_at": "2026-08-27T21:27:26Z"
+    },
+    "jellyfin/jellyfin": {
+      "tag_name": "v12.0",
+      "html_url": "https://github.com/jellyfin/jellyfin/releases/tag/v12.0",
+      "published_at": "2026-09-08T01:38:39Z"
+    },
+    "trapexit/mergerfs": {
+      "tag_name": "2.42.0",
+      "html_url": "https://github.com/trapexit/mergerfs/releases/tag/2.42.0",
+      "published_at": "2026-05-08T15:28:26Z"
+    },
+    "pikvm/kvmd": {
+      "tag_name": "v4.180",
+      "html_url": "https://github.com/pikvm/kvmd/releases/tag/v4.180",
+      "published_at": "2026-07-09T08:21:37Z"
+    }
+  },
+  "coolify_release_feed": {
+    "coolify": {
+      "v4": {
+        "version": "4.3.19"
+      },
+      "nightly": {
+        "version": "4.4-rc.1"
+      },
+      "helper": {
+        "version": "1.0.16"
+      },
+      "realtime": {
+        "version": "1.0.18"
+      },
+      "sentinel": {
+        "version": "0.0.22"
+      }
+    },
+    "traefik": {
+      "v3.7": "3.7.13",
+      "v3.6": "3.6.25",
+      "v3.5": "3.5.6",
+      "v3.4": "3.4.5",
+      "v3.3": "3.3.7",
+      "v3.2": "3.2.5",
+      "v3.1": "3.1.7",
+      "v3.0": "3.0.4",
+      "v2.11": "2.11.57"
+    }
+  },
+  "network_probe": {
+    "192.168.50.1": [
+      80
+    ],
+    "192.168.50.10": [
+      50,
+      80
+    ],
+    "192.168.50.20": [
+      22,
+      80,
+      100,
+      443,
+      8123
+    ],
+    "192.168.50.21": [
+      22,
+      80,
+      443
+    ],
+    "192.168.50.40": [
+      22,
+      80,
+      443
+    ],
+    "192.168.50.41": [
+      22,
+      80,
+      443
+    ],
+    "192.168.50.129": [
+      22
+    ],
+    "192.168.50.179": [
+      80
+    ],
+    "192.168.50.238": [
+      80
+    ],
+    "192.168.50.242": [
+      8123
+    ],
+    "192.168.50.247": [
+      80
+    ]
+  },
+  "device_details": {
+    "router": {
+      "status": 200,
+      "server": "httpd/3.0",
+      "title": [
+        "ASUS Login"
+      ],
+      "details": [
+        "<title>ASUS Login</title>",
+        "<div class=\"prod_madelName\">ZenWiFi Pro ET12</div>",
+        " class=\"p1 title_gap\">Sign in with your ASUS router account</div>"
+      ]
+    },
+    "mesh-node": {
+      "status": 200,
+      "server": "httpd/3.0",
+      "title": [
+        "AiMesh router detect"
+      ],
+      "details": []
+    },
+    "device-247": {
+      "status": 200,
+      "server": "EPSON_Linux UPnP/1.0 Epson UPnP SDK/1.0",
+      "title": [],
+      "details": []
+    },
+    "extra-service": {
+      "error": "HTTP Error 404: Not found"
+    }
+  },
+  "hue": {
+    "name": "Hue Bridge",
+    "modelid": "BSB002",
+    "swversion": "1978293000",
+    "apiversion": "1.78.0",
+    "datastoreversion": "197",
+    "productname": null,
+    "replacesbridgeid": null
+  },
+  "network_followup": {
+    "router": {
+      "version": {
+        "productid": "ET12",
+        "firmver": "3.0.0.6",
+        "buildno": "102",
+        "extendno": "37457-gb1775c6_476-gaed2e",
+        "webs_state_info": "3006_102_37457-gb1775c6_476-gaed2e"
+      },
+      "network_devices": [
+        {
+          "name": "DESKTOP-86GT42K",
+          "nickName": "",
+          "ip": "192.168.50.30",
+          "mac": "A0:AD:9F:30:67:73",
+          "isOnline": "0"
+        },
+        {
+          "name": "Raspberry Pi Trading Ltd",
+          "nickName": "",
+          "ip": "192.168.50.31",
+          "mac": "E4:5F:01:E1:51:F3",
+          "isOnline": "1"
+        },
+        {
+          "name": "pikvm",
+          "nickName": "",
+          "ip": "192.168.50.21",
+          "mac": "E4:5F:01:E4:5A:66",
+          "isOnline": "1"
+        }
+      ],
+      "mesh_devices": [
+        {
+          "model_name": "ZenWiFi_Pro_ET12",
+          "ip": "192.168.50.1",
+          "online": "1",
+          "fwver": "3.0.0.6.102_37457-gb1775c6_476-gaed2e",
+          "newfwver": "",
+          "alias": "Office"
+        },
+        {
+          "model_name": "ZenWiFi_Pro_ET12",
+          "ip": "192.168.50.179",
+          "online": "1",
+          "fwver": "3.0.0.6.102_37457-gb1775c6_476-gaed2e",
+          "newfwver": "",
+          "alias": "Living Room"
+        }
+      ]
+    },
+    "pikvm": {
+      "192.168.50.21": {
+        "system": {
+          "kernel": {
+            "machine": "armv7l",
+            "release": "5.15.68-3-rpi-ARCH",
+            "system": "Linux",
+            "version": "#1 SMP Mon Oct 31 20:56:54 MSK 2022"
+          },
+          "kvmd": {
+            "version": "3.199"
+          },
+          "streamer": {
+            "app": "ustreamer",
+            "features": {
+              "HAS_PDEATHSIG": true,
+              "WITH_GPIO": true,
+              "WITH_PTHREAD_NP": true,
+              "WITH_SETPROCTITLE": true,
+              "WITH_SYSTEMD": true
+            },
+            "version": "5.37"
+          }
+        },
+        "platform": {
+          "base": "Raspberry Pi Compute Module 4 Rev 1.1",
+          "type": "rpi"
+        },
+        "method": "Authenticated GET /api/info?fields=system,hw"
+      },
+      "192.168.50.41": {
+        "system": {
+          "kernel": {
+            "machine": "aarch64",
+            "release": "6.12.56-1-rpi",
+            "system": "Linux",
+            "version": "#1 SMP PREEMPT Sat Nov  8 15:47:08 UTC 2025"
+          },
+          "kvmd": {
+            "version": "4.121"
+          },
+          "streamer": {
+            "app": "ustreamer",
+            "features": {
+              "WITH_GPIO": true,
+              "WITH_JANUS": true,
+              "WITH_PDEATHSIG": true,
+              "WITH_PTHREAD_NP": true,
+              "WITH_PYTHON": true,
+              "WITH_SETPROCTITLE": true,
+              "WITH_SYSTEMD": true,
+              "WITH_V4P": true
+            },
+            "version": "6.41"
+          }
+        },
+        "platform": {
+          "base": "Raspberry Pi 4 Model B Rev 1.4",
+          "board": "rpi4",
+          "model": "v3",
+          "type": "rpi",
+          "video": "hdmi"
+        },
+        "method": "Authenticated GET /api/info?fields=system,hw"
+      }
+    },
+    "pikvm_root_authentication": {
+      "192.168.50.21": "Saved password rejected",
+      "192.168.50.41": "Saved password rejected"
+    },
+    "mikrotik": {
+      "identity": "MikroTik",
+      "board": "CRS326-24G-2S+",
+      "ip": "192.168.88.1",
+      "routeros": "6.49.7 (stable)",
+      "discovered_via": "MNDP UDP 5678, queried from andromon",
+      "management_reachable": false,
+      "latest_v6": "6.49.21",
+      "credential_item_saved_address": "10.0.0.1",
+      "saved_address_identity": "OpenSSH_10.2p1 Ubuntu-2ubuntu3.6; not authenticated",
+      "advisory": "https://mikrotik.com/supportsec/september-2026-vulnerability/"
+    },
+    "upstream_package_versions": {
+      "https://upgrade.mikrotik.com/routeros/LATEST.6": "6.49.21 1788435939",
+      "https://files.pikvm.org/repos/arch/rpi4/latest/kvmd": "4.215-1",
+      "https://files.pikvm.org/repos/arch/rpi4/latest/ustreamer": "6.66-1",
+      "https://files.pikvm.org/repos/arch/rpi4-aarch64/latest/kvmd": "4.215-1",
+      "https://files.pikvm.org/repos/arch/rpi4-aarch64/latest/ustreamer": "6.66-1"
+    }
+  }
+}
