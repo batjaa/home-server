@@ -10,8 +10,11 @@
   node_exporter.
 - **Remaining hosts/storage:** Andromon Docker tooling and mergerfs;
   Andromon/Tentomon OS updates.
-- **Access/coverage gaps:** MikroTik and both PiKVM updates; Greymon/Ollama,
-  Epson firmware, and the unidentified device on port 8123 remain unverified.
+- **Greymon recovered:** Ollama 0.34.0 is current; GPU inference from Open
+  WebUI and the HTTPS proxy pass. Greymon's PiKVM is reachable again.
+- **Access/coverage gaps:** MikroTik and PiKVM updates; Greymon Windows/GPU
+  driver versions, Epson firmware, and the unidentified device on port 8123
+  remain unverified.
 - The earlier Coolify stop-job incident is recovered, but its trigger remains
   unexplained. Unrelated local indexer/search changes remain uncommitted.
 
@@ -834,3 +837,33 @@ Sources: [Prowlarr release](https://github.com/linuxserver/docker-prowlarr/relea
 [Go release history](https://go.dev/doc/devel/release),
 [Huma 2.39.1](https://github.com/danielgtaylor/huma/releases/tag/v2.39.1),
 [distroless runtime images](https://github.com/GoogleContainerTools/distroless).
+
+
+## Greymon reachability recheck — 2026-09-14
+
+Greymon (`192.168.50.30`) and its PiKVM (`192.168.50.31`) are reachable again.
+Andromon's neighbor table matches both documented MAC addresses. Ollama responds
+from the laptop, andromon, and inside the Open WebUI container. The HTTPS proxy
+at `https://ollama.batjaa.site/api/version` returns HTTP 200.
+
+Ollama reports **0.34.0**, matching the
+[current stable release](https://github.com/ollama/ollama/releases/tag/v0.34.0)
+on this check. Six installed models are visible: `qwen3-coder-64k:latest`,
+`qwen3-coder:30b`, `qwen2.5-coder:14b`, `qwen2.5-coder:7b`, `gemma4:e4b`, and
+`qwen3.5:0.8b`.
+
+A short `qwen3.5:0.8b` generation initiated inside Open WebUI returned `OK`.
+The first request took **44.85 seconds**, with no models loaded beforehand;
+a repeat with the model warm took **0.12 seconds**. Ollama's running-model API
+reports **624,080,976 bytes**, all in GPU memory, with a 2,048-token context.
+These checks verify network access and actual inference; they do not exercise
+the full Open WebUI browser chat workflow or the larger installed models.
+
+PiKVM's SSH and HTTPS ports respond, and
+`https://kvm.greymon.home.local/` returns HTTP 200. Its authenticated management
+functions and software versions have not yet been checked. Greymon's Windows
+SSH, RDP, and WinRM probes still time out; Windows and GPU driver update status
+therefore remain unverified. ICMP also times out, despite the working Ollama
+service, so ping alone must not be used to classify this host as offline.
+
+No software upgrades, host configuration changes, or power actions were made.
