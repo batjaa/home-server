@@ -94,6 +94,7 @@
   environment:
     WHISPARR_URL: "http://127.0.0.1:{{ whisparr_port }}"
     WHISPARR_CONFIG_XML: "{{ docker_dir }}/{{ container_name }}/config.xml"
+    WHISPARR_ALLOWED_HOSTS: "{{ whisparr_allowed_hosts | join(',') }}"
     WHISPARR_ROOT_FOLDER: "{{ whisparr_root_folder }}"
     SABNZBD_HOST: "{{ whisparr_sabnzbd_host }}"
     SABNZBD_PORT: "{{ whisparr_sabnzbd_port }}"
@@ -124,3 +125,18 @@
   when:
     - sabnzbd_api_key is defined
     - prowlarr_api_key is defined
+
+- name: Restart Whisparr to apply changed allowed hosts
+  command: docker restart {{ container_name }}
+  changed_when: true
+  when: "'allowed-hosts-changed' in (whisparr_configure_run.stdout | default(''))"
+
+- name: Wait for Whisparr after allowed-host changes
+  uri:
+    url: "http://127.0.0.1:{{ whisparr_port }}/ping"
+    status_code: 200
+  register: whisparr_hosts_ping
+  retries: 30
+  delay: 2
+  until: whisparr_hosts_ping.status == 200
+  when: "'allowed-hosts-changed' in (whisparr_configure_run.stdout | default(''))"

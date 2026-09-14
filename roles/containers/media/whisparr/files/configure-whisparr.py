@@ -32,6 +32,7 @@ def env_bool(name, default):
 WHISPARR_URL = env("WHISPARR_URL").rstrip("/")
 WHISPARR_CONFIG_XML = env("WHISPARR_CONFIG_XML")
 WHISPARR_ROOT_FOLDER = env("WHISPARR_ROOT_FOLDER")
+WHISPARR_ALLOWED_HOSTS = env("WHISPARR_ALLOWED_HOSTS")
 SABNZBD_HOST = env("SABNZBD_HOST")
 SABNZBD_PORT = int(env("SABNZBD_PORT", "8080"))
 SABNZBD_API_KEY = env("SABNZBD_API_KEY")
@@ -168,6 +169,7 @@ def ensure_whisparr_host_config():
         WHISPARR_API_KEY,
     )
     expected = {
+        "allowedHosts": WHISPARR_ALLOWED_HOSTS,
         "authenticationMethod": WHISPARR_AUTHENTICATION_METHOD,
         "authenticationRequired": WHISPARR_AUTHENTICATION_REQUIRED,
         "logLevel": WHISPARR_LOG_LEVEL,
@@ -176,6 +178,7 @@ def ensure_whisparr_host_config():
     if all(config.get(key) == value for key, value in expected.items()):
         return False
 
+    allowed_hosts_changed = config.get("allowedHosts") != WHISPARR_ALLOWED_HOSTS
     config.update(expected)
     if config.get("password") is None:
         config["password"] = ""
@@ -187,6 +190,8 @@ def ensure_whisparr_host_config():
         WHISPARR_API_KEY,
         config,
     )
+    if allowed_hosts_changed:
+        print("allowed-hosts-changed")
     return True
 
 

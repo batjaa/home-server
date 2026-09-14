@@ -364,7 +364,9 @@ integrity checks passed for Home Assistant, Open WebUI, Whisparr, and SABnzbd.
 
 The off-host recovery archive and browser/runtime evidence are stored in:
 `/Users/batjaa/Downloads/andromon-app-upgrades-2026-09-14`.
-The archive's size and SHA-256 are recorded in `archive-checksum.json`.
+The archive is 6,587,340,800 bytes; its SHA-256 is recorded in
+`archive-checksum.json`. All eight database/configuration backup files inside
+it matched independently computed server-side SHA-256 checksums.
 
 Media originals were not duplicated as part of these application backups.
 SABnzbd's existing `Downloads` directory was excluded from its configuration
@@ -401,7 +403,11 @@ been exercised sufficiently.
   Unauthenticated `/` is an API endpoint and returns 401; the web UI is `/web/`.
 - **Whisparr:** 744 movie records, 209 files, one root folder, one download
   client, and two indexers remain. API version, queue, and integration
-  configuration checks passed.
+  configuration checks passed. Version 3.5 introduced an `AllowedHostsCheck`
+  warning; the role now configures the seven existing public/internal hosts
+  and restarts Whisparr when that list changes. All seven hosts passed an
+  authenticated API request, an unexpected hostname was rejected, and the
+  new health warning cleared.
 - **SABnzbd:** all 1,680 history entries remain; the queue is idle and both
   configured news servers remain present. API and browser checks passed.
 
