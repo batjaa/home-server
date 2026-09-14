@@ -1,4 +1,26 @@
 ---
+- name: Prepare the patched Immich database image
+  import_tasks: database-image.yml
+
+- name: Migrate the existing Immich database when explicitly requested
+  import_tasks: database-upgrade.yml
+  when: immich_db_upgrade | bool
+
+- name: Check for the legacy Immich database
+  stat:
+    path: "{{ docker_dir }}/{{ immich_db_container }}/PG_VERSION"
+  register: immich_legacy_db
+
+- name: Check for the migrated Immich database
+  stat:
+    path: "{{ immich_db_data_dir }}/.immich-migration-verified"
+  register: immich_migrated_db
+
+- name: Refuse to replace an existing library with an empty database
+  assert:
+    that: not immich_legacy_db.stat.exists or immich_migrated_db.stat.exists
+    fail_msg: Run the verified logical migration with immich_db_upgrade=true before switching from PostgreSQL 14.
+
 - name: Ensure Immich directories exist
   file:
     path: "{{ item }}"
@@ -8,8 +30,15 @@
     mode: '0775'
   loop:
     - "{{ immich_upload_dir }}"
-    - "{{ docker_dir }}/{{ immich_db_container }}"
     - "{{ docker_dir }}/{{ immich_ml_container }}"
+
+- name: Ensure database state directories exist without changing existing ownership
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ immich_db_data_dir }}"
+    - "{{ immich_redis_data_dir }}"
 
 - name: Create Immich Docker network
   docker_network:
@@ -21,7 +50,7 @@
   docker_container:
     name: "{{ immich_db_container }}"
     image: "{{ immich_db_image }}"
-    pull: yes
+    pull: no
     state: started
     networks:
       - name: "{{ immich_network }}"
@@ -33,7 +62,7 @@
       POSTGRES_INITDB_ARGS: "--data-checksums"
       DB_STORAGE_TYPE: "SSD"
     volumes:
-      - "{{ docker_dir }}/{{ immich_db_container }}:/var/lib/postgresql/data"
+      - "{{ immich_db_data_dir }}:/var/lib/postgresql"
     shm_size: "{{ immich_db_shm_size }}"
     # NOTE: vchord (vectorchord) MUST be in shared_preload_libraries — the
     # extension refuses to load otherwise and immich-server crash-loops on
@@ -84,9 +113,25 @@
     networks:
       - name: "{{ immich_network }}"
     networks_cli_compatible: yes
+    volumes:
+      - "{{ immich_redis_data_dir }}:/data"
     restart_policy: unless-stopped
 
 # ── Machine Learning (CLIP + face recognition) ─────────────────────────────
+- name: Verify the migrated Redis snapshot before starting Immich
+  command:
+    argv:
+      - python3
+      - -c
+      - >-
+        import json,pathlib,subprocess;
+        expected=json.loads(pathlib.Path("{{ immich_db_backup_dir }}/redis-before.json").read_text())["keys"];
+        actual=int(subprocess.check_output(["docker","exec","{{ immich_redis_container }}","redis-cli","DBSIZE"]));
+        assert actual == expected, f"Redis key count mismatch: {actual} != {expected}";
+        print(f"Redis snapshot verified: {actual} keys")
+  changed_when: false
+  when: immich_upgrade_preparation.changed | default(false)
+
 - name: Make sure the Immich ML container is running
   docker_container:
     name: "{{ immich_ml_container }}"

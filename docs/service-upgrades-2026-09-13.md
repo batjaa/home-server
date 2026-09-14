@@ -430,3 +430,79 @@ Primary release references:
 [LinuxServer Plex](https://docs.linuxserver.io/images/docker-plex/),
 [Whisparr image](https://hotio.dev/containers/whisparr/), and
 [SABnzbd 5.1.3](https://github.com/sabnzbd/sabnzbd/releases/tag/5.1.3).
+
+## Immich database follow-up — 2026-09-14
+
+The PostgreSQL lifecycle/patch and Redis patch items from the audit are complete.
+Immich server and ML remain on 3.2.0.
+
+| Component | Before | Verified after |
+|---|---|---|
+| PostgreSQL | 14.19 | 18.6 (`18.6-1.pgdg12+2`) |
+| VectorChord | 0.4.3 | 1.1.1 |
+| pgvector | 0.8.1 | 0.8.5 |
+| Redis | 6.2.23 | 6.2.24 |
+
+The official Immich `18-vectorchord1.1.1-pgvector0.8.5` image was inspected and
+still contains PostgreSQL 18.4. The Ansible role builds
+`local/immich-postgres:18.6-vectorchord1.1.1-pgvector0.8.5-r1` from its pinned
+digest, updating the server, client, and libpq packages to the pinned PGDG
+18.6 package revision. This retains Immich's extension binaries and health
+check. Future PostgreSQL patch releases require updating the package/image
+pins and rebuilding this layer. The database runs only on `immich-net`, with
+no published database port. PostgreSQL 18 is supported through November 2030.
+
+### Migration, data verification, and backups
+
+A rehearsal restored the earlier backup into an isolated PostgreSQL 18
+container. It exposed a parent-directory permission issue with the new
+versioned PGDATA layout; the helper was corrected before production migration.
+The rehearsal subsequently passed, including rebuilding the vector indexes.
+
+Production was paused for a fresh custom-format dump and restore into a
+separate directory. Every one of the **66 public table row counts**, plus a
+digest of all asset IDs, matched before the application was started. The
+database has **80,899 asset rows** (including deleted/hidden entries), two
+users, four albums, 159,125 face embeddings, and 80,501 smart-search embeddings.
+The authenticated API still reports **77,237 photos + 3,344 videos = 80,581
+visible assets**. PostgreSQL checksums are enabled, checksum failures are zero,
+and there are no invalid indexes. Metadata search, a 19,318-byte thumbnail,
+and natural-language smart search all passed. Failed job counts did not increase.
+
+Redis was saved and stopped before its original anonymous volume was copied
+to the persistent `/opt/docker/data/immich-redis` bind mount. All **22 keys**
+matched before Immich restarted. The original Redis volume was retained.
+
+Private recovery files on andromon:
+`/opt/docker/data/immich-db-upgrade-backups/20260914T174902Z`.
+The directory contains the 665,788,331-byte database dump, roles backup,
+original container definitions, table/asset-ID verification, and Redis snapshot.
+The off-host copy is at
+`/Users/batjaa/Downloads/immich-db-upgrade-2026-09-14`.
+The database SHA-256 matches the server copy, and all eight supplemental
+configuration/Redis file checksums match the off-host archive.
+
+The PostgreSQL 14 data remains at `/opt/docker/data/immich-db`; PostgreSQL 18
+uses `/opt/docker/data/immich-db-pg18/18/docker`. Uploaded media was neither
+moved nor duplicated. Rollback requires stopping Immich, preserving any new
+writes, and restoring the old PostgreSQL image/mount and Redis definition
+from `containers-before.json` together with the pre-migration role settings.
+Never point PostgreSQL 14 at the PostgreSQL 18 directory. The helper refuses
+existing target directories and only writes its migration marker after the
+restore and Redis copy have been verified; ordinary deploys refuse to start
+an empty replacement database when the legacy database is present.
+
+An Immich-managed backup also completed successfully using its PostgreSQL
+18.6 client: `immich-db-backup-20260914T105319-v3.2.0-pg18.6.sql.gz`,
+666,421,249 bytes. This confirms the application's scheduled backup mechanism
+can back up the new database version.
+
+Three migration safety tests passed, as did Ansible syntax validation. The
+ordinary Immich role rerun reported **changed=0, failed=0**; an explicit
+migration rerun skipped the completed migration and only refreshed the helper.
+
+Sources: [Immich database compatibility](https://docs.immich.app/administration/postgres-standalone/),
+[Immich 3.2.0 compatibility constants](https://github.com/immich-app/immich/blob/v3.2.0/server/src/constants.ts),
+[Immich backup/restore](https://docs.immich.app/administration/backup-and-restore/),
+[Immich database image build](https://github.com/immich-app/base-images/blob/main/postgres/Dockerfile),
+and [PostgreSQL support policy](https://www.postgresql.org/support/versioning/).

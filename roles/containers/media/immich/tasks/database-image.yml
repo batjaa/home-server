@@ -1,0 +1,22 @@
+---
+- name: Create Immich database image build directory
+  file:
+    path: "{{ docker_dir }}/immich-db-build"
+    state: directory
+    mode: '0755'
+
+- name: Render the pinned PostgreSQL patch image
+  template:
+    src: Dockerfile.postgres.j2
+    dest: "{{ docker_dir }}/immich-db-build/Dockerfile"
+    mode: '0644'
+  register: immich_db_dockerfile
+
+- name: Build the compatible patched Immich database image
+  community.docker.docker_image:
+    name: "{{ immich_db_image }}"
+    source: build
+    force_source: "{{ immich_db_dockerfile.changed }}"
+    build:
+      path: "{{ docker_dir }}/immich-db-build"
+      pull: false

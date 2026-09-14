@@ -627,6 +627,15 @@ Containers come up reading their original config — API keys, library DBs, Plex
 Immich, Open WebUI, Home Assistant, Homepage, Plex, Whisparr, and SABnzbd use
 explicit release pins in their role defaults. Update them with scoped Ansible
 tags after a configuration/database backup; update Immich server and ML together.
+
+Immich uses PostgreSQL 18.6 with VectorChord 1.1.1 and pgvector 0.8.5. Its role
+builds a pinned patch layer over the official Immich database image, which still
+bundles PostgreSQL 18.4. PostgreSQL state is at
+`/opt/docker/data/immich-db-pg18/18/docker`; Redis 6.2.24 state is at
+`/opt/docker/data/immich-redis`. The original `immich-db` directory is retained
+for rollback. An existing PostgreSQL 14 installation requires the explicit,
+verified logical migration (`--tags immich -e immich_db_upgrade=true`); simply
+changing the image or mounting the old data directory into PostgreSQL 18 is unsafe.
 See the [upgrade record](docs/service-upgrades-2026-09-13.md) for verified versions
 and rollback requirements.
 

@@ -1,0 +1,27 @@
+---
+- name: Install the explicit database migration helper
+  copy:
+    src: prepare-database-upgrade.py
+    dest: "{{ docker_dir }}/immich-db-build/prepare-database-upgrade.py"
+    mode: '0700'
+
+- name: Check whether the PostgreSQL 18 migration was fully verified
+  stat:
+    path: "{{ immich_db_data_dir }}/.immich-migration-verified"
+  register: immich_upgrade_target
+
+- name: Prepare and verify a logical restore before replacing production containers
+  command:
+    argv:
+      - python3
+      - "{{ docker_dir }}/immich-db-build/prepare-database-upgrade.py"
+      - --backup-dir
+      - "{{ immich_db_backup_dir }}"
+      - --target-dir
+      - "{{ immich_db_data_dir }}"
+      - --redis-dir
+      - "{{ immich_redis_data_dir }}"
+      - --image
+      - "{{ immich_db_image }}"
+  when: not immich_upgrade_target.stat.exists
+  register: immich_upgrade_preparation

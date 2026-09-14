@@ -1,0 +1,9 @@
+# The upstream Immich image supplies compatible vector extensions but lags PG patches.
+FROM {{ immich_db_base_image }}
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       postgresql-18={{ immich_db_package_version }} \
+       postgresql-client-18={{ immich_db_package_version }} \
+       libpq5={{ immich_db_package_version }} \
+    && rm -rf /var/lib/apt/lists/*
+ENV PG_VERSION={{ immich_db_package_version }}
