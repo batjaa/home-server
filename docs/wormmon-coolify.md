@@ -538,3 +538,36 @@ unset coolify_recovered_token
 The Sanctum format is `<id>|<plaintext>` — that whole string is the
 token value saved in 1Password. Revoke any superseded token from the UI once
 you regain access.
+
+
+## Additional production apps
+
+These apps use `coolify-production-apps.subdomain.conf.j2` and share the
+Cloudflare → andromon/SWAG → wormmon/Coolify ingress path:
+
+| Domain | Repository branch | Services |
+| --- | --- | --- |
+| `fotopass.app` | `batjaa/fotopass` `main` | Web, MySQL, queue worker, Nightwatch |
+| `mytendies.app` | `batjaa/tendies` `main` | Web, MySQL, queue worker, Nightwatch |
+| `heyanda.mn` | `batjaa/anda` `main` | Web, MySQL, Neo4j, queue worker |
+| `tech-nomads.io` | `batjaa/tech-nomads` `main` | Web, MySQL, Nightwatch |
+| `tsas.mn` | `batjaa/tsas` `master` | Web, MySQL |
+
+The apex DNS records point to `ddns.batjaa.site`. `www` redirects to the apex
+for Fotopass, Tendies, Tech Nomads, and TSAS. Heyanda preserves its wildcard
+subdomains: SWAG selects Coolify using the apex upstream Host and forwards the
+original hostname to Laravel. Pi-hole resolves these hosts to the LAN ingress.
+Existing mail, R2 media, and Tendies staging records remain separate.
+
+Each project's production secrets and recovery source environment are stored
+in its own 1Password Private-vault secure note, titled
+`<domain> — Production (Coolify)`. Tendies also requires its original Passport
+signing keys in persistent storage; both keys are included in its secure note.
+Fotopass's scheduler stays disabled, matching its previous production setup.
+
+The DigitalOcean apps and databases remain available for recovery in maintenance
+mode, with their migrated Supervisor workers and Nightwatch daemons disabled.
+`staging.mytendies.app` continues running on DigitalOcean. Before any rollback,
+copy the current Coolify database and local storage back to the old deployment,
+then restore the old DNS and Supervisor settings. The retained migration
+snapshots alone do not contain writes made after the cutover.
