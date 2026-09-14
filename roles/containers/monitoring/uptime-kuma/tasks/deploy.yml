@@ -1,0 +1,41 @@
+---
+- name: Make sure the Uptime Kuma container is running
+  docker_container:
+    name: "{{ container_name }}"
+    image: "{{ uptime_kuma_image }}"
+    pull: never
+    state: started
+    published_ports:
+      - "{{ uptime_kuma_bind }}:{{ uptime_kuma_port }}:3001"
+    env:
+      TZ: "{{ uptime_kuma_runtime_timezone }}"
+    volumes:
+      - "{{ docker_dir }}/{{ container_name }}:/app/data"
+    # Point at Pi-hole on the host. Otherwise Docker hands the container
+    # 8.8.8.8 and internal-only subdomains (grafana, home, ollama, chat,
+    # *arr stack) NXDOMAIN — Kuma reports them down even when SWAG is fine.
+    dns_servers:
+      - "{{ uptime_kuma_dns | default('192.168.50.10') }}"
+    restart_policy: unless-stopped
+
+- name: Wait for Uptime Kuma container health
+  community.docker.docker_container_info:
+    name: "{{ container_name }}"
+  register: uptime_kuma_health
+  until: >-
+    uptime_kuma_health.exists and
+    uptime_kuma_health.container.State.Health.Status | default('starting') == 'healthy'
+  retries: "{{ uptime_kuma_ready_retries }}"
+  delay: "{{ uptime_kuma_ready_delay }}"
+
+- name: Wait for the normal web interface after any database migration
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ uptime_kuma_port }}/"
+    status_code: 200
+    return_content: true
+  register: uptime_kuma_ready
+  until: >-
+    uptime_kuma_ready.status | default(0) == 200 and
+    'Uptime Kuma Migration' not in uptime_kuma_ready.content | default('')
+  retries: "{{ uptime_kuma_ready_retries }}"
+  delay: "{{ uptime_kuma_ready_delay }}"

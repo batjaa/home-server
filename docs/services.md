@@ -567,6 +567,45 @@ Manual setup steps (UI/CLI-only, not yet automated):
 
 ## Monitoring
 
+### Uptime Kuma — `https://status.batjaa.site`
+
+Runs on tentomon, with SWAG on andromon proxying to its LAN port 3001.
+`uptime_kuma_image` pins the managed release to 2.5.4.
+
+```bash
+ansible-playbook main.yml -l tentomon --tags uptime-kuma
+```
+
+Before changing the image, the role pulls it and makes a verified archive of
+all stopped application data, including SQLite journals, under
+`/opt/docker/backups/uptime-kuma/`. The previous image reference is stored beside
+each archive. Backups are outside the live data directory.
+
+The v1-to-v2 history migration can take hours on the Pi. Leave it running:
+Docker can report healthy and the UI can return HTTP 200 while migration is
+still underway. The role waits for the normal UI, container health, and the
+explicit database migration marker. A readiness timeout leaves the container
+running for investigation.
+
+The upstream v2.5.4 converter misinterprets stored UTC timestamps when run in a
+non-UTC process timezone. The role detects the database state (including
+restored data without a container), converts v1 history in UTC, and restores
+the configured timezone only after completion. A rerun waits for an already
+active migration; an interrupted, stopped migration requires restoring the
+backup. Never manually start v2 against a v1 archive with a non-UTC `TZ`.
+
+The verified statistics-repair workflow and its backups are recorded in
+[the September 13 upgrade record](service-upgrades-2026-09-13.md). Recovery
+helpers under this role's `files/` directory are offline tools, not routine
+Ansible tasks. Live repair requires stopping Kuma from the final snapshot
+through application of the statistics and restarting it to clear cached values.
+
+Rollback requires stopping Kuma, preserving the migrated data separately,
+restoring the complete pre-upgrade data archive, and recreating the previous
+image. Never start v1 against the migrated v2 database. Monitor definitions,
+notification configuration, and history live in the data directory and should
+be checked after an upgrade.
+
 ### Prometheus — `127.0.0.1:9090` (andromon-internal only)
 
 Scrapes:

@@ -1,4 +1,124 @@
 ---
+- name: Inspect the existing Uptime Kuma container
+  community.docker.docker_container_info:
+    name: "{{ container_name }}"
+  register: uptime_kuma_existing
+
+# Read the database marker so data-only restores and reruns during migration
+# receive the same protection as a normal running v1 container upgrade.
+- name: Read Uptime Kuma database migration state
+  ansible.builtin.command: &uptime_kuma_read_migration_state
+    argv:
+      - python3
+      - -c
+      - |
+        import json, pathlib, sqlite3, sys
+        path = pathlib.Path(sys.argv[1])
+        if not path.exists():
+            print("empty")
+            sys.exit(0)
+        db = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
+        try:
+            row = db.execute("SELECT value FROM setting WHERE key = ?", ("migrateAggregateTableState",)).fetchone()
+        finally:
+            db.close()
+        state = json.loads(row[0]) if row else None
+        if state not in (None, "migrating", "migrated"):
+            raise ValueError("Unrecognized Kuma migration state; inspect before deployment")
+        print(state or "not-migrated")
+      - "{{ docker_dir }}/{{ container_name }}/kuma.db"
+  register: uptime_kuma_initial_migration_state
+  changed_when: false
+
+- name: Refuse to resume an interrupted history migration
+  ansible.builtin.assert:
+    that: uptime_kuma_existing.exists and uptime_kuma_existing.container.State.Running
+    fail_msg: Restore the complete pre-upgrade backup before retrying an interrupted Kuma migration.
+  when: uptime_kuma_initial_migration_state.stdout == 'migrating'
+
+- name: Let an existing history migration finish before any container changes
+  ansible.builtin.command: *uptime_kuma_read_migration_state
+  register: uptime_kuma_completed_migration_state
+  changed_when: false
+  until: uptime_kuma_completed_migration_state.stdout == 'migrated'
+  retries: "{{ uptime_kuma_ready_retries }}"
+  delay: "{{ uptime_kuma_ready_delay }}"
+  when: uptime_kuma_initial_migration_state.stdout == 'migrating'
+
+- name: Select UTC only while converting v1 heartbeat history
+  ansible.builtin.set_fact:
+    uptime_kuma_v1_migration: "{{ uptime_kuma_initial_migration_state.stdout == 'not-migrated' }}"
+
+- name: Pull the pinned Uptime Kuma image before any downtime
+  community.docker.docker_image:
+    name: "{{ uptime_kuma_image }}"
+    source: pull
+
+- name: Back up Uptime Kuma before changing its image
+  when: >-
+    uptime_kuma_v1_migration or
+    (not uptime_kuma_existing.exists and uptime_kuma_initial_migration_state.stdout != 'empty') or
+    (uptime_kuma_existing.exists and uptime_kuma_existing.container.Config.Image != uptime_kuma_image)
+  block:
+    - name: Ensure the private Uptime Kuma backup directory exists
+      ansible.builtin.file:
+        path: "{{ uptime_kuma_backup_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+
+    - name: Choose a unique backup path
+      ansible.builtin.tempfile:
+        state: directory
+        path: "{{ uptime_kuma_backup_dir }}"
+        prefix: "pre-upgrade-{{ ansible_facts.date_time.iso8601_basic_short }}-"
+      register: uptime_kuma_backup
+
+    - name: Stop Uptime Kuma and make a consistent backup
+      block:
+        - name: Stop Uptime Kuma for its data backup
+          community.docker.docker_container:
+            name: "{{ container_name }}"
+            state: stopped
+            stop_timeout: 120
+          when: uptime_kuma_existing.exists and uptime_kuma_existing.container.State.Running
+
+        - name: Archive all Uptime Kuma data including SQLite journal files
+          ansible.builtin.command:
+            argv:
+              - tar
+              - --acls
+              - --xattrs
+              - -cpf
+              - "{{ uptime_kuma_backup.path }}/data.tar"
+              - -C
+              - "{{ docker_dir }}"
+              - "{{ container_name }}"
+          changed_when: true
+
+        - name: Verify the backup archive is readable
+          ansible.builtin.command:
+            argv: [tar, -tf, "{{ uptime_kuma_backup.path }}/data.tar"]
+          changed_when: false
+          no_log: true
+
+        - name: Record the previous image for rollback
+          ansible.builtin.copy:
+            dest: "{{ uptime_kuma_backup.path }}/image.txt"
+            content: "{{ (uptime_kuma_existing.container.Config.Image ~ '\n' ~ uptime_kuma_existing.container.Image) if uptime_kuma_existing.exists else 'Data-only restore: use the original backup image reference.' }}\n"
+            mode: '0600'
+      rescue:
+        - name: Resume the original container if its backup failed
+          community.docker.docker_container:
+            name: "{{ container_name }}"
+            state: started
+          when: uptime_kuma_existing.exists and uptime_kuma_existing.container.State.Running
+
+        - name: Abort the upgrade without changing the database
+          ansible.builtin.fail:
+            msg: "Uptime Kuma backup failed; the original image has been retained."
+
 - name: Ensure Uptime Kuma data dir exists
   file:
     path: "{{ docker_dir }}/{{ container_name }}"
@@ -7,21 +127,31 @@
     group: users
     mode: '0775'
 
-- name: Make sure the Uptime Kuma container is running
-  docker_container:
-    name: "{{ container_name }}"
-    image: "louislam/uptime-kuma:1"
-    pull: yes
-    state: started
-    published_ports:
-      - "{{ uptime_kuma_bind }}:{{ uptime_kuma_port }}:3001"
-    env:
-      TZ: "{{ timezone }}"
-    volumes:
-      - "{{ docker_dir }}/{{ container_name }}:/app/data"
-    # Point at Pi-hole on the host. Otherwise Docker hands the container
-    # 8.8.8.8 and internal-only subdomains (grafana, home, ollama, chat,
-    # *arr stack) NXDOMAIN — Kuma reports them down even when SWAG is fine.
-    dns_servers:
-      - "{{ uptime_kuma_dns | default('192.168.50.10') }}"
-    restart_policy: unless-stopped
+- name: Choose the timezone for the initial deployment
+  ansible.builtin.set_fact:
+    uptime_kuma_runtime_timezone: "{{ 'UTC' if uptime_kuma_v1_migration else timezone }}"
+
+- name: Deploy Uptime Kuma and wait for completed migration
+  ansible.builtin.include_tasks: deploy.yml
+
+- name: Read the migration marker after deployment
+  ansible.builtin.command: *uptime_kuma_read_migration_state
+  register: uptime_kuma_final_migration_state
+  changed_when: false
+
+- name: Require confirmed history migration before completing deployment
+  ansible.builtin.assert:
+    that: uptime_kuma_final_migration_state.stdout == 'migrated'
+    fail_msg: Kuma serves its UI but history migration is incomplete; inspect the database before proceeding.
+
+# Restore the configured process timezone only after the converter has finished.
+# The saved application/UI timezone is never changed by this workflow.
+- name: Restore the configured timezone after a v1 migration
+  when: uptime_kuma_v1_migration
+  block:
+    - name: Select the configured Uptime Kuma timezone
+      ansible.builtin.set_fact:
+        uptime_kuma_runtime_timezone: "{{ timezone }}"
+
+    - name: Recreate Uptime Kuma with its normal timezone and verify readiness
+      ansible.builtin.include_tasks: deploy.yml

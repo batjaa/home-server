@@ -1,6 +1,13 @@
 ---
 container_name: uptime-kuma
 uptime_kuma_port: 3001
+uptime_kuma_image: "louislam/uptime-kuma:2.5.4"
+# Full stopped-data backups are required to roll back database migrations.
+uptime_kuma_backup_dir: "/opt/docker/backups/uptime-kuma"
+# v1 heartbeat aggregation can take hours on the Pi. Waiting must never
+# interrupt the container; a timeout leaves it running for investigation.
+uptime_kuma_ready_retries: 720
+uptime_kuma_ready_delay: 30
 
 # Bind address for the published port. Defaults to localhost (suits a
 # single-host SWAG-on-the-same-box layout). Override to 0.0.0.0 when the
