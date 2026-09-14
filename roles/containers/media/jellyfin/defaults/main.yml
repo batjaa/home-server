@@ -1,3 +1,30 @@
 ---
 container_name: jellyfin
 mergerfs_root: /mnt/storage
+# Explicit release avoids unreviewed database migrations on routine runs.
+jellyfin_image: lscr.io/linuxserver/jellyfin:12.0ubu2604-ls48
+jellyfin_backup_dir: "{{ docker_dir }}/jellyfin-upgrade-backups/{{ ansible_facts['date_time']['iso8601_basic_short'] }}"
+
+jellyfin_qsv_settings:
+  HardwareAccelerationType: "qsv"
+  EnableHardwareEncoding: true
+  AllowHevcEncoding: true
+  # UHD 750 (Gen 12) does NOT support AV1 *encode* — only decode. Leaving
+  # this true makes Jellyfin silently fall back to (slow) software AV1.
+  AllowAv1Encoding: false
+  EnableTonemapping: true
+  EnableVppTonemapping: true
+  VaapiDevice: "/dev/dri/renderD128"
+  QsvDevice: ""
+  EnableIntelLowPowerH264HwEncoder: true
+  EnableIntelLowPowerHevcHwEncoder: true
+  # Decode is broader than encode on Intel iGPU — VP9 + AV1 are decode-only
+  HardwareDecodingCodecs:
+    - h264
+    - hevc
+    - mpeg2video
+    - vc1
+    - vp9
+    - av1
+  EnableDecodingColorDepth10Hevc: true
+  EnableDecodingColorDepth10Vp9: true

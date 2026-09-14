@@ -1,0 +1,125 @@
+---
+# Pull before stopping the service so a registry failure cannot cause downtime.
+- name: Pull the pinned Jellyfin image before maintenance
+  community.docker.docker_image:
+    name: "{{ jellyfin_image }}"
+    source: pull
+
+- name: Require the Jellyfin API key for upgrade preflight
+  ansible.builtin.assert:
+    that: jellyfin_api_key is defined
+    fail_msg: Store jellyfin_api_key in the host vault before upgrading Jellyfin.
+
+- name: Read Jellyfin sessions and users before maintenance
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:8096/{{ item }}"
+    headers:
+      Authorization: 'MediaBrowser Token="{{ jellyfin_api_key }}"'
+    return_content: true
+  loop: [Sessions, Users]
+  register: jellyfin_preflight
+  no_log: true
+
+- name: Refuse to interrupt playback or migrate colliding usernames
+  ansible.builtin.assert:
+    that:
+      - jellyfin_preflight.results[0].json | selectattr('NowPlayingItem', 'defined') | list | length == 0
+      - jellyfin_preflight.results[1].json | map(attribute='Name') | map('lower') | unique | length == jellyfin_preflight.results[1].json | length
+    fail_msg: Jellyfin has active playback or usernames that collide when lowercased.
+
+- name: Read Jellyfin version before maintenance
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8096/System/Info/Public
+    return_content: true
+  register: jellyfin_previous_version
+
+- name: Require a supported direct migration source
+  ansible.builtin.assert:
+    that: jellyfin_previous_version.json.Version is version('10.10.7', '>=')
+    fail_msg: Upgrade Jellyfin to at least 10.10.7 before migrating to v12.
+
+- name: Find installed repository plugins before the v12 migration
+  ansible.builtin.find:
+    paths: "{{ docker_dir }}/{{ container_name }}/data/plugins"
+    file_type: directory
+    recurse: false
+    excludes: configurations
+  register: jellyfin_external_plugins
+  when: jellyfin_previous_version.json.Version is version('12.0', '<')
+
+- name: Require compatible plugin preparation before migrating to v12
+  ansible.builtin.assert:
+    that: jellyfin_external_plugins.files | default([]) | length == 0
+    fail_msg: Remove repository plugins before the v12 migration, retaining their settings and backup.
+  when: jellyfin_previous_version.json.Version is version('12.0', '<')
+
+- name: Create private Jellyfin upgrade backup directory
+  ansible.builtin.file:
+    path: "{{ jellyfin_backup_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Save the previous image reference for a full restore
+  ansible.builtin.copy:
+    dest: "{{ jellyfin_backup_dir }}/previous-image.json"
+    content: "{{ {'image': jellyfin_before.container.Image, 'reference': jellyfin_before.container.Config.Image, 'version': jellyfin_previous_version.json.Version} | to_nice_json }}\n"
+    mode: '0600'
+    force: false
+
+- name: Back up Jellyfin with its database stopped
+  block:
+    - name: Stop Jellyfin for a consistent backup
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        state: stopped
+        stop_timeout: 60
+
+    - name: Archive the complete Jellyfin configuration
+      ansible.builtin.command:
+        argv:
+          - tar
+          - --acls
+          - --xattrs
+          - -cpf
+          - "{{ jellyfin_backup_dir }}/config.tar.partial"
+          - -C
+          - "{{ docker_dir }}"
+          - "{{ container_name }}"
+      register: jellyfin_archive
+
+    - name: Verify the Jellyfin archive can be read
+      ansible.builtin.command:
+        argv: [tar, -tf, "{{ jellyfin_backup_dir }}/config.tar.partial"]
+      changed_when: false
+      no_log: true
+
+    - name: Publish the verified backup archive
+      ansible.builtin.command:
+        argv: [mv, "{{ jellyfin_backup_dir }}/config.tar.partial", "{{ jellyfin_backup_dir }}/config.tar"]
+      changed_when: true
+
+    # v12 made EncoderPreset non-nullable. Without this, a valid old null
+    # makes Jellyfin discard the entire encoding configuration on startup.
+    - name: Normalize the legacy null encoder preset for Jellyfin v12
+      ansible.builtin.replace:
+        path: "{{ docker_dir }}/{{ container_name }}/encoding.xml"
+        regexp: '<EncoderPreset[^>]*xsi:nil="true"[^>]*/>'
+        replace: '<EncoderPreset>auto</EncoderPreset>'
+      when: jellyfin_previous_version.json.Version is version('12.0', '<')
+
+    - name: Mark the required full library scan as pending
+      ansible.builtin.copy:
+        dest: "{{ docker_dir }}/{{ container_name }}/.ansible-v12-scan-pending"
+        content: "Full library scan required after the Jellyfin 12 migration.\n"
+        mode: '0600'
+      when: jellyfin_previous_version.json.Version is version('12.0', '<')
+  rescue:
+    - name: Restart the previous Jellyfin container after a backup failure
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        state: started
+    - name: Stop the upgrade after an unsuccessful backup
+      ansible.builtin.fail:
+        msg: Jellyfin backup failed; the previous container has been restarted. Inspect the backup before retrying.

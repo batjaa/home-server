@@ -4,14 +4,26 @@
     path: "{{ docker_dir }}/{{ container_name }}"
     state: directory
     owner: "{{ username }}"
-    group: users
+    group: "{{ guid }}"
     mode: '0775'
+
+- name: Inspect the existing Jellyfin container
+  community.docker.docker_container_info:
+    name: "{{ container_name }}"
+  register: jellyfin_before
+  no_log: true
+
+- name: Prepare a backed-up Jellyfin upgrade
+  ansible.builtin.include_tasks: upgrade.yml
+  when:
+    - jellyfin_before.exists
+    - jellyfin_before.container.Config.Image != jellyfin_image
 
 - name: Make sure the Jellyfin container is running
   docker_container:
     name: "{{ container_name }}"
-    image: "lscr.io/linuxserver/jellyfin:latest"
-    pull: yes
+    image: "{{ jellyfin_image }}"
+    pull: missing
     state: started
     network_mode: host
     devices:
@@ -29,54 +41,62 @@
       - "{{ mergerfs_root }}/Media:/media:ro"
     restart_policy: unless-stopped
 
-# After deploy: enable QSV in Jellyfin via API so the dashboard toggle
-# isn't needed. Idempotent — re-applies on every run.
 - name: Wait for Jellyfin API to be ready
   uri:
     url: "http://127.0.0.1:8096/health"
-    status_code: [200, 401]
+    status_code: 200
+    return_content: true
   register: jf_health
-  retries: 30
-  delay: 2
-  until: jf_health.status in [200, 401]
+  retries: 360
+  delay: 5
+  until: jf_health.status == 200 and jf_health.content == "Healthy"
 
-- name: Configure QSV hardware transcoding via /System/Configuration/encoding
-  # Requires `jellyfin_api_key` in host_vars/<host>/secret.yml. Generate one at
-  #   Dashboard → Administration → API Keys → "+ New API Key"
-  # Without it this task skips and you can flip the dashboard toggles by hand.
-  uri:
-    url: "http://127.0.0.1:8096/System/Configuration/encoding"
+# Preserve the complete encoding configuration: the API replaces this object.
+- name: Read the existing Jellyfin encoding configuration
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8096/System/Configuration/encoding
+    headers:
+      Authorization: 'MediaBrowser Token="{{ jellyfin_api_key }}"'
+    return_content: true
+  register: jellyfin_encoding
+  retries: 360
+  delay: 5
+  until: jellyfin_encoding.status == 200
+  when: jellyfin_api_key is defined
+  no_log: true
+
+- name: Configure QSV hardware transcoding
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8096/System/Configuration/encoding
     method: POST
     headers:
-      X-Emby-Token: "{{ jellyfin_api_key | default('') }}"
+      Authorization: 'MediaBrowser Token="{{ jellyfin_api_key }}"'
     body_format: json
-    body:
-      HardwareAccelerationType: "qsv"
-      EnableHardwareEncoding: true
-      AllowHevcEncoding: true
-      # UHD 750 (Gen 12) does NOT support AV1 *encode* — only decode. Leaving
-      # this true makes Jellyfin silently fall back to (slow) software AV1.
-      AllowAv1Encoding: false
-      EnableTonemapping: true
-      EnableVppTonemapping: true
-      VaapiDevice: "/dev/dri/renderD128"
-      QsvDevice: ""
-      EnableIntelLowPowerH264HwEncoder: true
-      EnableIntelLowPowerHevcHwEncoder: true
-      # Decode is broader than encode on Intel iGPU — VP9 + AV1 are decode-only
-      HardwareDecodingCodecs:
-        - h264
-        - hevc
-        - mpeg2video
-        - vc1
-        - vp9
-        - av1
-      EnableDecodingColorDepth10Hevc: true
-      EnableDecodingColorDepth10Vp9: true
-    status_code: [204]
-  when: jellyfin_api_key is defined
-  register: jellyfin_qsv_config
-  retries: 10
-  delay: 2
-  until: jellyfin_qsv_config.status == 204
-  changed_when: false
+    body: "{{ jellyfin_encoding.json | combine(jellyfin_qsv_settings) }}"
+    status_code: 204
+  when:
+    - jellyfin_api_key is defined
+    - jellyfin_encoding.json | combine(jellyfin_qsv_settings) != jellyfin_encoding.json
+  changed_when: true
+  no_log: true
+
+- name: Check whether the v12 migration needs its full library scan
+  ansible.builtin.stat:
+    path: "{{ docker_dir }}/{{ container_name }}/.ansible-v12-scan-pending"
+  register: jellyfin_scan_pending
+
+- name: Start the required post-migration full library scan
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8096/Library/Refresh
+    method: POST
+    headers:
+      Authorization: 'MediaBrowser Token="{{ jellyfin_api_key }}"'
+    status_code: 204
+  when: jellyfin_scan_pending.stat.exists
+  changed_when: true
+  no_log: true
+
+- name: Record that the post-migration scan was requested
+  ansible.builtin.file:
+    path: "{{ docker_dir }}/{{ container_name }}/.ansible-v12-scan-pending"
+    state: absent

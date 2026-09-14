@@ -220,8 +220,27 @@ Plex account on first start; not needed afterward.
 
 ### Jellyfin — `https://jellyfin.batjaa.site`
 
-**Auth:** none stored in vault — admin user is created on first-run
-wizard.
+**Auth:** the admin user is created in the first-run wizard. The
+`jellyfin_api_key` in `host_vars/andromon/secret.yml` authorizes upgrade preflight,
+QSV configuration, and library scans. Jellyfin 12 requires the modern
+`Authorization: MediaBrowser Token="..."` header used by the role.
+
+**Managed release:** `jellyfin_image` pins LinuxServer Jellyfin 12.0. To deploy:
+
+```bash
+ansible-playbook main.yml -l andromon --tags jellyfin
+```
+
+Before changing the image, the role checks playback, users, and plugin readiness,
+pulls the image, and archives the complete stopped configuration under
+`/opt/docker/data/jellyfin-upgrade-backups/`. It normalizes the legacy nullable
+encoder preset for v12, preserves the rest of the encoding settings, waits for
+`Healthy`, and requests the required full library scan once. Routine reruns do
+not restart Jellyfin or rescan the library.
+
+Rollback requires restoring the complete pre-upgrade configuration archive and
+the previous image recorded beside it. An older image alone cannot undo the
+v12 database migrations.
 
 **Manual setup if `_docker_data` was lost:**
 - First-run wizard (admin user, libraries Movies → `/media/Movies`, TV →
