@@ -4,7 +4,7 @@
     path: "{{ docker_dir }}/{{ container_name }}"
     state: directory
     owner: "{{ username }}"
-    group: users
+    group: "{{ guid }}"
     mode: '0775'
 
 - name: Ensure arr Docker network
@@ -15,7 +15,7 @@
 - name: Make sure the Prowlarr container is running
   docker_container:
     name: "{{ container_name }}"
-    image: "lscr.io/linuxserver/prowlarr:latest"
+    image: "{{ prowlarr_image }}"
     pull: yes
     state: started
     networks:

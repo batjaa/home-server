@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -15,7 +16,14 @@ import (
 	"github.com/danielgtaylor/huma/v2/adapters/humago"
 )
 
+var version = "dev"
+
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == "version" {
+		fmt.Printf("movie-agent %s\n", version)
+		return
+	}
+
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	addr := envDefault("MOVIE_AGENT_ADDR", ":8080")

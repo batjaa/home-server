@@ -1,4 +1,5 @@
 ---
 container_name: bazarr
 bazarr_port: 6767
+bazarr_image: "lscr.io/linuxserver/bazarr:v1.6.0-ls363"
 arr_network: arr-net

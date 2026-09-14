@@ -1,4 +1,5 @@
 ---
 container_name: prowlarr
 prowlarr_port: 9696
+prowlarr_image: "lscr.io/linuxserver/prowlarr:2.5.2.5491-ls159"
 arr_network: arr-net

@@ -4,7 +4,7 @@
     path: "{{ docker_dir }}/{{ container_name }}"
     state: directory
     owner: "{{ username }}"
-    group: users
+    group: "{{ guid }}"
     mode: '0775'
 
 - name: Ensure arr Docker network
@@ -15,7 +15,7 @@
 - name: Make sure the Bazarr container is running
   docker_container:
     name: "{{ container_name }}"
-    image: "lscr.io/linuxserver/bazarr:latest"
+    image: "{{ bazarr_image }}"
     pull: yes
     state: started
     networks:
@@ -31,3 +31,33 @@
       - "{{ docker_dir }}/{{ container_name }}:/config"
       - "{{ mergerfs_root }}:/storage"
     restart_policy: unless-stopped
+
+- name: Read Bazarr integration settings
+  uri:
+    url: "http://127.0.0.1:{{ bazarr_port }}/api/system/settings"
+    headers:
+      X-API-KEY: "{{ bazarr_api_key }}"
+    status_code: 200
+  register: bazarr_settings
+  until: bazarr_settings.status == 200
+  retries: 30
+  delay: 2
+  no_log: true
+
+- name: Keep enabled Bazarr integrations authenticated with vaulted API keys
+  uri:
+    url: "http://127.0.0.1:{{ bazarr_port }}/api/system/settings"
+    method: POST
+    headers:
+      X-API-KEY: "{{ bazarr_api_key }}"
+    body_format: form-urlencoded
+    body: "{{ {'settings-' + item.name + '-apikey': item.key} }}"
+    status_code: 204
+  loop:
+    - { name: sonarr, key: "{{ sonarr_api_key }}" }
+    - { name: radarr, key: "{{ radarr_api_key }}" }
+  when:
+    - bazarr_settings.json.general['use_' + item.name] | default(false) | bool
+    - bazarr_settings.json[item.name].apikey | default('') != item.key
+  changed_when: true
+  no_log: true

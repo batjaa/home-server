@@ -40,6 +40,7 @@
       path: "{{ movie_agent_build_dir }}"
       args:
         TARGET: "movie-agent"
+        VERSION: "{{ movie_agent_version }}"
       pull: no
       rm: yes
   register: image_build

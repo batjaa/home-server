@@ -4,7 +4,7 @@
     path: "{{ docker_dir }}/{{ container_name }}"
     state: directory
     owner: "{{ username }}"
-    group: users
+    group: "{{ guid }}"
     mode: '0775'
 
 - name: Ensure TV media dir exists
@@ -31,7 +31,7 @@
 - name: Make sure the Sonarr container is running
   docker_container:
     name: "{{ container_name }}"
-    image: "lscr.io/linuxserver/sonarr:latest"
+    image: "{{ sonarr_image }}"
     pull: yes
     state: started
     networks:

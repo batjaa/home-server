@@ -1,7 +1,8 @@
 ---
 container_name: movie-agent
 movie_agent_port: 3401
-movie_agent_image: "agents/movie-agent:dev"
+movie_agent_version: "2026.09.14"
+movie_agent_image: "agents/movie-agent:{{ movie_agent_version }}"
 movie_agent_build_dir: "/opt/docker/build/movie-agent"
 movie_agent_radarr_url: "http://radarr:7878"
 movie_agent_seerr_url: "http://seerr:5055"

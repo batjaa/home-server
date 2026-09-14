@@ -1,5 +1,22 @@
 # Home service upgrades — 2026-09-13
 
+## Current handoff — 2026-09-14
+
+- **Completed:** the earlier Coolify/application upgrades; Immich, Paperless,
+  and Nextcloud database patches; Prowlarr, Bazarr, Sonarr, Radarr container
+  rebuilds; and movie-agent's Go/Huma/runtime update. Bazarr's missing Sonarr
+  credential was also repaired in Ansible.
+- **Remaining monitoring:** Grafana, Prometheus, cAdvisor, and Tentomon's
+  node_exporter.
+- **Remaining hosts/storage:** Andromon Docker tooling and mergerfs;
+  Andromon/Tentomon OS updates.
+- **Access/coverage gaps:** MikroTik and both PiKVM updates; Greymon/Ollama,
+  Epson firmware, and the unidentified device on port 8123 remain unverified.
+- The earlier Coolify stop-job incident is recovered, but its trigger remains
+  unexplained. Unrelated local indexer/search changes remain uncommitted.
+
+Detailed verification and rollback records follow in chronological sections.
+
 Follow-up to the [initial network audit](service-update-audit-2026-09-13.md).
 The user authorized Jellyfin, Uptime Kuma, Coolify, and replacement of the
 archived DDNS updater, running independently in parallel. Versions are pinned
@@ -718,3 +735,102 @@ and account for any writes made since then. Nextcloud's app configuration backup
 contains maintenance mode; turn maintenance mode off after database and
 application checks. Do not extract a cold database archive over a running
 cluster. Original database images remain on the server.
+
+
+## Media applications and movie-agent — 2026-09-14
+
+| Component | Before | Verified running |
+|---|---|---|
+| Prowlarr | 2.5.2.5491-ls158 | 2.5.2.5491-ls159 |
+| Bazarr | v1.6.0-ls357 | v1.6.0-ls363 |
+| Sonarr | 4.0.19.2979-ls321 | 4.0.19.2979-ls324 |
+| Radarr | 6.3.0.10514-ls313 | 6.3.0.10514-ls316 |
+| movie-agent | `agents/movie-agent:dev`, Go 1.25.10 / Huma 2.37.3 | `agents/movie-agent:2026.09.14`, Go 1.27.1 / Huma 2.39.1 |
+
+The four media upgrades are LinuxServer rebuilds of the same application
+versions. Their role defaults now pin explicit releases. Config-directory groups
+match the containers' PGID, avoiding permission churn on repeated deployments.
+Prowlarr's existing convergence script already matched the pending local changes;
+its NZBFinder interactive-only profile and three application connections remain
+unchanged. Those unrelated pending changes were not included in this commit.
+
+Movie-agent's builder and nonroot Debian 13 distroless runtime are pinned by
+digest. The build embeds a release version and uses `-trimpath`;
+`/agent version` reports `movie-agent 2026.09.14` without requiring server
+credentials, while an ordinary local build reports `dev`. The running binary's
+build metadata confirms Go 1.27.1 and Huma 2.39.1. No API routes or operation IDs
+were removed, and existing environment values and network connections remain.
+
+### Backups and data verification
+
+Server backups:
+`/opt/docker/data/media-app-upgrade-backups/20260914T193226Z`.
+Off-host copies:
+`/Users/batjaa/Downloads/media-app-upgrades-2026-09-14`.
+
+Each media app was stopped for its configuration/database archive. Archives were
+compared against the source, extracted into separate directories, and the
+restored SQLite databases passed integrity checks with all table counts matching:
+Prowlarr **21**, Bazarr **17**, Sonarr **39**, Radarr **42** tables. All four
+archives were copied off-host and their SHA256 digests matched. Movie-agent is
+stateless; its original Docker image, source tree, and container specification
+were preserved, with image/source archives also verified off-host.
+
+- **Prowlarr:** two indexers, three applications, one download client, and all
+  application profiles preserved; health endpoint reports no issues.
+- **Sonarr:** 54 series, 6,054 episode records, and 3,303 episode files preserved.
+  Download client, two indexers, Plex notification, and root-folder settings
+  match. Only two new background-command rows appeared in the post-restart
+  database comparison; root-folder free-space readings naturally changed.
+- **Radarr:** all 212 movies and 197 movie files retained; table counts,
+  indexers, download client, Plex notification, and root-folder settings match.
+- **Bazarr:** 197 movies and two language profiles retained; all table counts
+  initially matched after the image update. Its enabled Sonarr integration had
+  an empty API key before this work, leaving zero shows/episodes and producing
+  unauthorized SignalR errors. Ansible now reads current settings and supplies
+  the vaulted key only when an enabled integration differs. Only
+  `sonarr.apikey` changed. The SignalR connection now succeeds, Bazarr can read
+  all 54 Sonarr series, and its TV catalogue has begun populating normally.
+
+### Application checks
+
+Movie-agent's new HTTP contract tests exercise all seven routes against mock
+upstreams, request serialization, authorization, invalid inputs, and upstream
+failure. Go race tests, `go vet`, and source vulnerability scanning passed.
+A separate `govulncheck -mode=binary` scan of the actual deployed Linux binary
+also found no known vulnerabilities. Both the default and embedded version
+commands were tested without service credentials.
+
+Production checks passed for movie-agent health, schema, authenticated ping,
+library search, recent movies, queue, discovery, combined movie status, and
+rejection of invalid requests. Successful request creation was tested against a
+mock Seerr server only, avoiding real downloads. Open WebUI can authenticate to
+movie-agent over its Docker network. All seven OpenAPI paths and operation IDs
+remain available; Greymon/Ollama remains outside verified coverage.
+
+Browser checks returned HTTP 200 without uncaught JavaScript exceptions for all
+four media apps. Bazarr's interface was verified using its API key. Prowlarr,
+Sonarr, and Radarr were verified at their login pages; their authenticated APIs
+were tested separately. No new interactive login to those three UIs was performed.
+Screenshots and browser JSON are stored with the off-host backups.
+
+The final scoped Ansible rerun, including Bazarr's integration repair, reported
+**ok=31, changed=0, failed=0, skipped=3**. All five containers run with their
+original mounts and zero restart counts. The four existing Prowlarr convergence
+tests also passed. Secrets remain in the vault and private backup artifacts.
+
+For rollback, stop the affected media container, preserve its current config
+directory, restore its cold archive with original ownership, and select the
+previous image in the role before applying its tag. Keep any metadata created
+since backup time if it is needed. Movie-agent can be rolled back to the retained
+original image; it has no persistent data volume. Media files were not archived
+again or modified by the upgrade process. Normal configured application jobs
+continue after restart.
+
+Sources: [Prowlarr release](https://github.com/linuxserver/docker-prowlarr/releases/tag/2.5.2.5491-ls159),
+[Bazarr release](https://github.com/linuxserver/docker-bazarr/releases/tag/v1.6.0-ls363),
+[Sonarr release](https://github.com/linuxserver/docker-sonarr/releases/tag/4.0.19.2979-ls324),
+[Radarr release](https://github.com/linuxserver/docker-radarr/releases/tag/6.3.0.10514-ls316),
+[Go release history](https://go.dev/doc/devel/release),
+[Huma 2.39.1](https://github.com/danielgtaylor/huma/releases/tag/v2.39.1),
+[distroless runtime images](https://github.com/GoogleContainerTools/distroless).

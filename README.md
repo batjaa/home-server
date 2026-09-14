@@ -625,8 +625,8 @@ Containers come up reading their original config — API keys, library DBs, Plex
 ## Services
 
 Immich, Open WebUI, Home Assistant, Homepage, Plex, Whisparr, SABnzbd,
-Paperless, Nextcloud, Beets, Tautulli, and Navidrome use
-explicit release pins in their role defaults. Update them with scoped Ansible
+Paperless, Nextcloud, Beets, Tautulli, Navidrome, Prowlarr, Bazarr, Sonarr,
+and Radarr use explicit release pins in their role defaults. Update them with scoped Ansible
 tags after a configuration/database backup; update Immich server and ML together.
 
 Immich uses PostgreSQL 18.6 with VectorChord 1.1.1 and pgvector 0.8.5. Its role
@@ -647,6 +647,13 @@ upgrade backups and verification are recorded in
 [`docs/service-upgrades-2026-09-13.md`](docs/service-upgrades-2026-09-13.md).
 See the [upgrade record](docs/service-upgrades-2026-09-13.md) for verified versions
 and rollback requirements.
+
+Movie-agent is built with Go 1.27.1 and Huma 2.39.1, using pinned build and
+nonroot runtime images. Its Ansible release is `2026.09.14`; run
+`docker exec movie-agent /agent version` to identify the deployed build. Local
+builds report `dev` unless `-ldflags "-X main.version=<release>"` is supplied.
+Bazarr keeps enabled Sonarr/Radarr integrations authenticated with their vaulted
+API keys, so rebuilds and key rotations retain working synchronization.
 
 What each thing in the stack is for. Per-service runbooks (config steps not yet automated, where credentials live, what manual setup is needed) are in [`docs/services.md`](docs/services.md). **Keep this table in sync when adding/removing/repurposing a service.**
 
