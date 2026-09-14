@@ -506,3 +506,22 @@ Sources: [Immich database compatibility](https://docs.immich.app/administration/
 [Immich backup/restore](https://docs.immich.app/administration/backup-and-restore/),
 [Immich database image build](https://github.com/immich-app/base-images/blob/main/postgres/Dockerfile),
 and [PostgreSQL support policy](https://www.postgresql.org/support/versioning/).
+
+### Immich browser and WebSocket follow-up
+
+Authenticated browser verification found that the UI displayed “Server Offline”
+while REST requests and photos worked. Direct WebSocket handshakes returned
+HTTP 101; the SWAG route returned HTTP 400. The Immich proxy template repeated
+`Upgrade` and `Connection` headers already set by SWAG's included `proxy.conf`.
+Those duplicate directives were removed from the Immich template. Only that
+proxy file was applied, nginx configuration validation passed, and nginx was
+reloaded without restarting its container.
+
+The final authenticated browser check reports **Server Online**, HTTP 200,
+31 loaded images, zero WebSocket handshake errors, and zero uncaught JavaScript
+errors. Evidence is in `immich-after.png` and `browser-verification.json` in
+the off-host recovery directory. Temporary verification login sessions were
+logged out. The new Immich-managed database backup also passed `gzip -t`.
+
+References: [Immich reverse proxy requirements](https://docs.immich.app/administration/reverse-proxy/)
+and [SWAG's shared proxy headers](https://github.com/linuxserver/docker-swag/blob/master/root/defaults/nginx/proxy.conf.sample).

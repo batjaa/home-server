@@ -14,10 +14,9 @@ server {
     client_max_body_size 0;
 
     location / {
+        # proxy.conf already sets Upgrade and Connection; duplicates break WebSockets.
         include /config/nginx/proxy.conf;
         include /config/nginx/resolver.conf;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
         set $upstream_app 127.0.0.1;
         set $upstream_port {{ immich_port | default(2283) }};
         set $upstream_proto http;
