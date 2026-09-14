@@ -626,3 +626,95 @@ Sources: [Paperless 3.1.3](https://github.com/paperless-ngx/paperless-ngx/releas
 [Beets 2.14.0](https://github.com/beetbox/beets/releases/tag/v2.14.0),
 [Tautulli 2.18.1](https://github.com/Tautulli/Tautulli/releases/tag/v2.18.1),
 and [Navidrome 0.64 migration notes](https://github.com/navidrome/navidrome/releases/tag/v0.64.0).
+
+## Paperless and Nextcloud database patches — 2026-09-14
+
+The database-only follow-up supersedes the deferred database patches in the
+selected application section above. Application releases remain Paperless 3.1.3
+and Nextcloud 34.0.4.
+
+| Component | Before | Verified running |
+|---|---|---|
+| Paperless PostgreSQL | 16.14 | 16.15 (`16.15-trixie`) |
+| Paperless Redis | 7.4.10 | 7.4.11 (`7.4.11-alpine`) |
+| Nextcloud MariaDB | 11.8.8 | 11.8.9 |
+
+All three image references are pinned by release and digest in role defaults.
+PostgreSQL retains Debian 13/Trixie and glibc 2.41, matching the existing
+cluster's collation version. The cluster only has `plpgsql` installed and no
+logical replication slots, so the release's extension reindex and output-plugin
+configuration caveats do not apply.
+
+### Backup and rehearsal
+
+Fresh backups are at
+`/opt/docker/data/app-db-patch-backups/20260914T190334Z` on andromon.
+Each application was stopped before its SQL dump and configuration archive;
+Nextcloud was also placed in maintenance mode. Database containers were shut
+down cleanly before cold archives were created and compared against the source.
+Paperless's cold archive includes the Redis bind directory.
+
+For each SQL database, two isolated containers running the target image were
+verified: a fresh logical restore and an upgrade of a copy of the existing
+physical database. Both ran with `--network none`. All **74 Paperless table
+counts** and **131 Nextcloud table counts** matched their paused sources in both
+rehearsals. MariaDB table checks passed in both. Redis 7.4.11 loaded the copied
+snapshot with all **12 unexpired keys**, serialized value hashes, and expiry
+times preserved.
+
+The backup archives contain database state and application configuration. This
+database-only change does not modify document or user-file storage; their full
+backups from the preceding application upgrade remain available at
+`/opt/docker/data/selected-app-upgrade-backups/20260914T181027Z`.
+
+Sources: [PostgreSQL 16.15 release notes](https://www.postgresql.org/docs/16/release-16-15.html),
+[Redis 7.4.11 release notes](https://github.com/redis/redis/releases/tag/7.4.11),
+[MariaDB 11.8.9 release notes](https://mariadb.com/docs/release-notes/community-server/11.8/11.8.9).
+
+### Production verification and recovery
+
+Both scoped Ansible deployments passed. A repeat run of
+`--tags paperless,nextcloud` reported **ok=16, changed=0, failed=0**; syntax and
+whitespace checks also passed. All five containers are running with their
+original mounts, zero restart counts, and the expected image IDs. Paperless
+reports Docker health `healthy`.
+
+- **Paperless:** PostgreSQL reports `16.15-1.pgdg13+2`; Redis reports 7.4.11.
+  There are no invalid indexes or recorded collation mismatches. All 10
+  documents and three users remain; authenticated document listing and PDF
+  preview pass. `document_sanity_checker --no-progress-bar` reports no issues.
+  The production table comparison differs only by two newly recorded background
+  tasks. Redis resumes normal worker activity after the snapshot rehearsal.
+- **Nextcloud:** MariaDB reports `11.8.9-MariaDB-ubu2404-log` and confirms that
+  no `mariadb-upgrade` is required within this release series. All 131 table
+  counts match immediately after restart, including 10,329 file-cache records,
+  one user, two shares, two calendars, and two address books. All 50 enabled
+  apps remain enabled. Maintenance mode is off, no application database upgrade
+  is pending, authenticated WebDAV returns 207, and both database table checks
+  and Nextcloud core integrity checks pass.
+- Authenticated browser checks reach Paperless's dashboard and Nextcloud's Files
+  page with HTTP 200 and no uncaught JavaScript exceptions. Screenshots and
+  browser result JSON are saved alongside the off-host backups.
+
+MariaDB uses its normal libaio fallback because io_uring is unavailable on the
+host. Isolated rehearsal networking also produces harmless address-discovery
+warnings; neither prevented startup or table verification.
+
+All six fresh SQL/configuration/cold-database backup files were copied to
+`/Users/batjaa/Downloads/app-db-patches-2026-09-14` and matched their server-side
+SHA256 manifests. The 33-file supplemental verification/recovery archive also
+matches its server SHA256; it includes private original/current container
+specifications, API inventories, comparisons, and logs. Ansible logs and the
+verification scripts are retained off-host too. Rehearsal containers and their
+four temporary database directories were removed after verification; backup
+archives and verification results remain.
+
+For rollback, stop the affected application and database containers, preserve
+the current database directories under new names, restore the matching cold
+archive with original ownership, revert that role's image pins to the previous
+commit, and apply its scoped Ansible tag. Paperless's database cold archive also
+restores Redis state. A rollback returns the database to backup time, so preserve
+and account for any writes made since then. Nextcloud's app configuration backup
+contains maintenance mode; turn maintenance mode off after database and
+application checks. Do not extract a cold database archive over a running
+cluster. Original database images remain on the server.
