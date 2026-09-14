@@ -549,9 +549,9 @@ Cloudflare → andromon/SWAG → wormmon/Coolify ingress path:
 | --- | --- | --- |
 | `fotopass.app` | `batjaa/fotopass` `main` | Web, MySQL, queue worker, Nightwatch |
 | `mytendies.app` | `batjaa/tendies` `main` | Web, MySQL, queue worker, Nightwatch |
-| `heyanda.mn` | `batjaa/anda` `main` | Web, MySQL, Neo4j, queue worker |
+| `heyanda.mn` | `batjaa/anda` `main` | Web, MySQL, Neo4j, queue worker, Nightwatch |
 | `tech-nomads.io` | `batjaa/tech-nomads` `main` | Web, MySQL, Nightwatch |
-| `tsas.mn` | `batjaa/tsas` `master` | Web, MySQL |
+| `tsas.mn` | `batjaa/tsas` `master` | Web, MySQL, Nightwatch |
 
 The apex DNS records point to `ddns.batjaa.site`. `www` redirects to the apex
 for Fotopass, Tendies, Tech Nomads, and TSAS. Heyanda preserves its wildcard
