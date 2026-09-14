@@ -1,0 +1,107 @@
+---
+- name: Refuse automatic Coolify downgrades across database migrations
+  assert:
+    that:
+      - coolify_current_image.stdout.split(':')[-1] is version(coolify_version, '<')
+    fail_msg: Restore the pre-upgrade database and configuration before downgrading Coolify.
+
+- name: Wait for existing application deployments to finish
+  command:
+    argv:
+      - docker
+      - exec
+      - coolify-db
+      - psql
+      - -U
+      - coolify
+      - -d
+      - coolify
+      - -Atc
+      - SELECT count(*) FROM application_deployment_queues WHERE status IN ('in_progress', 'queued');
+  register: coolify_active_deployments
+  changed_when: false
+  retries: 60
+  delay: 10
+  until: coolify_active_deployments.stdout == '0'
+
+- name: Ensure the private Coolify upgrade backup root exists
+  file:
+    path: "{{ coolify_upgrade_backup_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Create a private Coolify upgrade backup directory
+  tempfile:
+    state: directory
+    path: "{{ coolify_upgrade_backup_dir }}"
+    prefix: "{{ coolify_current_image.stdout.split(':')[-1] }}-to-{{ coolify_version }}-"
+  register: coolify_upgrade_backup
+
+- name: Back up and validate Coolify control-plane database and configuration
+  shell: |
+    set -euo pipefail
+    umask 077
+    docker exec coolify-db pg_dump -U coolify -d coolify -Fc > {{ (coolify_upgrade_backup.path ~ '/coolify.dump') | quote }}
+    docker exec -i coolify-db pg_restore --list < {{ (coolify_upgrade_backup.path ~ '/coolify.dump') | quote }} > {{ (coolify_upgrade_backup.path ~ '/coolify.dump.list') | quote }}
+    docker exec coolify-db pg_dumpall -U coolify --globals-only > {{ (coolify_upgrade_backup.path ~ '/globals.sql') | quote }}
+    tar -czf {{ (coolify_upgrade_backup.path ~ '/configuration.tar.gz') | quote }} --exclude='./backups' --exclude='./metrics' -C {{ coolify_root_dir | quote }} .
+    tar -tzf {{ (coolify_upgrade_backup.path ~ '/configuration.tar.gz') | quote }} > /dev/null
+    docker ps -q | xargs docker inspect --format {{ '{{json .Name}} {{json .Id}} {{json .Image}} {{json .State.Status}} {{json .State.StartedAt}}' | quote }} > {{ (coolify_upgrade_backup.path ~ '/containers-before.txt') | quote }}
+  args:
+    executable: /bin/bash
+  changed_when: true
+
+- name: Download the supported Coolify upgrade script
+  get_url:
+    url: "{{ coolify_upgrade_script_url }}"
+    dest: /usr/local/sbin/coolify-upgrade.sh
+    mode: "0755"
+
+- name: Run and verify the Coolify upgrade
+  block:
+    - name: Start the vendor Coolify upgrade
+      command:
+        argv:
+          - /usr/local/sbin/coolify-upgrade.sh
+          - "{{ coolify_version }}"
+          - "{{ coolify_helper_version }}"
+          - "{{ coolify_registry }}"
+          - "false"
+      register: coolify_upgrade
+      changed_when: true
+
+    # The vendor script detaches its restart and can report success even if
+    # Compose failed; require the actual target image and Docker health state.
+    - name: Wait for the upgraded Coolify container to become healthy
+      command:
+        argv:
+          - docker
+          - inspect
+          - --format
+          - "{{ '{{.Config.Image}} {{.State.Health.Status}}' }}"
+          - coolify
+      register: coolify_upgraded_container
+      changed_when: false
+      retries: 90
+      delay: 10
+      until:
+        - coolify_upgraded_container.rc == 0
+        - coolify_upgraded_container.stdout == coolify_registry ~ '/coollabsio/coolify:' ~ coolify_version ~ ' healthy'
+  always:
+    - name: Restore backup traversal permissions after the vendor upgrade
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ coolify_container_uid }}"
+        group: root
+        mode: "0711"
+      loop:
+        - "{{ coolify_root_dir }}"
+        - "{{ coolify_root_dir }}/backups"
+        - "{{ coolify_root_dir }}/backups/coolify"
+
+- name: Report the private pre-upgrade backup path
+  debug:
+    msg: "Coolify pre-upgrade backup: {{ coolify_upgrade_backup.path }}"

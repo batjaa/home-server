@@ -4,6 +4,11 @@ coolify_root_dir: /data/coolify
 coolify_source_dir: "{{ coolify_root_dir }}/source"
 coolify_env_file: "{{ coolify_source_dir }}/.env"
 coolify_install_script_url: https://cdn.coollabs.io/coolify/install.sh
+coolify_upgrade_script_url: https://cdn.coollabs.io/coolify/upgrade.sh
+coolify_version: "4.3.19"
+coolify_helper_version: "1.0.16"
+coolify_registry: ghcr.io
+coolify_upgrade_backup_dir: /opt/docker/data/coolify-upgrade-backups
 # uid of www-data inside the coolify image; its install script chowns /data/coolify to this
 coolify_container_uid: "9999"
 coolify_auto_update: false

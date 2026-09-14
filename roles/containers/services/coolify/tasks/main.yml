@@ -45,9 +45,13 @@
     url: "{{ coolify_install_script_url }}"
     dest: /usr/local/sbin/coolify-install.sh
     mode: "0755"
+  when: not coolify_install_state.stat.exists
 
 - name: Install Coolify
-  command: /usr/local/sbin/coolify-install.sh
+  command:
+    argv:
+      - /usr/local/sbin/coolify-install.sh
+      - "{{ coolify_version }}"
   environment:
     USER: "{{ username }}"
     HOME: "/home/{{ username }}"
@@ -58,6 +62,21 @@
   when: not coolify_install_state.stat.exists
   register: coolify_install
   changed_when: true
+
+- name: Inspect installed Coolify image
+  command:
+    argv:
+      - docker
+      - inspect
+      - --format
+      - "{{ '{{.Config.Image}}' }}"
+      - coolify
+  register: coolify_current_image
+  changed_when: false
+
+- name: Upgrade existing Coolify through the vendor workflow
+  include_tasks: upgrade.yml
+  when: coolify_current_image.stdout.split(':')[-1] != coolify_version
 
 # Coolify's install/upgrade script chmods /data/coolify to 700 for its
 # container uid, but scheduled DB backups run over SSH as the deploy user

@@ -57,6 +57,33 @@ Use `andromon` as the only public edge. `wormmon` stays an internal app host.
 This avoids breaking the existing public services on `andromon` while still
 letting `wormmon` host app workloads.
 
+## Pinned control-plane upgrades
+
+The Ansible role pins `coolify_version` (currently `4.3.19`). To apply that version:
+
+```bash
+ansible-playbook main.yml -l wormmon --tags coolify
+```
+
+When the installed version differs, the role waits for queued/running deployments
+to finish, saves a PostgreSQL custom dump, database globals, configuration, and SSH
+keys under `/opt/docker/data/coolify-upgrade-backups/`, then invokes the supported
+vendor upgrade script. Backups are private to root. It waits for the actual target
+container to become healthy and restores the backup traversal permissions to
+`0711`, including if the upgrade fails. A second run at the pinned version is a no-op.
+
+The vendor workflow chooses its companion images and may patch the control-plane
+PostgreSQL/Redis containers. It does not redeploy tenant applications. The September
+2026 upgrade installed realtime `1.0.19`, PostgreSQL `15.19`, and Redis `7.4.11`.
+Sentinel stayed at `0.0.22`, selected by Coolify's live version feed; do not force a
+separate Sentinel version based only on release-note text.
+
+Rollback must restore the pre-upgrade database and configuration alongside the
+old control-plane image. Changing the version pin alone cannot undo migrations;
+the role rejects automatic downgrades. Preserve tenant containers and the proxy
+throughout rollback. Dump/archive readability is verified at backup time; that is
+not a full restore rehearsal.
+
 ## Coolify deployment model
 
 Use Coolify projects/environments with Docker-first deploys.
