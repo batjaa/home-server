@@ -1,21 +1,23 @@
 ---
 - name: Ensure Beets directories exist
   file:
-    path: "{{ item }}"
+    path: "{{ item.path }}"
     state: directory
     owner: "{{ username }}"
-    group: users
+    group: "{{ item.group }}"
     mode: '0775'
   loop:
-    - "{{ docker_dir }}/{{ container_name }}"
-    - "{{ beets_import_dir }}"
+    - path: "{{ docker_dir }}/{{ container_name }}"
+      group: "{{ guid }}"
+    - path: "{{ beets_import_dir }}"
+      group: users
 
 - name: Render beets config.yaml (default — moves files into /music layout)
   template:
     src: config.yaml.j2
     dest: "{{ docker_dir }}/{{ container_name }}/config.yaml"
     owner: "{{ username }}"
-    group: users
+    group: "{{ guid }}"
     mode: '0644'
   notify: restart beets
 
@@ -24,13 +26,13 @@
     src: inplace.yaml.j2
     dest: "{{ docker_dir }}/{{ container_name }}/inplace.yaml"
     owner: "{{ username }}"
-    group: users
+    group: "{{ guid }}"
     mode: '0644'
 
 - name: Make sure the Beets container is running
   docker_container:
     name: "{{ container_name }}"
-    image: "lscr.io/linuxserver/beets:latest"
+    image: "{{ beets_image }}"
     pull: yes
     state: started
     published_ports:

@@ -4,13 +4,13 @@
     path: "{{ docker_dir }}/{{ container_name }}"
     state: directory
     owner: "{{ username }}"
-    group: users
+    group: "{{ guid }}"
     mode: '0775'
 
 - name: Make sure the Tautulli container is running
   docker_container:
     name: "{{ container_name }}"
-    image: "lscr.io/linuxserver/tautulli:latest"
+    image: "{{ tautulli_image }}"
     pull: yes
     state: started
     published_ports:

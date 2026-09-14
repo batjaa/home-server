@@ -10,7 +10,7 @@
 - name: Make sure the Navidrome container is running
   docker_container:
     name: "{{ container_name }}"
-    image: "deluan/navidrome:latest"
+    image: "{{ navidrome_image }}"
     pull: yes
     state: started
     user: "{{ guid }}:{{ guid }}"

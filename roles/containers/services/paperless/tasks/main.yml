@@ -8,10 +8,19 @@
     mode: '0775'
   loop:
     - "{{ docker_dir }}/{{ container_name }}"
-    - "{{ docker_dir }}/{{ paperless_db_container }}"
     - "{{ paperless_media_dir }}"
     - "{{ paperless_consume_dir }}"
     - "{{ paperless_export_dir }}"
+
+- name: Ensure Paperless database directory exists without changing database ownership
+  file:
+    path: "{{ docker_dir }}/{{ paperless_db_container }}"
+    state: directory
+
+- name: Ensure Paperless Redis state directory exists without changing ownership
+  file:
+    path: "{{ paperless_redis_data_dir }}"
+    state: directory
 
 - name: Create Paperless Docker network
   docker_network:
@@ -21,7 +30,7 @@
 - name: Make sure the Paperless DB container is running
   docker_container:
     name: "{{ paperless_db_container }}"
-    image: "docker.io/library/postgres:16"
+    image: "{{ paperless_db_image }}"
     pull: yes
     state: started
     networks:
@@ -38,18 +47,20 @@
 - name: Make sure the Paperless Redis container is running
   docker_container:
     name: "{{ paperless_redis_container }}"
-    image: "docker.io/library/redis:7-alpine"
+    image: "{{ paperless_redis_image }}"
     pull: yes
     state: started
     networks:
       - name: "{{ paperless_network }}"
     networks_cli_compatible: yes
+    volumes:
+      - "{{ paperless_redis_data_dir }}:/data"
     restart_policy: unless-stopped
 
 - name: Make sure the Paperless container is running
   docker_container:
     name: "{{ container_name }}"
-    image: "ghcr.io/paperless-ngx/paperless-ngx:latest"
+    image: "{{ paperless_image }}"
     pull: yes
     state: started
     networks:

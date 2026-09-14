@@ -624,7 +624,8 @@ Containers come up reading their original config — API keys, library DBs, Plex
 
 ## Services
 
-Immich, Open WebUI, Home Assistant, Homepage, Plex, Whisparr, and SABnzbd use
+Immich, Open WebUI, Home Assistant, Homepage, Plex, Whisparr, SABnzbd,
+Paperless, Nextcloud, Beets, Tautulli, and Navidrome use
 explicit release pins in their role defaults. Update them with scoped Ansible
 tags after a configuration/database backup; update Immich server and ML together.
 
@@ -636,6 +637,12 @@ bundles PostgreSQL 18.4. PostgreSQL state is at
 for rollback. An existing PostgreSQL 14 installation requires the explicit,
 verified logical migration (`--tags immich -e immich_db_upgrade=true`); simply
 changing the image or mounting the old data directory into PostgreSQL 18 is unsafe.
+
+Paperless Redis state is persisted at `/opt/docker/data/paperless-redis` so
+container replacements retain it. Navidrome 0.64 migrates internal item IDs;
+clients with cached IDs or offline downloads may need to resync. Application
+upgrade backups and verification are recorded in
+[`docs/service-upgrades-2026-09-13.md`](docs/service-upgrades-2026-09-13.md).
 See the [upgrade record](docs/service-upgrades-2026-09-13.md) for verified versions
 and rollback requirements.
 

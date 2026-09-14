@@ -8,8 +8,11 @@
     mode: '0775'
   loop:
     - "{{ docker_dir }}/{{ container_name }}"
-    - "{{ docker_dir }}/{{ container_name }}/html"
-    - "{{ docker_dir }}/{{ nextcloud_db_container }}"
+
+- name: Ensure Nextcloud database directory exists without changing database ownership
+  file:
+    path: "{{ docker_dir }}/{{ nextcloud_db_container }}"
+    state: directory
 
 - name: Ensure Nextcloud app files are owned by www-data
   # The official Nextcloud image writes config.php and app files at runtime.
@@ -48,7 +51,7 @@
 - name: Make sure the Nextcloud DB (MariaDB) container is running
   docker_container:
     name: "{{ nextcloud_db_container }}"
-    image: "mariadb:11"
+    image: "{{ nextcloud_db_image }}"
     pull: yes
     state: started
     networks:

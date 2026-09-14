@@ -1,3 +1,4 @@
 ---
 container_name: navidrome
 navidrome_port: 4533
+navidrome_image: "deluan/navidrome:0.64.0"

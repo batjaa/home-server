@@ -525,3 +525,104 @@ logged out. The new Immich-managed database backup also passed `gzip -t`.
 
 References: [Immich reverse proxy requirements](https://docs.immich.app/administration/reverse-proxy/)
 and [SWAG's shared proxy headers](https://github.com/linuxserver/docker-swag/blob/master/root/defaults/nginx/proxy.conf.sample).
+
+## Selected application follow-up — 2026-09-14
+
+The user selected the five remaining applications from the top audit list.
+All five were deployed through their Ansible roles, with reviewed releases
+pinned in defaults.
+
+| Application | Before | Verified after |
+|---|---|---|
+| Paperless-ngx | 3.0.5 | 3.1.3 |
+| Nextcloud | 34.0.2 | 34.0.4 (`34.0.4-apache`) |
+| Beets | 2.13.1 | 2.14.0, LinuxServer `2.14.0-ls352` |
+| Tautulli | 2.17.2 | 2.18.1, LinuxServer `v2.18.1-ls244` |
+| Navidrome | 0.63.2 | 0.64.0 |
+
+Paperless PostgreSQL/Redis and Nextcloud MariaDB remain on their original image
+IDs, now pinned by digest. Their engine patch upgrades remain separate audit
+items. The roles now preserve existing database-directory ownership. Beets
+and Tautulli configuration groups match their container PGID; this fixes the
+previous Beets config ownership/reset/restart cycle on every Ansible rerun.
+
+### Backups and recovery
+
+Private backups on andromon:
+`/opt/docker/data/selected-app-upgrade-backups/20260914T181027Z`.
+Original container definitions/image IDs are saved in the root of that directory.
+
+Each app was stopped before its configuration archive; Nextcloud also entered
+maintenance mode. Paperless's PostgreSQL dump was restored into an isolated
+container with **all 74 table counts matching**. Nextcloud's MariaDB dump was
+restored into an isolated container with **all 131 table counts matching**.
+The three SQLite catalogs passed integrity checking. Configuration/document
+archives were compared byte-for-byte against their stopped sources.
+
+Nextcloud's full user-data archive is **31,680,860,160 bytes** and its application
+archive is **879,779,840 bytes**. The full user-data archive is retained on the
+server. All five apps' configuration/database backups, plus Paperless's document
+archive, have off-host copies with matching SHA-256 checksums at:
+`/Users/batjaa/Downloads/selected-app-upgrades-2026-09-14`.
+Music originals were not duplicated; the update does not modify those files.
+
+Paperless's pinned-image deployment recreated its anonymous Redis volume.
+Verification caught the change. The pre-update RDB snapshot had eight unexpired
+keys; seven were missing from the new instance. Those seven keys were restored
+without overwriting newer keys, and the overlapping key matched. The combined
+state was saved with Paperless stopped and copied into the explicit persistent
+mount `/opt/docker/data/paperless-redis`. Both anonymous volumes and the original
+and recovered RDB snapshots were retained. The recovery evidence is included
+in the off-host archive. Redis remains on the same engine image/version.
+
+To roll back an app, stop it, preserve any post-update writes, and restore its
+matching database/configuration archive and previous image together. For
+Nextcloud, the backup includes maintenance mode; restore the matching SQL,
+application files, and user data as needed, then disable maintenance mode after
+checking consistency. Navidrome's ID migration cannot be undone by changing
+only the image tag; its old SQLite database must be restored too.
+
+### Verification and application notes
+
+- **Paperless:** 10 documents and three users retained; authenticated API and
+  PDF preview passed. `document_sanity_checker --no-progress-bar` reported no
+  issues. The container health check passes, including after Redis recovery.
+- **Nextcloud:** all 50 enabled apps remain enabled; 10,329 file-cache records,
+  one user, two shares, two calendars, and two address books remain. Upgrade
+  completed, maintenance is off, and `needsDbUpgrade` is false. Authenticated
+  WebDAV returned HTTP 207, capabilities returned the new version, and
+  `occ integrity:check-core` passed.
+- **Beets:** all ten configured plugins load on 2.14.0. Its existing catalog is
+  empty (zero items/albums); the query UI and catalog API work. No import or
+  retag operation was run against the music collection.
+- **Tautulli:** 226 history records, six users, and three libraries retained.
+  Authenticated version/activity/library APIs passed. Its browser displays the
+  expected Plex SSO login page; a new Plex SSO login was not exercised.
+- **Navidrome:** an isolated migration rehearsal preserved all 17,163 songs,
+  3,356 albums, 3,947 artists, four users, annotations, and music paths/sizes,
+  with no foreign-key violations. Production retained the same music/user
+  counts and path digest. Its enabled startup scanner imported 36 existing
+  playlists (385 entries) and cleaned up one orphaned artist annotation which
+  referenced no artist in either database; it had no star/rating. Streaming
+  returned HTTP 206 with a 1,024-byte audio range. Incomplete artist metadata
+  produced artwork lookup warnings, including one empty-artist Deezer error;
+  library access and audio streaming passed.
+
+Navidrome 0.64 re-encodes internal IDs. Clients caching IDs or offline downloads
+may need to resync. Its public-sharing setting remains disabled.
+
+All five browser pages returned HTTP 200 with no uncaught JavaScript errors.
+Paperless, Nextcloud, and Navidrome were checked after login; Beets's empty query
+interface and Tautulli's SSO entry page were checked alongside their APIs.
+Screenshots and runtime/API verification are in the off-host backup directory.
+
+The final scoped Ansible rerun passed with **changed=0, failed=0** and syntax
+validation passed. All 52 supplemental verification/recovery file checksums
+also match the server copies. Existing unrelated repository changes were
+preserved.
+
+Sources: [Paperless 3.1.3](https://github.com/paperless-ngx/paperless-ngx/releases/tag/v3.1.3),
+[Nextcloud 34.0.4](https://nextcloud.com/changelog/#latest34),
+[Beets 2.14.0](https://github.com/beetbox/beets/releases/tag/v2.14.0),
+[Tautulli 2.18.1](https://github.com/Tautulli/Tautulli/releases/tag/v2.18.1),
+and [Navidrome 0.64 migration notes](https://github.com/navidrome/navidrome/releases/tag/v0.64.0).
