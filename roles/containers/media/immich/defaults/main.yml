@@ -12,11 +12,11 @@ immich_port: 2283
 # After bulk-import, this is the single source of truth — no external library.
 immich_upload_dir: "{{ mergerfs_root }}/Immich"
 
-# Image pins (track release on the immich server, sync ML to match)
-immich_server_image: "ghcr.io/immich-app/immich-server:release"
-immich_ml_image: "ghcr.io/immich-app/immich-machine-learning:release"
-immich_db_image: "ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0"
-immich_redis_image: "docker.io/redis:6.2-alpine"
+# Upgrade server and ML together after reviewing release notes.
+immich_server_image: "ghcr.io/immich-app/immich-server:v3.2.0"
+immich_ml_image: "ghcr.io/immich-app/immich-machine-learning:v3.2.0"
+immich_db_image: "ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23"
+immich_redis_image: "docker.io/redis:6.2-alpine@sha256:ec5e187c913d422cdf60f4216a5fdfb95246792c6de6fe21ff5bed75cbfc8c23"
 
 # DB defaults (override secrets in host_vars/secret.yml)
 immich_db_name: immich

@@ -1,7 +1,7 @@
 ---
 container_name: whisparr
 whisparr_port: 6969
-whisparr_image: ghcr.io/hotio/whisparr:v3
+whisparr_image: "ghcr.io/hotio/whisparr:v3@sha256:b18ba2049123f1480a557b23954f1055b86f2625436f0bc51ccaa012030d9ba3"
 arr_network: arr-net
 whisparr_media_dir: "{{ mergerfs_root }}/Media/Whisparr"
 whisparr_download_dir: "{{ mergerfs_root }}/usenet/complete/whisparr"

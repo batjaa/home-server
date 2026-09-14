@@ -1,5 +1,6 @@
 ---
 container_name: plex
+plex_image: "lscr.io/linuxserver/plex:1.43.4.10903-e5521bd8c-ls324"
 mergerfs_root: /mnt/storage
 # Scheduled library scan interval (seconds). Backstop for mergerfs's
 # missing inotify propagation — see tasks/main.yml.

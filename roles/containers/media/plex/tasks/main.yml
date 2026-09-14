@@ -17,7 +17,7 @@
 - name: Make sure the Plex container is created and running
   docker_container:
     name: "{{ container_name }}"
-    image: "lscr.io/linuxserver/plex:latest"
+    image: "{{ plex_image }}"
     pull: yes
     state: started
     network_mode: host

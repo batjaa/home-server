@@ -624,6 +624,12 @@ Containers come up reading their original config — API keys, library DBs, Plex
 
 ## Services
 
+Immich, Open WebUI, Home Assistant, Homepage, Plex, Whisparr, and SABnzbd use
+explicit release pins in their role defaults. Update them with scoped Ansible
+tags after a configuration/database backup; update Immich server and ML together.
+See the [upgrade record](docs/service-upgrades-2026-09-13.md) for verified versions
+and rollback requirements.
+
 What each thing in the stack is for. Per-service runbooks (config steps not yet automated, where credentials live, what manual setup is needed) are in [`docs/services.md`](docs/services.md). **Keep this table in sync when adding/removing/repurposing a service.**
 
 ### Media playback

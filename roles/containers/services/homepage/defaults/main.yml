@@ -1,5 +1,6 @@
 ---
 container_name: homepage
+homepage_image: "ghcr.io/gethomepage/homepage:v2.3.0"
 homepage_port: 3010
 
 # When true, mounts /var/run/docker.sock so the Docker integration

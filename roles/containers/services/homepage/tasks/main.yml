@@ -23,7 +23,7 @@
 - name: Make sure the Homepage container is running
   docker_container:
     name: "{{ container_name }}"
-    image: "ghcr.io/gethomepage/homepage:latest"
+    image: "{{ homepage_image }}"
     pull: yes
     state: started
     network_mode: host

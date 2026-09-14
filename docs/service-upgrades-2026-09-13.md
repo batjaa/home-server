@@ -141,7 +141,8 @@ Do not rerun these recovery tools as routine maintenance.
 The vendor upgrade workflow moved the control plane to 4.3.19, realtime to
 1.0.19, PostgreSQL to 15.19, Redis to 7.4.11, and pulled helper 1.0.16.
 Sentinel remains at 0.0.22 as selected by the live Coolify version feed; the
-proxy is unchanged. Release notes mention a newer Sentinel, but the deployed
+proxy was unchanged during that control-plane upgrade; the later application
+maintenance below updated it to 3.6.25. Release notes mention a newer Sentinel, but the deployed
 vendor reconciliation uses the feed.
 
 - Host: wormmon
@@ -180,14 +181,137 @@ There is no persistent application state to migrate. The previous image remains
 locally available; rollback uses the old role configuration and the existing
 vault token. See the [DDNS runbook](services.md#cloudflare-ddns).
 
+## Coolify application and host maintenance
+
+Completed after the user approved the application update backlog. Execution
+finished September 13 PDT (September 14 UTC), on wormmon, across all 13 active
+Coolify applications. Changes were committed and pushed from isolated
+worktrees to each application's main branch (TSAS uses master), then explicitly
+deployed and verified. The stopped experimental Heyanda application was excluded.
+
+| Application | Verified database runtime | Deployed commit |
+|---|---|---|
+| bet-mn | PostgreSQL 16.15 | `87ff134c4227` |
+| demo | PostgreSQL 16.15 | `c78d8a1977b1` |
+| fotopass | MySQL 8.4.11 | `6a30db95aeec` |
+| groove | PostgreSQL 16.15 | `7796767e5eee` |
+| Heyanda | MySQL 8.4.11; Neo4j 5.26.30 | `6700bd8db6a9` |
+| kedge | PostgreSQL 16.15 | `83bfbe5356e2` |
+| plotling | MySQL 8.4.11; Neo4j 5.26.30 | `fdcb7b113c96` |
+| summit-todo | PostgreSQL 16.15 | `d1a8357e05dd` |
+| tech-nomads | MySQL 8.4.11 | `de53b756a00b` |
+| tendies | MySQL 8.4.11 | `af41e8ae957d` |
+| tipped | PostgreSQL 16.15 / PostGIS 3.5.7 | `56cf4bb4765a` |
+| tsas | MySQL 8.4.11 | `78ce1b3442c2` |
+| otor | PostgreSQL 16.15 | `b13c5e4eff1e` |
+
+Six MySQL databases moved from the final 8.0.46 release to 8.4.11 LTS.
+The six regular PostgreSQL databases moved from 16.13/16.14 to 16.15.
+Tipped moved from PostgreSQL 16.4 / PostGIS 3.4.3 to PostgreSQL 16.15 /
+PostGIS 3.5.7, using
+`postgis/postgis:16-3.5-alpine@sha256:47e961a569fd52ff31f0fe205ed91eeab17d9f5fff6722e6d7ea6b588748b293`.
+All three PostGIS extensions were upgraded and a spatial query passed.
+Both Neo4j instances moved from 5.26.23 to 5.26.30 on the existing LTS line.
+
+Kedge's Kroki server and Mermaid, Excalidraw, and BPMN sidecars moved together
+from 0.31.0 to 0.32.1. All four formats produced SVGs in an isolated rendering
+check. Live container image versions match the new pins.
+
+Composer security remediation passed for all 13 app lockfiles; all 15 npm
+lockfiles used by the Coolify builds report zero known vulnerabilities at the
+time of verification. Package validation, platform requirements, targeted PHP
+tests, and affected frontend builds passed. PHP/Node/Caddy base images were
+refreshed for the rebuilds. This is a security and compatibility update, not an
+assertion that every dependency is on its newest release. Groove's separate
+mobile dependency tree was outside the Coolify dependency update scope.
+
+Kedge's web build uses Next 16.3.5 and Vitest 4.1.11; its build, tests, and CI
+passed. Plotling and Tipped needed Nova 5.10.2 to fix console command discovery
+with the updated Laravel packages. Regression tests cover command listing and
+Tinker startup. Plotling's full 87-test browser suite and Tipped's 44 targeted
+PHP tests passed. All 18 configured GitHub checks across seven repositories
+finished successfully; six repositories have no configured checks for these
+commits and were verified with local/build/runtime checks.
+
+### Backup and migration evidence
+
+- Remote private backup root:
+  `/opt/docker/data/app-upgrade-backups/20260914T042636Z` on wormmon.
+- Off-host private copy and verification artifacts:
+  `/Users/batjaa/Downloads/coolify-upgrades-2026-09-13`.
+- The database archive is 212,211,829 bytes; SHA-256 checksums are recorded in
+  `archive-checksums.json`. The separate `host-maintenance.tar.gz` contains host
+  package/configuration evidence and the previous proxy configuration.
+- Logical backups from all 13 relational databases were restored into isolated
+  containers running the target database versions. Existing deployed PHP images
+  passed PDO connect/read/write/rollback checks against those restored copies.
+- Each production migration drained writers, stopped the database, archived its
+  data volume, and verified a cold copy before starting the upgraded database.
+  Exact per-table row counts matched while writes were paused. Both Neo4j
+  databases retained their node and relationship counts.
+- Original volumes remain retained. New volumes use `mysql-data-v84`,
+  `postgres-data-v16-15`, `postgres-data-v16-15-postgis35`, or
+  `neo4j-data-v5-26-30`, prefixed with the Coolify application UUID.
+- The five existing production secure notes for Fotopass, MyTendies, Heyanda,
+  Tech Nomads, and TSAS were updated with backup and volume references and
+  read back successfully. Their secrets were preserved.
+
+For rollback, stop writers and preserve current data before restoring the
+matching old database image, configuration, and pre-upgrade volume/archive.
+The retained old volumes are snapshots, not replicas: they do not contain
+writes made after the upgrade. Reconcile those writes before switching back;
+never start an older database image against an upgraded data directory.
+
+### Wormmon host and ingress
+
+Workers were drained and databases stopped cleanly before the shared Docker
+maintenance window. Databases recovered first, then apps, workers, schedulers,
+and ingress. Final versions:
+
+| Component | Before | Verified after |
+|---|---|---|
+| Docker Engine | 29.7.2 | 29.8.0 |
+| containerd | 2.3.3 | 2.3.5 |
+| Docker Compose | 5.4.0 | 5.5.1 |
+| Buildx | 0.36.1 | 0.37.1 |
+| Traefik | 3.6.23 | 3.6.25 |
+| node_exporter | 1.11.1 | 1.12.1 |
+
+APT installed 31 package updates. Ubuntu deferred
+`python3-software-properties` and `software-properties-common` under its
+phased rollout; that policy was not overridden. No reboot is required and no
+systemd units are failed. Node exporter was updated through the existing
+Ansible role, pinned in the local wormmon host variables, and its second
+scoped run passed with **changed=0, failed=0**.
+
+### Final verification
+
+All 65 running containers passed their declared health checks; containers
+without a health check were confirmed running. All 13 app images match the
+tested commit and Composer lockfile hash. All eight configured Nightwatch
+connections passed `nightwatch:status`: Fotopass, Groove, Heyanda, Kedge,
+Plotling, Tech Nomads, MyTendies, and TSAS.
+
+All 16 public URLs loaded in a fresh Chrome context with HTTP 200 after
+redirects, no uncaught JavaScript errors, and no detected broken images.
+Screenshots and page results are in `browser-proof/` in the off-host evidence
+directory. These checks cover public pages; they do not establish that every
+authenticated, payment, or paid AI workflow was exercised in production.
+
+Temporary commit pins and auto-deployment changes were restored to each
+application's previous settings and read back through the Coolify API. The
+clean local Plotling main checkout was fast-forwarded to its deployed commit.
+Other existing local working-tree changes were preserved.
+
 ## Validation and limits
 
-Backup archive listings and the PostgreSQL dump listing were verified. Full
-restore rehearsals were not performed. No host package or firmware updates
-were included. Other audit findings remain open, including MySQL lifecycle,
-PiKVM and MikroTik maintenance, and the other outdated application images.
-The combined playbook syntax check passed. Existing unrelated working-tree
-changes were preserved.
+For the initial Jellyfin, Uptime Kuma, Coolify control-plane, and DDNS work,
+backup archive listings and the PostgreSQL dump listing were verified; full
+restore rehearsals were not performed. The later Coolify application work
+below includes database restore rehearsals and wormmon host packages.
+PiKVM, MikroTik, other hosts, and application updates outside the scope recorded
+here remain separate maintenance work. The combined playbook syntax check
+passed. Existing unrelated working-tree changes were preserved.
 
 Reapply each service independently:
 
@@ -205,3 +329,98 @@ ansible-playbook main.yml -l tentomon --tags cloudflare-ddns
 - [Coolify 4.3.19 release](https://github.com/coollabsio/coolify/releases/tag/v4.3.19)
 - [Coolify version feed](https://cdn.coollabs.io/coolify/versions.json)
 - [Favonia DDNS 1.17.0](https://github.com/favonia/cloudflare-ddns/releases/tag/v1.17.0)
+
+## Application follow-up — 2026-09-14
+
+The user selected seven remaining applications on andromon. All seven were
+updated through their existing Ansible roles and verified. Their image versions
+are now pinned in role defaults; Immich server and ML advance together.
+
+| Application | Before | Verified after |
+|---|---|---|
+| Immich server + ML | 3.1.0 | 3.2.0 |
+| Open WebUI | 0.11.0 (`main`) | 0.11.3 stable |
+| Home Assistant | 2026.8.1 | 2026.9.2 |
+| Homepage | 1.13.2 | 2.3.0 |
+| Plex | 1.43.3.10861 | 1.43.4.10903, LinuxServer `1.43.4.10903-e5521bd8c-ls324` |
+| Whisparr | 3.3.7.979 | 3.5.0.1585, pinned by digest on v3 |
+| SABnzbd | 5.1.0 | 5.1.3, LinuxServer `5.1.3-ls273` |
+
+Immich's database and Redis image IDs were preserved and their existing
+images pinned by digest. This follow-up did not upgrade database engines,
+operating systems, Docker, or network infrastructure.
+
+### Backups and rollback
+
+Each app was stopped cleanly before its backup. Plex had no active viewers;
+Whisparr and SABnzbd had no queued work. Backups are private on andromon:
+`/opt/docker/data/application-upgrade-backups/20260914T142228Z`.
+
+The directory contains pre-upgrade container definitions/image IDs, consistent
+configuration archives, database checks, and verification records. Immich's
+665,961,722-byte custom PostgreSQL dump was restored into a separate container
+with networking disabled. Asset/user/album counts matched the backup. SQLite
+integrity checks passed for Home Assistant, Open WebUI, Whisparr, and SABnzbd.
+
+The off-host recovery archive and browser/runtime evidence are stored in:
+`/Users/batjaa/Downloads/andromon-app-upgrades-2026-09-14`.
+The archive's size and SHA-256 are recorded in `archive-checksum.json`.
+
+Media originals were not duplicated as part of these application backups.
+SABnzbd's existing `Downloads` directory was excluded from its configuration
+archive; its configuration and history were backed up. Plex's library metadata
+was archived, while its separate media mounts were preserved.
+
+Rollback requires stopping the affected app, preserving any new writes, then
+restoring its matching pre-upgrade configuration/database and old image.
+An image downgrade alone does not undo database or Home Assistant registry
+migrations. Keep the original images and backups until the updated apps have
+been exercised sufficiently.
+
+### Verification
+
+- **Immich:** all 80,581 assets remain. Authenticated metadata search and an
+  existing image thumbnail succeeded. No increase in failed background jobs
+  was detected. Both server and ML containers are healthy.
+- **Home Assistant:** the target image passed configuration checking against
+  an isolated writable copy, including device-registry migration. Authenticated
+  API reports `RUNNING` on 2026.9.2. All 196 entity IDs remain, with the same
+  20 pre-existing unavailable entities and no newly unavailable entities.
+  The temporary verification login was revoked afterward.
+- **Open WebUI:** health and version endpoints pass. Both users, all 12 chats,
+  and all three saved models remain; the `chat.timer_at` migration is present.
+  Its authenticated movie-agent connection returns seven available API paths.
+  Ollama on greymon remains unreachable, as noted in the original audit, so
+  chat generation could not be verified.
+- **Homepage:** dashboard and 32 widget requests passed after the other apps
+  recovered, with no widget errors or uncaught JavaScript exceptions. The
+  existing authentication behavior was preserved; v2 authentication is optional.
+- **Plex:** three libraries, five account records, 24,088 metadata records,
+  and 24,078 media items/parts remain. Authenticated media retrieval returned
+  HTTP 206 with a 1,024-byte range. Its authenticated web UI loaded correctly.
+  Unauthenticated `/` is an API endpoint and returns 401; the web UI is `/web/`.
+- **Whisparr:** 744 movie records, 209 files, one root folder, one download
+  client, and two indexers remain. API version, queue, and integration
+  configuration checks passed.
+- **SABnzbd:** all 1,680 history entries remain; the queue is idle and both
+  configured news servers remain present. API and browser checks passed.
+
+All eight application containers match their verified target image IDs and
+pass declared health checks. Startup-log checks found no ERROR/FATAL/CRITICAL
+lines. Seven application UIs loaded in Chrome with no uncaught JavaScript
+exceptions; screenshots are in the off-host evidence directory.
+
+The scoped Ansible rerun passed with **failed=0** and no container replacements.
+Its six reported changes were four directory-permission normalizations and
+the existing SABnzbd temporary server-fragment creation/removal workflow.
+Existing unrelated repository changes were preserved.
+
+Primary release references:
+[Immich 3.2.0](https://github.com/immich-app/immich/releases/tag/v3.2.0),
+[Open WebUI 0.11.3](https://github.com/open-webui/open-webui/releases/tag/v0.11.3),
+[Home Assistant 2026.9](https://www.home-assistant.io/blog/2026/09/02/release-20269/),
+[Homepage 2.3.0](https://github.com/gethomepage/homepage/releases/tag/v2.3.0),
+[Homepage authentication](https://gethomepage.dev/installation/#security-authentication),
+[LinuxServer Plex](https://docs.linuxserver.io/images/docker-plex/),
+[Whisparr image](https://hotio.dev/containers/whisparr/), and
+[SABnzbd 5.1.3](https://github.com/sabnzbd/sabnzbd/releases/tag/5.1.3).

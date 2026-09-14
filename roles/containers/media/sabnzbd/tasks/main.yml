@@ -23,7 +23,7 @@
 - name: Make sure the SABnzbd container is running
   docker_container:
     name: "{{ container_name }}"
-    image: "lscr.io/linuxserver/sabnzbd:latest"
+    image: "{{ sabnzbd_image }}"
     pull: yes
     state: started
     networks:

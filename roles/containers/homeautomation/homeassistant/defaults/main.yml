@@ -1,7 +1,7 @@
 ---
 container_name: homeassistant
 
-homeassistant_image: ghcr.io/home-assistant/home-assistant:stable
+homeassistant_image: ghcr.io/home-assistant/home-assistant:2026.9.2
 homeassistant_port: 8123
 homeassistant_config_dir: "{{ docker_dir }}/{{ container_name }}/config"
 
