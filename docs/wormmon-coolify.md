@@ -571,3 +571,14 @@ mode, with their migrated Supervisor workers and Nightwatch daemons disabled.
 copy the current Coolify database and local storage back to the old deployment,
 then restore the old DNS and Supervisor settings. The retained migration
 snapshots alone do not contain writes made after the cutover.
+
+
+Split DNS uses Pi-hole `dns.hosts` for exact production hostnames. Only explicitly
+configured wildcard suffixes use dnsmasq `address` rules; an apex `address` rule
+would also redirect external media and staging subdomains to SWAG.
+
+The migrated DigitalOcean Nginx sites, including their Forge aliases, are now
+disabled. Original site configurations and data remain intact; the removed
+symlink mapping is `/root/coolify-migrated-websites-disabled.json` on `tinker-box`.
+The old Neo4j container is stopped with restart policy `no`. Staging and the
+unmigrated Tipped site retain their original Nginx routes.

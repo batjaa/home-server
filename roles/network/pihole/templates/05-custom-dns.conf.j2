@@ -4,10 +4,8 @@
 address=/{{ record.domain }}/{{ record.ip }}
 {% endfor %}
 
-# Split DNS for external domains (*.batjaa.site → SWAG on LAN)
-{% for record in pihole_split_dns %}
-address=/{{ record.domain }}/{{ record.ip }}
-{% endfor %}
+# Exact split DNS records are configured through Pi-hole dns.hosts.
+# Do not use address=/domain/ here: it also overrides media and staging subdomains.
 
 # Wildcard split DNS suffixes (*.preview.batjaa.site → wormmon on LAN)
 {% for record in pihole_wildcard_dns | default([]) %}
