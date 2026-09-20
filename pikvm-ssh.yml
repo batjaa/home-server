@@ -1,0 +1,34 @@
+---
+# PiKVM keeps its factory OS; this playbook manages only additional SSH keys.
+- name: Authorize SSH clients on PiKVM recovery devices
+  hosts: pikvm
+  gather_facts: false
+  vars:
+    username: root
+    ansible_remote_tmp: /tmp/.ansible-root
+  tasks:
+    - name: Check whether additional SSH keys need updating
+      ansible.posix.authorized_key:
+        user: "{{ username }}"
+        state: present
+        key: "{{ item }}"
+        exclusive: false
+      loop: "{{ ssh_additional_public_keys | default([]) }}"
+      check_mode: true
+      register: pikvm_ssh_keys
+
+    - name: Persist additional SSH keys
+      when:
+        - pikvm_ssh_keys is changed
+        - not ansible_check_mode
+      block:
+        - name: Make the PiKVM filesystem writable
+          ansible.builtin.raw: rw
+          changed_when: false
+
+        - name: Install additional SSH keys
+          ansible.builtin.import_tasks: roles/system/tasks/ssh-keys.yml
+      always:
+        - name: Restore the PiKVM filesystem to read-only mode
+          ansible.builtin.raw: ro
+          changed_when: false

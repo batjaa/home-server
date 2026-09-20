@@ -62,6 +62,10 @@ email_smtp_port_startls: 587
 #
 security_ssh_port: 50
 
+# Public keys for additional clients, shared by servers and pikvm-ssh.yml.
+ssh_additional_public_keys:
+    - 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOEbLmL910dLtkUzyop6SuSfM2KO7JWXb+uhFlQKs8gc home-mac'
+
 security_sudoers_passwordless: ['{{ username }}']
 
 security_autoupdate_reboot: true

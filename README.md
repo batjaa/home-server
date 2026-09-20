@@ -757,6 +757,40 @@ These are systemd timers that periodically write `*.prom` files into the textfil
 
 ## Day-to-day Usage
 
+### Additional SSH clients
+
+Add each client's public key to `ssh_additional_public_keys` (a YAML list) in
+`group_vars/all/vars.yml`. Existing keys, including the per-host vault
+`ssh_public_key`, are preserved. Apply only the additional keys with:
+
+```bash
+ansible-playbook main.yml --tags ssh-keys
+```
+
+The PiKVM devices use the separate `pikvm` inventory group shown in
+`hosts.example`. Their factory OS is unchanged; `pikvm-ssh.yml` only adds the
+same client keys to root's authorized keys. It temporarily makes the filesystem
+writable when keys need updating, then restores read-only mode, following the
+[PiKVM handbook](https://docs.pikvm.org/cheatsheet/).
+
+```bash
+# Use --ask-pass when the controller's SSH key is not already authorized.
+ansible-playbook pikvm-ssh.yml --ask-pass
+```
+
+Current SSH endpoints:
+
+| Host | Login | Port |
+|------|-------|------|
+| andromon | `batjaa@192.168.50.20` | 100 |
+| tentomon | `tentomon@192.168.50.10` | 50 |
+| wormmon | `batjaa@192.168.50.40` | 22 |
+| kvm.andromon | `root@192.168.50.21` | 22 |
+| kvm.greymon | `root@192.168.50.31` | 22 |
+| kvm.wormmon | `root@192.168.50.41` | 22 |
+
+### Running playbooks
+
 Run everything (all hosts):
 ```bash
 ansible-playbook main.yml

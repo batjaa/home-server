@@ -57,6 +57,9 @@
   notify:
     - remove default user
 
+- import_tasks: ssh-keys.yml
+  tags: [ssh-keys]
+
 - name: Set the default shell
   user:
     name: "{{ username }}"

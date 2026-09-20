@@ -1,0 +1,9 @@
+---
+- name: Authorize additional SSH clients
+  ansible.posix.authorized_key:
+    user: "{{ username }}"
+    state: present
+    key: "{{ item }}"
+    exclusive: false
+  loop: "{{ ssh_additional_public_keys | default([]) }}"
+  tags: [ssh-keys]
