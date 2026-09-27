@@ -478,3 +478,7 @@
       - role: containers/media/arr-search
         tags: [arr-search, arr, containers]
         when: enable_arr_search | default(false) | bool
+
+# App-specific storage and GoDaddy HTTP-01 ingress. Coolify owns the workload.
+- import_playbook: jolly.yml
+  tags: [jolly]

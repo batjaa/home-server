@@ -1,0 +1,48 @@
+# Managed by home-server roles/network/jolly. Coolify owns the upstream app.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name jollyanswer.com www.jollyanswer.com;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root /config/nginx/acme;
+        try_files $uri =404;
+    }
+    location / {
+{% if jolly_tls | bool %}
+        return 308 https://jollyanswer.com$request_uri;
+{% else %}
+        default_type text/plain;
+        return 503 "Jolly Answer is being deployed. HTTPS will activate after DNS is updated.\n";
+{% endif %}
+    }
+}
+{% if jolly_tls | bool %}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name www.jollyanswer.com;
+    ssl_certificate /config/nginx/jolly-letsencrypt/live/jollyanswer.com/fullchain.pem;
+    ssl_certificate_key /config/nginx/jolly-letsencrypt/live/jollyanswer.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    return 308 https://jollyanswer.com$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name jollyanswer.com;
+    ssl_certificate /config/nginx/jolly-letsencrypt/live/jollyanswer.com/fullchain.pem;
+    ssl_certificate_key /config/nginx/jolly-letsencrypt/live/jollyanswer.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    client_max_body_size 8k;
+
+    location / {
+        include /config/nginx/proxy.conf;
+        proxy_pass https://{{ hostvars['wormmon']['ansible_host'] }}:443;
+    }
+}
+{% endif %}

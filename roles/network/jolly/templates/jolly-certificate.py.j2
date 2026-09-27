@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+"""Issue a separate HTTP-01 cert without modifying SWAG's shared wildcard cert."""
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+from urllib.parse import urlencode
+from urllib.request import urlopen
+
+if len(sys.argv) > 1 and sys.argv[1] == 'version':
+    print('dev')
+    sys.exit(0)
+
+def records(name, kind):
+    with urlopen('https://dns.google/resolve?' + urlencode({'name': name, 'type': kind}), timeout=15) as response:
+        result = json.load(response)
+    if result.get('Status') != 0:
+        raise RuntimeError('DNS lookup failed for ' + name)
+    return {row['data'] for row in result.get('Answer', []) if row['type'] == kind}
+
+def run(*args):
+    subprocess.run(args, check=True, timeout=240)
+
+base = Path({{ (docker_dir ~ '/swag') | to_json }})
+certificate = base / 'nginx/jolly-letsencrypt/live/jollyanswer.com/fullchain.pem'
+if not certificate.exists():
+    home = records('ddns.batjaa.site', 1)
+    for domain in ['jollyanswer.com', 'www.jollyanswer.com']:
+        if not home or records(domain, 1) != home or records(domain, 28):
+            print('Waiting for public A/CNAME records to point home, with no conflicting AAAA: ' + domain)
+            sys.exit(0)
+    run('docker', 'exec', 'swag', 'certbot', 'certonly', '--non-interactive', '--agree-tos', '--config', '/dev/null',
+        '--config-dir', '/config/nginx/jolly-letsencrypt', '--work-dir', '/tmp/letsencrypt',
+        '--logs-dir', '/config/log/letsencrypt', '--webroot', '-w', '/config/nginx/acme', '--preferred-challenges', 'http',
+        '--cert-name', 'jollyanswer.com', '--email', {{ email | to_json }},
+        '--deploy-hook', 'nginx -s reload', '-d', 'jollyanswer.com', '-d', 'www.jollyanswer.com')
+
+ready = base / 'nginx/jollyanswer-ready.conf'
+active = base / 'nginx/proxy-confs/jollyanswer.subdomain.conf'
+if ready.read_bytes() == active.read_bytes():
+    print('HTTPS already active')
+    sys.exit(0)
+previous = active.read_bytes()
+temporary = active.with_suffix('.pending')
+shutil.copyfile(ready, temporary)
+temporary.chmod(0o664)
+temporary.replace(active)
+try:
+    run('docker', 'exec', 'swag', 'nginx', '-t')
+    run('docker', 'exec', 'swag', 'nginx', '-s', 'reload')
+except Exception:
+    active.write_bytes(previous)
+    raise
+print('Activated HTTPS for jollyanswer.com and www.jollyanswer.com')

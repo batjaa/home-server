@@ -1,0 +1,17 @@
+---
+# Coolify owns the app; this playbook owns its persistent directory and edge.
+- hosts: wormmon
+  become: true
+  tasks:
+    - name: Create Jolly SQLite storage for the Node container
+      ansible.builtin.file:
+        path: /opt/docker/data/jolly
+        state: directory
+        owner: '1000'
+        group: '1000'
+        mode: '0700'
+
+- hosts: andromon
+  become: true
+  roles:
+    - network/jolly

@@ -295,6 +295,32 @@ Expected results:
 - `www` returns `308` with `Location: https://usegroove.app/...`;
 - `/up` returns a successful response.
 
+## Jolly Answer (`jollyanswer.com`)
+
+Jolly's landing page is deployed in Coolify on wormmon, with persistent SQLite
+at `/opt/docker/data/jolly`. Its repository is `tech-nomads-inc/jolly`; the
+application's `docs/INFRASTRUCTURE.md` is the detailed deployment and recovery
+runbook, including a rendered traffic diagram and the future multi-app layout.
+
+Unlike the other production domains, its authoritative DNS remains at GoDaddy.
+Do not add it to `swag_extra_domains`: that shared certificate uses Cloudflare
+DNS-01. The `network/jolly` role installs an independent HTTP-01 certificate
+flow, guarded by public DNS checks, with a separate persistent Certbot directory
+under `/opt/docker/data/swag/nginx/jolly-letsencrypt` and explicit renewal cron.
+
+Run `ansible-playbook jolly.yml` (also imported by the full playbook with the
+`jolly` tag). It creates the UID 1000 data directory and configures the SWAG route
+and `jolly-certificate.timer`. The timer activates HTTPS once GoDaddy apex and
+`www` records point home. Public TCP 80 must also forward to andromon for ACME;
+the initial public-IP test refused port 80 even though SWAG was listening locally.
+Split DNS is declared in `host_vars/tentomon/vars.yml` and applied with `pihole`.
+
+Initially the app uses a Coolify custom service built from the local checkout.
+Repository admin access is available, but the organization currently disables
+deploy keys, so source-based auto-deploy is pending that policy decision or a
+GitHub App integration. Refer to the application runbook for the live resource
+IDs and current status. Gemini calls are disabled until the runtime key is set.
+
 ## Certificate notes
 
 `*.batjaa.site` does not cover `*.preview.batjaa.site` — wildcards only

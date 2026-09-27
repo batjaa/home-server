@@ -1,0 +1,94 @@
+---
+- name: Create persistent HTTP challenge directory
+  ansible.builtin.file:
+    path: '{{ docker_dir }}/swag/nginx/acme/.well-known/acme-challenge'
+    state: directory
+    mode: '0755'
+
+- name: Check whether Jolly has a certificate
+  ansible.builtin.stat:
+    path: '{{ docker_dir }}/swag/nginx/jolly-letsencrypt/live/jollyanswer.com/fullchain.pem'
+  register: jolly_certificate
+
+- name: Render Jolly configuration ready for HTTPS
+  ansible.builtin.template:
+    src: jollyanswer.conf.j2
+    dest: '{{ docker_dir }}/swag/nginx/jollyanswer-ready.conf'
+    mode: '0644'
+  vars:
+    jolly_tls: true
+
+- name: Install current Jolly ingress configuration
+  ansible.builtin.template:
+    src: jollyanswer.conf.j2
+    dest: '{{ docker_dir }}/swag/nginx/proxy-confs/jollyanswer.subdomain.conf'
+    mode: '0664'
+  vars:
+    jolly_tls: '{{ jolly_certificate.stat.exists }}'
+  notify: Reload Jolly ingress
+
+- name: Install automatic DNS cutover script
+  ansible.builtin.template:
+    src: jolly-certificate.py.j2
+    dest: /usr/local/sbin/jolly-certificate
+    mode: '0755'
+
+- name: Install DNS cutover service and timer
+  ansible.builtin.copy:
+    dest: '/etc/systemd/system/jolly-certificate.{{ item.key }}'
+    content: '{{ item.value }}'
+    mode: '0644'
+  loop:
+    - key: service
+      value: |
+        [Unit]
+        Description=Activate Jolly HTTPS when public DNS points home
+        After=docker.service network-online.target
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/jolly-certificate
+        TimeoutStartSec=300
+    - key: timer
+      value: |
+        [Unit]
+        Description=Check Jolly DNS cutover every 15 minutes
+        [Timer]
+        OnBootSec=5min
+        OnUnitActiveSec=15min
+        [Install]
+        WantedBy=timers.target
+  register: jolly_units
+
+- name: Enable DNS cutover timer
+  ansible.builtin.systemd:
+    name: jolly-certificate.timer
+    enabled: true
+    state: started
+    daemon_reload: '{{ jolly_units.changed }}'
+
+- name: Apply current ingress before certificate checks
+  ansible.builtin.meta: flush_handlers
+
+# SWAG's standard renewal command loads a Cloudflare-only cli.ini. Keep the
+# GoDaddy HTTP-01 certificate on a separate renewal schedule with explicit flags.
+- name: Install Jolly HTTP-01 certificate renewal
+  ansible.builtin.cron:
+    name: Renew Jolly HTTP certificate
+    minute: '23'
+    hour: '3,15'
+    job: >-
+      test ! -f {{ docker_dir }}/swag/nginx/jolly-letsencrypt/live/jollyanswer.com/fullchain.pem ||
+      docker exec swag certbot renew --quiet --config /dev/null
+      --config-dir /config/nginx/jolly-letsencrypt --work-dir /tmp/letsencrypt
+      --logs-dir /config/log/letsencrypt --cert-name jollyanswer.com
+      --webroot --webroot-path /config/nginx/acme --preferred-challenges http
+      --deploy-hook 'nginx -s reload'
+
+- name: Check DNS and activate certificate when ready
+  ansible.builtin.command: /usr/local/sbin/jolly-certificate
+  register: jolly_activation
+  changed_when: "'Activated HTTPS' in jolly_activation.stdout"
+
+- name: Report certificate readiness
+  ansible.builtin.debug:
+    var: jolly_activation.stdout
