@@ -496,3 +496,7 @@
   tags: [jolly-app]
 - import_playbook: jolly-dns.yml
   tags: [jolly-dns]
+
+# Project preview namespaces: shared DNS, isolated wildcard TLS, target routing.
+- import_playbook: preview-projects.yml
+  tags: [preview-projects]

@@ -1,0 +1,118 @@
+---
+- name: Resolve project namespace
+  ansible.builtin.set_fact:
+    preview_domain: '{{ preview_registration.key }}.preview.batjaa.site'
+    preview_target: '{{ preview_targets[preview_registration.value.target] }}'
+
+- name: Check isolated project certificate
+  ansible.builtin.stat:
+    path: '{{ docker_dir }}/swag/nginx/preview-letsencrypt/live/{{ preview_domain }}/fullchain.pem'
+  register: preview_certificate
+
+- name: Issue root and wildcard project certificate using DNS-01
+  ansible.builtin.command:
+    argv:
+      - docker
+      - exec
+      - swag
+      - certbot
+      - certonly
+      - --non-interactive
+      - --agree-tos
+      - --config
+      - /dev/null
+      - --config-dir
+      - /config/nginx/preview-letsencrypt
+      - --work-dir
+      - /tmp/preview-letsencrypt
+      - --logs-dir
+      - /config/log/preview-letsencrypt
+      - --dns-cloudflare
+      - --dns-cloudflare-credentials
+      - /config/dns-conf/cloudflare.ini
+      - --dns-cloudflare-propagation-seconds
+      - '30'
+      - --cert-name
+      - '{{ preview_domain }}'
+      - --email
+      - '{{ email }}'
+      - -d
+      - '{{ preview_domain }}'
+      - -d
+      - '*.{{ preview_domain }}'
+  when: not preview_certificate.stat.exists
+  changed_when: true
+
+- name: Check existing registered route
+  ansible.builtin.stat:
+    path: '{{ docker_dir }}/swag/nginx/proxy-confs/preview-project-{{ preview_registration.key }}.subdomain.conf'
+  register: preview_old_route
+
+- name: Preserve existing registered route for validation rollback
+  ansible.builtin.slurp:
+    src: '{{ docker_dir }}/swag/nginx/proxy-confs/preview-project-{{ preview_registration.key }}.subdomain.conf'
+  register: preview_old_content
+  when: preview_old_route.stat.exists
+
+- name: Install and validate project route
+  block:
+    - name: Render project root and service routing
+      ansible.builtin.template:
+        src: project.conf.j2
+        dest: '{{ docker_dir }}/swag/nginx/proxy-confs/preview-project-{{ preview_registration.key }}.subdomain.conf'
+        mode: '0644'
+      register: preview_route
+    - name: Validate Nginx before activation
+      ansible.builtin.command: docker exec swag nginx -t
+      changed_when: false
+    - name: Schedule reload for a changed route
+      ansible.builtin.debug:
+        msg: 'Validated {{ preview_domain }}'
+      changed_when: preview_route.changed
+      notify: Reload registered preview ingress
+  rescue:
+    - name: Restore previous route
+      ansible.builtin.copy:
+        content: '{{ preview_old_content.content | b64decode }}'
+        dest: '{{ docker_dir }}/swag/nginx/proxy-confs/preview-project-{{ preview_registration.key }}.subdomain.conf'
+        mode: '0644'
+      when: preview_old_route.stat.exists
+    - name: Remove invalid new route
+      ansible.builtin.file:
+        path: '{{ docker_dir }}/swag/nginx/proxy-confs/preview-project-{{ preview_registration.key }}.subdomain.conf'
+        state: absent
+      when: not preview_old_route.stat.exists
+    - name: Report failed route activation
+      ansible.builtin.fail:
+        msg: 'Project route failed validation; previous route restored without reloading Nginx.'
+
+# Only retire explicitly listed old routes after the replacement validates.
+- name: Retire superseded per-app preview routes
+  ansible.builtin.file:
+    path: '{{ docker_dir }}/swag/nginx/proxy-confs/{{ item }}'
+    state: absent
+  loop: '{{ preview_registration.value.legacy_routes | default([]) }}'
+  notify: Reload registered preview ingress
+
+- name: Exercise project certificate renewal against ACME staging when requested
+  ansible.builtin.command:
+    argv:
+      - docker
+      - exec
+      - swag
+      - certbot
+      - renew
+      - --dry-run
+      - --non-interactive
+      - --config
+      - /dev/null
+      - --config-dir
+      - /config/nginx/preview-letsencrypt
+      - --work-dir
+      - /tmp/preview-letsencrypt
+      - --logs-dir
+      - /config/log/preview-letsencrypt
+      - --cert-name
+      - '{{ preview_domain }}'
+  when: preview_test_renewal | default(false) | bool
+  changed_when: false

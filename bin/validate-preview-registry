@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""Validate the complete registry before Ansible makes external changes."""
+import importlib.machinery
+import importlib.util
+from pathlib import Path
+import sys
+
+path = Path(__file__).resolve().with_name('register-preview-project')
+loader = importlib.machinery.SourceFileLoader('preview_registry', str(path))
+spec = importlib.util.spec_from_loader(loader.name, loader)
+module = importlib.util.module_from_spec(spec)
+loader.exec_module(module)
+if sys.argv[1:] == ['version']:
+    print(module.VERSION)
+else:
+    module.read_registry(path.parent.parent)
+    print('Preview registry valid')

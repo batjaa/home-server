@@ -1,0 +1,21 @@
+{
+  "exported_at": "2026-09-27 02:54:03",
+  "source": "GoDaddy zone export supplied by domain owner through user",
+  "zone": "jollyanswer.com",
+  "records": [
+    {"type":"A","name":"jollyanswer.com","content":"50.47.228.186","priority":0},
+    {"type":"CNAME","name":"pay.jollyanswer.com","content":"paylinks.commerce.godaddy.com","priority":0},
+    {"type":"CNAME","name":"www.jollyanswer.com","content":"jollyanswer.com","priority":0},
+    {"type":"CNAME","name":"_domainconnect.jollyanswer.com","content":"_domainconnect.gd.domaincontrol.com","priority":0},
+    {"type":"MX","name":"jollyanswer.com","content":"aspmx.l.google.com","priority":1},
+    {"type":"MX","name":"jollyanswer.com","content":"alt3.aspmx.l.google.com","priority":10},
+    {"type":"MX","name":"jollyanswer.com","content":"alt4.aspmx.l.google.com","priority":10},
+    {"type":"MX","name":"jollyanswer.com","content":"alt1.aspmx.l.google.com","priority":5},
+    {"type":"MX","name":"jollyanswer.com","content":"alt2.aspmx.l.google.com","priority":5},
+    {"type":"TXT","name":"jollyanswer.com","content":"google-site-verification=cmbDVhthnNR2UTzqe1Y-T8oFuZGtXEEAak89EaRZrdQ","priority":0},
+    {"type":"TXT","name":"jollyanswer.com","content":"v=spf1 include:dc-aa8e722993._spfm.jollyanswer.com ~all","priority":0},
+    {"type":"TXT","name":"dc-aa8e722993._spfm.jollyanswer.com","content":"v=spf1 include:_spf.google.com ~all","priority":0},
+    {"type":"TXT","name":"_dmarc.jollyanswer.com","content":"v=DMARC1; p=quarantine; adkim=r; aspf=r; rua=mailto:dmarc_rua@onsecureserver.net;","priority":0}
+  ],
+  "note": "SOA and old GoDaddy NS omitted deliberately; Cloudflare manages authority records. TTLs are not compared."
+}

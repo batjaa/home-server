@@ -1,0 +1,14 @@
+{
+  "preview_targets": {
+    "wormmon": {
+      "server_uuid": "oj5cg3ezwioty3yv7uud1o2j",
+      "upstream_host": "192.168.50.40",
+      "upstream_port": 443
+    },
+    "tech-nomads": {
+      "server_uuid": "b3mwnfgzbdyjtb7uuzrz0qlw",
+      "upstream_host": "192.168.50.40",
+      "upstream_port": 8443
+    }
+  }
+}

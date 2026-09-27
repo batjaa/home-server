@@ -1,0 +1,30 @@
+---
+- hosts: tentomon
+  gather_facts: false
+  vars:
+    exported: '{{ lookup("file", "docs/dns/jollyanswer-export-2026-09-27.json") | from_json }}'
+  tasks:
+    - name: Read prepared Cloudflare zone
+      delegate_to: localhost
+      ansible.builtin.uri:
+        url: https://api.cloudflare.com/client/v4/zones/fc373bec548e276bb24e81937a09397b/dns_records?per_page=100
+        headers:
+          Authorization: 'Bearer {{ cloudflare_dns_token }}'
+        return_content: true
+      register: prepared
+      no_log: true
+    - name: Normalize public record values
+      ansible.builtin.set_fact:
+        normalized: '{{ normalized | default([]) + [{"type": item.type, "name": item.name, "content": item.content | trim("\""), "priority": item.priority | default(0)}] }}'
+      loop: '{{ prepared.json.result }}'
+      no_log: true
+    - name: Verify every exported record including MX priorities
+      ansible.builtin.assert:
+        that: item in normalized
+        fail_msg: 'Missing or changed record: {{ item.name }} ({{ item.type }})'
+      loop: '{{ exported.records }}'
+      loop_control:
+        label: '{{ item.name }} ({{ item.type }})'
+    - name: Verify existing records remain DNS-only
+      ansible.builtin.assert:
+        that: prepared.json.result | selectattr('proxied', 'equalto', true) | list | length == 0

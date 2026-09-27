@@ -840,3 +840,16 @@ records. The assigned nameservers are `keaton.ns.cloudflare.com` and
 `kristina.ns.cloudflare.com`. Do not switch until the full export has been imported
 and checked. `jolly-app.preview.batjaa.site` provides a separate HTTPS app preview
 through the existing preview certificate while production DNS is pending.
+
+### Registered project previews
+
+Project namespaces now share an automated registration workflow. A single entry
+in `vars/preview-projects.json` provisions DNS, a project wildcard certificate,
+and routing to the approved Coolify target. `app-bootstrap` registers projects
+before deployment; additional service subdomains require only app hostname
+configuration. See [the preview runbook](docs/project-previews.md).
+
+Jolly's business app is at `https://app.jolly.preview.batjaa.site`; the old
+`jolly-app.preview.batjaa.site` remains an alias. Production nameservers are
+independent. `verify-jolly-dns.yml` checks the prepared Cloudflare zone against
+the owner-provided export, including mail records and MX priorities.
