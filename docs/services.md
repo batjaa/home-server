@@ -335,6 +335,12 @@ is single-provider SSL.
   (`http://sabnzbd:8080`, paste SAB API key, category `movies`)
 - Click Apps → Sync App Indexers (pushes indexer config to all *arr apps)
 
+The Ansible role assigns NZBFinder to a managed `Interactive only` application
+profile. This disables RSS and automatic searches for NZBFinder in every synced
+*arr app while preserving manual interactive searches. NZBFinder sometimes
+omits IMDb/TMDb IDs from Newznab results, which can otherwise make Radarr accept
+an unrelated movie with the same title and year.
+
 ### Radarr — `https://radarr.batjaa.site`
 
 **Manual setup if `_docker_data` was lost:**
@@ -418,9 +424,12 @@ Role gotchas (cost a debugging session, don't rediscover):
 
 ### arr-search (timer, no UI)
 
-`arr-missing-search.timer` on andromon, nightly 04:00: triggers
-`MissingMoviesSearch` in Radarr, `MissingEpisodeSearch` in Sonarr
-30 minutes later, then a rotating Whisparr batch another 30 minutes later.
+`arr-missing-search.timer` on andromon, nightly 04:00: searches a rotating
+batch of monitored, missing Radarr movies whose `isAvailable` flag is true,
+triggers `MissingEpisodeSearch` in Sonarr 30 minutes later, then processes a
+rotating Whisparr batch another 30 minutes later. Filtering Radarr's backlog
+before invoking `MoviesSearch` prevents the user-invoked search path from
+bypassing the movie's configured minimum availability date.
 Exists because RSS sync only grabs releases posted *after* the initial search
 — without it, a request whose first search found nothing is never retried.
 Whisparr is batched with a cursor in `/var/lib/arr-search/state.json` so the

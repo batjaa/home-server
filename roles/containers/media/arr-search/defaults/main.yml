@@ -7,6 +7,7 @@ whisparr_port: 6969
 # backup, before peak indexer hours). Apps are offset to spread indexer API
 # usage.
 arr_search_schedule: '04:00'
+arr_search_radarr_missing_batch_size: 50
 arr_search_sonarr_delay_minutes: 30
 arr_search_whisparr_delay_minutes: 30
 arr_search_state_dir: /var/lib/arr-search
@@ -41,9 +42,9 @@ arr_search_apps:
     enabled: "{{ enable_radarr | default(false) | bool }}"
     url: "http://127.0.0.1:{{ radarr_port }}"
     api_key: "{{ radarr_api_key }}"
-    mode: command
-    payload:
-      name: MissingMoviesSearch
+    mode: missing_movie_batch
+    command: MoviesSearch
+    batch_size: "{{ arr_search_radarr_missing_batch_size }}"
     delay_before_minutes: 0
 
   - name: Sonarr

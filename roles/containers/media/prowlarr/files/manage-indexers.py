@@ -4,9 +4,12 @@
 Reads the desired indexer list as JSON from $PROWLARR_INDEXERS, the API key
 from $PROWLARR_API_KEY, and the API base URL from $PROWLARR_URL (default
 http://127.0.0.1:9696). For each entry, ensures a matching Prowlarr indexer
-exists with the right baseUrl + apiKey; creates it if missing, updates if
-present and drifted. Indexers in Prowlarr but absent from the desired list
-are left alone (non-destructive — UI-added indexers survive).
+exists with the right baseUrl + apiKey and application profile; creates it if
+missing, updates if present and drifted. Names in
+$PROWLARR_INTERACTIVE_ONLY_INDEXERS are assigned a managed profile that turns
+off RSS and automatic search while retaining interactive search. Indexers in
+Prowlarr but absent from the desired list are left alone (non-destructive —
+UI-added indexers survive).
 
 Prints "changed" on stdout if any create/update happened (used by the
 Ansible task's changed_when).
@@ -23,6 +26,16 @@ import urllib.request
 
 BASE = os.environ.get("PROWLARR_URL", "http://127.0.0.1:9696").rstrip("/")
 KEY = os.environ.get("PROWLARR_API_KEY") or sys.exit("PROWLARR_API_KEY not set")
+INTERACTIVE_ONLY_INDEXERS = set(
+    json.loads(os.environ.get("PROWLARR_INTERACTIVE_ONLY_INDEXERS", "[]"))
+)
+INTERACTIVE_ONLY_PROFILE = {
+    "name": "Interactive only",
+    "enableRss": False,
+    "enableAutomaticSearch": False,
+    "enableInteractiveSearch": True,
+    "minimumSeeders": 1,
+}
 
 
 def call(method: str, path: str, body=None):
@@ -41,7 +54,12 @@ def call(method: str, path: str, body=None):
         raise SystemExit(f"{method} {path} -> {e.code}: {body}")
 
 
-def newznab_payload(name: str, base_url: str, api_key: str) -> dict:
+def newznab_payload(
+    name: str,
+    base_url: str,
+    api_key: str,
+    app_profile_id: int = 1,
+) -> dict:
     """Build a POST/PUT body for a Newznab indexer."""
     return {
         "enable": True,
@@ -50,7 +68,7 @@ def newznab_payload(name: str, base_url: str, api_key: str) -> dict:
         "supportsSearch": True,
         "supportsRedirect": True,
         "supportsPagination": True,
-        "appProfileId": 1,
+        "appProfileId": app_profile_id,
         "protocol": "usenet",
         "privacy": "private",
         "priority": 25,
@@ -79,15 +97,37 @@ def field_value(indexer: dict, field_name: str):
     return None
 
 
+def app_profile_needs_update(existing: dict, desired: dict) -> bool:
+    return any(existing.get(key) != value for key, value in desired.items())
+
+
+def ensure_app_profile(desired: dict) -> tuple[int, bool]:
+    profiles = call("GET", "/api/v1/appprofile")
+    existing = next(
+        (profile for profile in profiles if profile.get("name") == desired["name"]),
+        None,
+    )
+    if existing is None:
+        created = call("POST", "/api/v1/appprofile", desired)
+        return int(created["id"]), True
+
+    if app_profile_needs_update(existing, desired):
+        payload = {**desired, "id": existing["id"]}
+        updated = call("PUT", f"/api/v1/appprofile/{existing['id']}", payload)
+        return int((updated or payload)["id"]), True
+
+    return int(existing["id"]), False
+
+
 def needs_update(existing: dict, desired: dict) -> bool:
-    """True iff baseUrl differs or the indexer is disabled (apiKey is masked
-    on GET so we can't compare it; rely on the user to bump some other field
-    to trigger a refresh, or delete the indexer if you want a forced reset)."""
+    """True iff managed settings differ (apiKey is masked on GET)."""
     if not existing.get("enable", True):
         return True
     if field_value(existing, "baseUrl") != field_value(desired, "baseUrl"):
         return True
     if field_value(existing, "apiPath") != field_value(desired, "apiPath"):
+        return True
+    if existing.get("appProfileId", 1) != desired.get("appProfileId", 1):
         return True
     return False
 
@@ -97,9 +137,24 @@ def main() -> int:
     existing = {i["name"]: i for i in call("GET", "/api/v1/indexer")}
 
     changed = False
+    interactive_only_profile_id = None
+    if INTERACTIVE_ONLY_INDEXERS:
+        interactive_only_profile_id, profile_changed = ensure_app_profile(
+            INTERACTIVE_ONLY_PROFILE
+        )
+        changed |= profile_changed
+
     for spec in desired:
         name = spec["name"]
-        payload = newznab_payload(name, spec["base_url"], spec["api_key"])
+        app_profile_id = (
+            interactive_only_profile_id if name in INTERACTIVE_ONLY_INDEXERS else 1
+        )
+        payload = newznab_payload(
+            name,
+            spec["base_url"],
+            spec["api_key"],
+            app_profile_id=app_profile_id,
+        )
         if name in existing:
             cur = existing[name]
             if needs_update(cur, payload):

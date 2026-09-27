@@ -195,14 +195,18 @@ def trigger_missing_movie_batch(app, api_key, state):
     records, total = wanted_missing_records(app, api_key)
     missing_ids = []
     for record in records:
-        if not truthy(record.get("monitored", True)) or truthy(record.get("hasFile")):
+        if (
+            not truthy(record.get("monitored", True))
+            or truthy(record.get("hasFile"))
+            or not truthy(record.get("isAvailable"))
+        ):
             continue
         movie_id = record.get("movieId") or record.get("id")
         if movie_id is not None:
             missing_ids.append(int(movie_id))
 
     if not missing_ids:
-        log(f"{app['name']} has no monitored missing items")
+        log(f"{app['name']} has no available monitored missing items")
         return False
 
     key = app_key(app)
@@ -215,7 +219,8 @@ def trigger_missing_movie_batch(app, api_key, state):
     command = app.get("command", "MoviesSearch")
     log(
         f"Triggering {app['name']} {command} for {len(selected)} of "
-        f"{len(missing_ids)} monitored missing items; total wanted records: {total}; offset: {offset}"
+        f"{len(missing_ids)} available monitored missing items; "
+        f"total wanted records: {total}; offset: {offset}"
     )
     request_json(
         "POST",

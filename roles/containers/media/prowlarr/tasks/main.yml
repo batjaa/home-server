@@ -61,6 +61,7 @@
     PROWLARR_URL: "http://127.0.0.1:{{ prowlarr_port }}"
     PROWLARR_API_KEY: "{{ prowlarr_api_key }}"
     PROWLARR_INDEXERS: "{{ prowlarr_indexers | to_json }}"
+    PROWLARR_INTERACTIVE_ONLY_INDEXERS: "{{ prowlarr_interactive_only_indexers | to_json }}"
   register: prowlarr_indexers_run
   changed_when: "'changed' in prowlarr_indexers_run.stdout"
   no_log: true

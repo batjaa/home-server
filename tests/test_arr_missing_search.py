@@ -31,6 +31,57 @@ class ArrMissingSearchTests(unittest.TestCase):
     def setUpClass(cls):
         cls.module = load_template()
 
+    def test_missing_movie_batch_searches_only_available_movies(self):
+        app = {"name": "Radarr", "url": "http://radarr", "batch_size": 50}
+        records = [
+            {"id": 1, "monitored": True, "hasFile": False, "isAvailable": False},
+            {"id": 2, "monitored": True, "hasFile": False, "isAvailable": True},
+            {"id": 3, "monitored": False, "hasFile": False, "isAvailable": True},
+            {"id": 4, "monitored": True, "hasFile": True, "isAvailable": True},
+        ]
+        request = mock.Mock()
+
+        with mock.patch.dict(
+            self.module,
+            {
+                "wanted_missing_records": mock.Mock(return_value=(records, len(records))),
+                "request_json": request,
+                "log": mock.Mock(),
+            },
+        ):
+            state = {}
+            changed = self.module["trigger_missing_movie_batch"](app, "key", state)
+
+        self.assertTrue(changed)
+        request.assert_called_once_with(
+            "POST",
+            "http://radarr",
+            "key",
+            "/api/v3/command",
+            payload={"name": "MoviesSearch", "movieIds": [2]},
+        )
+        self.assertEqual(state["radarr"]["last_count"], 1)
+
+    def test_missing_movie_batch_does_not_search_when_movies_are_unavailable(self):
+        app = {"name": "Radarr", "url": "http://radarr", "batch_size": 50}
+        records = [
+            {"id": 1, "monitored": True, "hasFile": False, "isAvailable": False},
+        ]
+        request = mock.Mock()
+
+        with mock.patch.dict(
+            self.module,
+            {
+                "wanted_missing_records": mock.Mock(return_value=(records, len(records))),
+                "request_json": request,
+                "log": mock.Mock(),
+            },
+        ):
+            changed = self.module["trigger_missing_movie_batch"](app, "key", {})
+
+        self.assertFalse(changed)
+        request.assert_not_called()
+
     def test_movie_file_id_marks_movie_as_imported_when_has_file_is_omitted(self):
         app = {"url": "http://whisparr"}
         with mock.patch.dict(

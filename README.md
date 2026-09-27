@@ -690,11 +690,11 @@ What each thing in the stack is for. Per-service runbooks (config steps not yet 
 | **Radarr** | `radarr.batjaa.site` | Movie automation — same pattern as Sonarr but for movies. |
 | **Whisparr** | `whisparr.batjaa.site` | Private library automation — same Prowlarr/SABnzbd path model, imports to `/mnt/storage/Media/Whisparr`. |
 | **Bazarr** | `bazarr.batjaa.site` | Subtitle automation — fetches missing subtitles for everything Sonarr/Radarr have. |
-| **Prowlarr** | `prowlarr.batjaa.site` | Single indexer manager. Currently feeds NZBgeek + NZBFinder to Sonarr/Radarr/Whisparr; both vault-managed via `prowlarr_indexers`. |
+| **Prowlarr** | `prowlarr.batjaa.site` | Single indexer manager. Currently feeds NZBgeek + NZBFinder to Sonarr/Radarr/Whisparr; both are vault-managed via `prowlarr_indexers`. NZBFinder is interactive-only because some of its results omit movie IDs and can collide by title/year. |
 | **SABnzbd** | `sabnzbd.batjaa.site` | Usenet download client. Pulls articles from Newshosting (priority 0) + UsenetExpress (priority 1, fill-in for missing articles); both vault-managed via `usenet_servers`. |
 | **Beets** | `beets.batjaa.site` | Music tagger / library organizer. Used out-of-band when adding music. |
 | **Decluttarr** | (no UI) | Daemon that watches Sonarr/Radarr queues every 10 min and removes stuck items (failed imports, stalled downloads, missing files, orphans) after 3 strikes. The cleanup we keep doing by hand. |
-| **arr-search** | (no UI, systemd timer) | Nightly 04:00 backlog search — re-runs Radarr/Sonarr missing-media searches and rotates through Whisparr missing batches. Whisparr also does code-aware Prowlarr searches and tracks SAB job IDs for completed-download scans. |
+| **arr-search** | (no UI, systemd timer) | Nightly 04:00 backlog search — searches only Radarr movies whose release date is available, re-runs Sonarr missing-media searches, and rotates through Whisparr missing batches. Whisparr also does code-aware Prowlarr searches and tracks SAB job IDs for completed-download scans. |
 
 ### AI / inference
 
