@@ -297,6 +297,23 @@ Expected results:
 
 ## Jolly Answer (`jollyanswer.com`)
 
+The `Tech Nomads` collaboration team is Coolify team `2`, with Batjaa as Owner
+and an Admin invitation sent to `amarbayar.amarsanaa@gmail.com`. Its setup is
+`ansible-playbook coolify-tech-nomads.yml`. The native invitation link is emailed
+through the existing vault-managed Postmark account; this does not enable
+Coolify-wide SMTP or send other notifications. Repeated runs do not duplicate a
+valid pending invitation.
+
+Jolly remains in Root Team until Tech Nomads has its own deployment server.
+Coolify v4 blocks sharing the same server across teams, and moving only the
+project would break non-root administrators' deployment authorization. The owner
+chose a dedicated VM on wormmon, initially 2 vCPUs / 4 GiB RAM / 30 GiB disk.
+Provisioning is blocked until AMD SVM is enabled in BIOS: the kernel explicitly
+reports `SVM disabled (by BIOS) in MSR_VM_CR`, and `/dev/kvm` is absent. Schedule
+the required reboot before proceeding; all wormmon applications are affected.
+At the September 26 check, 61 containers used about 7.2 GiB of 30 GiB RAM, 22 GiB
+was available, CPU was 96–98% idle, and the root filesystem had 92 GiB free.
+
 Jolly's landing page is deployed in Coolify on wormmon, with persistent SQLite
 at `/opt/docker/data/jolly`. Its repository is `tech-nomads-inc/jolly`; the
 application's `docs/INFRASTRUCTURE.md` is the detailed deployment and recovery

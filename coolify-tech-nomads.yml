@@ -1,0 +1,19 @@
+---
+# Creates the collaboration team and sends exactly one pending admin invitation.
+# Project/server migration is deliberately separate: Coolify v4 requires a
+# server owned by the destination team and cannot share wormmon across teams.
+- hosts: wormmon
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Create Tech Nomads and invite its administrator
+      ansible.builtin.command:
+        argv: [docker, exec, -i, coolify, php]
+        stdin: '{{ lookup("template", "templates/coolify-tech-nomads.php.j2") }}'
+      register: tech_nomads_setup
+      no_log: true
+      changed_when: "'CHANGED' in tech_nomads_setup.stdout"
+
+    - name: Report collaboration setup
+      ansible.builtin.debug:
+        msg: '{{ tech_nomads_setup.stdout }}'

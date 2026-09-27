@@ -1,0 +1,68 @@
+<?php
+require '/var/www/html/vendor/autoload.php';
+$app = require '/var/www/html/bootstrap/app.php';
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+$owner = App\Models\User::where('email', 'batjaa0615@gmail.com')->firstOrFail();
+if (!$owner->teams()->where('teams.id', 0)->wherePivot('role', 'owner')->exists()) {
+    throw new RuntimeException('Expected instance owner is missing.');
+}
+Illuminate\Support\Facades\Auth::login($owner);
+$team = App\Models\Team::firstOrCreate(['name' => 'Tech Nomads'], [
+    'description' => 'Tech Nomads projects and collaboration',
+    'personal_team' => false,
+    'is_mcp_server_enabled' => false,
+]);
+if ($team->wasRecentlyCreated) echo "CHANGED: Created Tech Nomads team {$team->id}.\n";
+if (!$team->members()->where('users.id', $owner->id)->exists()) {
+    $owner->teams()->attach($team, ['role' => 'owner']);
+    echo "CHANGED: Added Batjaa as owner.\n";
+}
+$owner->unsetRelation('teams');
+session(['currentTeam' => $team]);
+$email = 'amarbayar.amarsanaa@gmail.com';
+if ($team->members()->where('email', $email)->exists()) {
+    echo "Already a team member; no invitation sent.\n";
+    exit(0);
+}
+$invitation = App\Models\TeamInvitation::where('email', $email)->first();
+if ($invitation && $invitation->team_id !== $team->id) {
+    throw new RuntimeException('A different team already has a pending invitation for this email.');
+}
+if ($invitation && $invitation->via === 'email' && !$invitation->hasExpired()) {
+    echo "Admin invitation already sent; no duplicate email.\n";
+    exit(0);
+}
+if (!$invitation || $invitation->hasExpired()) {
+    $component = new App\Livewire\Team\InviteLink;
+    $component->email = $email;
+    $component->role = 'admin';
+    $component->viaLink();
+    $invitation = App\Models\TeamInvitation::where('email', $email)->where('team_id', $team->id)->firstOrFail();
+}
+if ($invitation->role !== 'admin' || $invitation->hasExpired()) {
+    throw new RuntimeException('Unexpected invitation role or expiry.');
+}
+
+// Send only this authorized invitation through the existing home-lab Postmark
+// account. Coolify's global SMTP/notification settings are not modified.
+$html = view('emails.invitation-link', [
+    'team' => $team->name,
+    'invitation_link' => $invitation->link,
+])->render();
+$response = Illuminate\Support\Facades\Http::timeout(30)->withHeaders([
+    'X-Postmark-Server-Token' => {{ hostvars['andromon']['email_postmark_token'] | to_json }},
+    'Accept' => 'application/json',
+])->post('https://api.postmarkapp.com/email', [
+    'From' => 'Coolify <{{ hostvars["andromon"]["email_from"] }}>',
+    'To' => $email,
+    'Subject' => 'You have been invited to Tech Nomads on Coolify.',
+    'HtmlBody' => $html,
+    'MessageStream' => 'outbound',
+]);
+if (!$response->successful() || $response->json('ErrorCode') !== 0) {
+    throw new RuntimeException('Postmark invitation delivery request failed: HTTP '.$response->status());
+}
+$invitation->update(['via' => 'email']);
+echo 'CHANGED: Admin invitation sent to '.$email.'; Postmark message '.$response->json('MessageID').".\n";
+echo 'Team ID: '.$team->id.".\n";
