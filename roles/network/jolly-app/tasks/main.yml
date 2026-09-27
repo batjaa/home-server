@@ -1,0 +1,92 @@
+---
+- name: Create product app HTTP challenge directory
+  ansible.builtin.file:
+    path: '{{ docker_dir }}/swag/nginx/acme/.well-known/acme-challenge'
+    state: directory
+    mode: '0755'
+
+- name: Check product app certificate
+  ansible.builtin.stat:
+    path: '{{ docker_dir }}/swag/nginx/jolly-app-letsencrypt/live/app.jollyanswer.com/fullchain.pem'
+  register: jolly_app_certificate
+
+- name: Render product app HTTPS configuration
+  ansible.builtin.template:
+    src: jolly-app.conf.j2
+    dest: '{{ docker_dir }}/swag/nginx/jolly-app-ready.conf'
+    mode: '0644'
+  vars:
+    jolly_app_tls: true
+
+- name: Install product app ingress configuration
+  ansible.builtin.template:
+    src: jolly-app.conf.j2
+    dest: '{{ docker_dir }}/swag/nginx/proxy-confs/jolly-app.subdomain.conf'
+    mode: '0644'
+  vars:
+    jolly_app_tls: '{{ jolly_app_certificate.stat.exists }}'
+  notify: Reload Jolly app ingress
+
+- name: Install product app certificate activation script
+  ansible.builtin.template:
+    src: jolly-app-certificate.py.j2
+    dest: /usr/local/sbin/jolly-app-certificate
+    mode: '0755'
+
+- name: Install product app certificate timer
+  ansible.builtin.copy:
+    dest: '/etc/systemd/system/jolly-app-certificate.{{ item.key }}'
+    content: '{{ item.value }}'
+    mode: '0644'
+  loop:
+    - key: service
+      value: |
+        [Unit]
+        Description=Activate Jolly app HTTPS when public DNS is ready
+        After=docker.service network-online.target
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/jolly-app-certificate
+        TimeoutStartSec=300
+    - key: timer
+      value: |
+        [Unit]
+        Description=Check Jolly app DNS every 15 minutes
+        [Timer]
+        OnBootSec=5min
+        OnUnitActiveSec=15min
+        [Install]
+        WantedBy=timers.target
+  register: jolly_app_units
+
+- name: Enable product app certificate timer
+  ansible.builtin.systemd:
+    name: jolly-app-certificate.timer
+    enabled: true
+    state: started
+    daemon_reload: '{{ jolly_app_units.changed }}'
+
+- name: Apply product app ingress before certificate check
+  ansible.builtin.meta: flush_handlers
+
+- name: Renew product app HTTP certificate
+  ansible.builtin.cron:
+    name: Renew Jolly app HTTP certificate
+    minute: '41'
+    hour: '3,15'
+    job: >-
+      test ! -f {{ docker_dir }}/swag/nginx/jolly-app-letsencrypt/live/app.jollyanswer.com/fullchain.pem ||
+      docker exec swag certbot renew --quiet --config /dev/null
+      --config-dir /config/nginx/jolly-app-letsencrypt --work-dir /tmp/jolly-app-letsencrypt
+      --logs-dir /config/log/jolly-app-letsencrypt --cert-name app.jollyanswer.com
+      --webroot --webroot-path /config/nginx/acme --preferred-challenges http
+      --deploy-hook 'nginx -s reload'
+
+- name: Activate product app certificate if DNS is ready
+  ansible.builtin.command: /usr/local/sbin/jolly-app-certificate
+  register: jolly_app_activation
+  changed_when: "'Activated HTTPS' in jolly_app_activation.stdout"
+
+- name: Report product app HTTPS readiness
+  ansible.builtin.debug:
+    var: jolly_app_activation.stdout

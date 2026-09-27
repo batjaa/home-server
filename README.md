@@ -823,3 +823,11 @@ Traefik and Docker containers. Other home apps retain the shared wormmon host.
 See [the Coolify runbook](docs/wormmon-coolify.md#jolly-answer-jollyanswercom) for
 provisioning, routing, storage, team access, and recovery. `main.yml` includes
 the VM setup under `tech-nomads` and Jolly ingress under `jolly`.
+
+The Jolly product app uses `app.jollyanswer.com` and a separate Coolify resource
+in the same VM. `ansible-playbook jolly-app.yml` prepares its state directory,
+SWAG route, and independent HTTP-01 certificate. Add a GoDaddy CNAME `app` to
+`ddns.batjaa.site`; a 15-minute timer activates HTTPS after public DNS is ready.
+App state belongs under `/opt/docker/data/jolly-app/`. This does not change the
+marketing site's database or certificate. See the Jolly repository's app deployment
+guide for application images, migrations, secrets, health checks and backups.

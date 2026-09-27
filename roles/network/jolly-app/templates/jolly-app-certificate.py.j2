@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""Activate the product subdomain's independent HTTP-01 certificate."""
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+from urllib.parse import urlencode
+from urllib.request import urlopen
+
+if len(sys.argv) > 1 and sys.argv[1] == 'version':
+    print('dev')
+    sys.exit(0)
+
+def records(name, kind):
+    with urlopen('https://dns.google/resolve?' + urlencode({'name': name, 'type': kind}), timeout=15) as response:
+        result = json.load(response)
+    if result.get('Status') == 3:
+        return set()
+    if result.get('Status') != 0:
+        raise RuntimeError('DNS lookup failed for ' + name)
+    return {row['data'] for row in result.get('Answer', []) if row['type'] == kind}
+
+def run(*args):
+    subprocess.run(args, check=True, timeout=240)
+
+base = Path({{ (docker_dir ~ '/swag') | to_json }})
+certificate = base / 'nginx/jolly-app-letsencrypt/live/app.jollyanswer.com/fullchain.pem'
+if not certificate.exists():
+    home = records('ddns.batjaa.site', 1)
+    if not home or records('app.jollyanswer.com', 1) != home or records('app.jollyanswer.com', 28):
+        print('Waiting for app.jollyanswer.com CNAME to ddns.batjaa.site, with no conflicting AAAA')
+        sys.exit(0)
+    run('docker', 'exec', 'swag', 'certbot', 'certonly', '--non-interactive', '--agree-tos', '--config', '/dev/null',
+        '--config-dir', '/config/nginx/jolly-app-letsencrypt', '--work-dir', '/tmp/jolly-app-letsencrypt',
+        '--logs-dir', '/config/log/jolly-app-letsencrypt', '--webroot', '-w', '/config/nginx/acme', '--preferred-challenges', 'http',
+        '--cert-name', 'app.jollyanswer.com', '--email', {{ email | to_json }},
+        '--deploy-hook', 'nginx -s reload', '-d', 'app.jollyanswer.com')
+
+ready = base / 'nginx/jolly-app-ready.conf'
+active = base / 'nginx/proxy-confs/jolly-app.subdomain.conf'
+if ready.read_bytes() == active.read_bytes():
+    print('HTTPS already active')
+    sys.exit(0)
+previous = active.read_bytes()
+temporary = active.with_suffix('.pending')
+shutil.copyfile(ready, temporary)
+temporary.chmod(0o644)
+temporary.replace(active)
+try:
+    run('docker', 'exec', 'swag', 'nginx', '-t')
+    run('docker', 'exec', 'swag', 'nginx', '-s', 'reload')
+except Exception:
+    active.write_bytes(previous)
+    raise
+print('Activated HTTPS for app.jollyanswer.com')
