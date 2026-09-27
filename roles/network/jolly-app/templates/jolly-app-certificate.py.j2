@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Activate the product subdomain's independent HTTP-01 certificate."""
+"""Activate Jolly wildcard DNS-01 TLS only after Cloudflare becomes authoritative."""
 import json
 from pathlib import Path
 import shutil
@@ -19,23 +19,24 @@ def records(name, kind):
         return set()
     if result.get('Status') != 0:
         raise RuntimeError('DNS lookup failed for ' + name)
-    return {row['data'] for row in result.get('Answer', []) if row['type'] == kind}
+    return {row['data'].rstrip('.').lower() for row in result.get('Answer', []) if row['type'] == kind}
 
 def run(*args):
     subprocess.run(args, check=True, timeout=240)
 
 base = Path({{ (docker_dir ~ '/swag') | to_json }})
-certificate = base / 'nginx/jolly-app-letsencrypt/live/app.jollyanswer.com/fullchain.pem'
+certificate = base / 'nginx/jolly-wildcard-letsencrypt/live/jollyanswer.com/fullchain.pem'
 if not certificate.exists():
-    home = records('ddns.batjaa.site', 1)
-    if not home or records('app.jollyanswer.com', 1) != home or records('app.jollyanswer.com', 28):
-        print('Waiting for app.jollyanswer.com CNAME to ddns.batjaa.site, with no conflicting AAAA')
+    expected = {'keaton.ns.cloudflare.com', 'kristina.ns.cloudflare.com'}
+    if records('jollyanswer.com', 2) != expected:
+        print('Waiting for the GoDaddy owner to activate the verified Cloudflare nameservers')
         sys.exit(0)
     run('docker', 'exec', 'swag', 'certbot', 'certonly', '--non-interactive', '--agree-tos', '--config', '/dev/null',
-        '--config-dir', '/config/nginx/jolly-app-letsencrypt', '--work-dir', '/tmp/jolly-app-letsencrypt',
-        '--logs-dir', '/config/log/jolly-app-letsencrypt', '--webroot', '-w', '/config/nginx/acme', '--preferred-challenges', 'http',
-        '--cert-name', 'app.jollyanswer.com', '--email', {{ email | to_json }},
-        '--deploy-hook', 'nginx -s reload', '-d', 'app.jollyanswer.com')
+        '--config-dir', '/config/nginx/jolly-wildcard-letsencrypt', '--work-dir', '/tmp/jolly-wildcard-letsencrypt',
+        '--logs-dir', '/config/log/jolly-wildcard-letsencrypt', '--dns-cloudflare',
+        '--dns-cloudflare-credentials', '/config/dns-conf/cloudflare.ini', '--dns-cloudflare-propagation-seconds', '30',
+        '--cert-name', 'jollyanswer.com', '--email', {{ email | to_json }},
+        '--deploy-hook', 'nginx -s reload', '-d', 'jollyanswer.com', '-d', '*.jollyanswer.com')
 
 ready = base / 'nginx/jolly-app-ready.conf'
 active = base / 'nginx/proxy-confs/jolly-app.subdomain.conf'
@@ -53,4 +54,4 @@ try:
 except Exception:
     active.write_bytes(previous)
     raise
-print('Activated HTTPS for app.jollyanswer.com')
+print('Activated HTTPS for *.jollyanswer.com')

@@ -1,0 +1,14 @@
+# Exact hostname overrides the shared wormmon preview route.
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name jolly-app.preview.batjaa.site;
+    include /config/nginx/ssl.conf;
+    client_max_body_size 2m;
+    location / {
+        include /config/nginx/proxy.conf;
+        proxy_buffering off;
+        proxy_pass https://{{ hostvars['wormmon']['ansible_host'] }}:8443;
+    }
+}

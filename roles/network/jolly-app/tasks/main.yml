@@ -1,13 +1,7 @@
 ---
-- name: Create product app HTTP challenge directory
-  ansible.builtin.file:
-    path: '{{ docker_dir }}/swag/nginx/acme/.well-known/acme-challenge'
-    state: directory
-    mode: '0755'
-
 - name: Check product app certificate
   ansible.builtin.stat:
-    path: '{{ docker_dir }}/swag/nginx/jolly-app-letsencrypt/live/app.jollyanswer.com/fullchain.pem'
+    path: '{{ docker_dir }}/swag/nginx/jolly-wildcard-letsencrypt/live/jollyanswer.com/fullchain.pem'
   register: jolly_app_certificate
 
 - name: Render product app HTTPS configuration
@@ -33,6 +27,13 @@
     dest: /usr/local/sbin/jolly-app-certificate
     mode: '0755'
 
+- name: Route product preview to the Tech Nomads VM
+  ansible.builtin.template:
+    src: jolly-app-preview.conf.j2
+    dest: '{{ docker_dir }}/swag/nginx/proxy-confs/jolly-app-preview.subdomain.conf'
+    mode: '0644'
+  notify: Reload Jolly app ingress
+
 - name: Install product app certificate timer
   ansible.builtin.copy:
     dest: '/etc/systemd/system/jolly-app-certificate.{{ item.key }}'
@@ -42,7 +43,7 @@
     - key: service
       value: |
         [Unit]
-        Description=Activate Jolly app HTTPS when public DNS is ready
+        Description=Activate Jolly wildcard HTTPS after Cloudflare DNS cutover
         After=docker.service network-online.target
         [Service]
         Type=oneshot
@@ -51,7 +52,7 @@
     - key: timer
       value: |
         [Unit]
-        Description=Check Jolly app DNS every 15 minutes
+        Description=Check Jolly Cloudflare nameservers every 15 minutes
         [Timer]
         OnBootSec=5min
         OnUnitActiveSec=15min
@@ -69,17 +70,23 @@
 - name: Apply product app ingress before certificate check
   ansible.builtin.meta: flush_handlers
 
-- name: Renew product app HTTP certificate
+- name: Remove superseded per-host HTTP renewal job
   ansible.builtin.cron:
     name: Renew Jolly app HTTP certificate
+    state: absent
+
+- name: Renew product wildcard DNS certificate
+  ansible.builtin.cron:
+    name: Renew Jolly wildcard DNS certificate
     minute: '41'
     hour: '3,15'
     job: >-
-      test ! -f {{ docker_dir }}/swag/nginx/jolly-app-letsencrypt/live/app.jollyanswer.com/fullchain.pem ||
+      test ! -f {{ docker_dir }}/swag/nginx/jolly-wildcard-letsencrypt/live/jollyanswer.com/fullchain.pem ||
       docker exec swag certbot renew --quiet --config /dev/null
-      --config-dir /config/nginx/jolly-app-letsencrypt --work-dir /tmp/jolly-app-letsencrypt
-      --logs-dir /config/log/jolly-app-letsencrypt --cert-name app.jollyanswer.com
-      --webroot --webroot-path /config/nginx/acme --preferred-challenges http
+      --config-dir /config/nginx/jolly-wildcard-letsencrypt --work-dir /tmp/jolly-wildcard-letsencrypt
+      --logs-dir /config/log/jolly-wildcard-letsencrypt --cert-name jollyanswer.com
+      --dns-cloudflare --dns-cloudflare-credentials /config/dns-conf/cloudflare.ini
+      --dns-cloudflare-propagation-seconds 30
       --deploy-hook 'nginx -s reload'
 
 - name: Activate product app certificate if DNS is ready

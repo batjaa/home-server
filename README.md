@@ -826,8 +826,17 @@ the VM setup under `tech-nomads` and Jolly ingress under `jolly`.
 
 The Jolly product app uses `app.jollyanswer.com` and a separate Coolify resource
 in the same VM. `ansible-playbook jolly-app.yml` prepares its state directory,
-SWAG route, and independent HTTP-01 certificate. Add a GoDaddy CNAME `app` to
-`ddns.batjaa.site`; a 15-minute timer activates HTTPS after public DNS is ready.
+SWAG route, and independent wildcard DNS-01 certificate. A 15-minute timer
+activates HTTPS after Cloudflare becomes authoritative, using SWAG's existing
+Cloudflare credential file. New first-level subdomains then need only a Coolify route.
 App state belongs under `/opt/docker/data/jolly-app/`. This does not change the
 marketing site's database or certificate. See the Jolly repository's app deployment
 guide for application images, migrations, secrets, health checks and backups.
+
+Cloudflare DNS migration is prepared, pending the GoDaddy owner's zone export
+and nameserver change. `ansible-playbook jolly-dns.yml` converges only the app and
+wildcard subdomain records in the pending Cloudflare zone; it preserves all other
+records. The assigned nameservers are `keaton.ns.cloudflare.com` and
+`kristina.ns.cloudflare.com`. Do not switch until the full export has been imported
+and checked. `jolly-app.preview.batjaa.site` provides a separate HTTPS app preview
+through the existing preview certificate while production DNS is pending.

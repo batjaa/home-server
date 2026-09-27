@@ -494,3 +494,5 @@
   tags: [jolly]
 - import_playbook: jolly-app.yml
   tags: [jolly-app]
+- import_playbook: jolly-dns.yml
+  tags: [jolly-dns]

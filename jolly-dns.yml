@@ -1,0 +1,16 @@
+---
+# Run after creating jollyanswer.com in Cloudflare. Preserve all unlisted records.
+# Nameserver cutover requires the GoDaddy owner's full zone export and verification.
+- hosts: tentomon
+  gather_facts: false
+  tasks:
+    - name: Prepare Jolly app and future subdomains in Cloudflare
+      ansible.builtin.include_role:
+        name: network/cloudflare-dns
+        tasks_from: zone
+      vars:
+        cloudflare_managed_zone:
+          name: jollyanswer.com
+          records:
+            - { name: app, type: CNAME, content: ddns.batjaa.site, proxied: false }
+            - { name: '*', type: CNAME, content: ddns.batjaa.site, proxied: false }
