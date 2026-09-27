@@ -298,11 +298,17 @@ Expected results:
 ## Jolly Answer (`jollyanswer.com`)
 
 The `Tech Nomads` collaboration team is Coolify team `2`, with Batjaa as Owner
-and an Admin invitation sent to `amarbayar.amarsanaa@gmail.com`. Its setup is
+and `amarbayar.amarsanaa@gmail.com` as an active Admin. Its setup is
 `ansible-playbook coolify-tech-nomads.yml`. The native invitation link is emailed
 through the existing vault-managed Postmark account; this does not enable
 Coolify-wide SMTP or send other notifications. Repeated runs do not duplicate a
 valid pending invitation.
+
+The initial CLI-generated invitation used `localhost` because the instance FQDN
+was unset. `coolify-public-url.yml` now sets `https://deploy.batjaa.site` and
+checks Coolify's native URL builder. The Coolify role and team bootstrap apply
+this configuration, and the invitation sender rejects an incorrect origin.
+Amarbayar accepted the invitation; no duplicate invitation was sent after that.
 
 Jolly now belongs to Tech Nomads, together with its dedicated server
 `tech-nomads` (`192.168.124.10`, Coolify UUID `b3mwnfgzbdyjtb7uuzrz0qlw`).

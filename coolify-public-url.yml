@@ -1,0 +1,14 @@
+---
+- hosts: wormmon
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Configure and verify Coolify public invitation URL
+      ansible.builtin.command:
+        argv: [docker, exec, -i, coolify, php]
+        stdin: '{{ lookup("template", "templates/coolify-public-url.php.j2") }}'
+      register: coolify_public_url_result
+      changed_when: "'CHANGED' in coolify_public_url_result.stdout"
+    - name: Report public URL verification
+      ansible.builtin.debug:
+        var: coolify_public_url_result.stdout

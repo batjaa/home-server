@@ -17,3 +17,4 @@ coolify_soketi_port: "6001"
 coolify_root_username: ""
 coolify_root_user_email: ""
 coolify_root_user_password: ""
+coolify_public_url: https://deploy.batjaa.site

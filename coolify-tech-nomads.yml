@@ -1,4 +1,6 @@
 ---
+- import_playbook: coolify-public-url.yml
+
 # Creates the collaboration team and sends exactly one pending admin invitation.
 # Project/server migration is deliberately separate: Coolify v4 requires a
 # server owned by the destination team and cannot share wormmon across teams.

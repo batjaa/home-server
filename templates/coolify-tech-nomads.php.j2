@@ -29,6 +29,19 @@ $invitation = App\Models\TeamInvitation::where('email', $email)->first();
 if ($invitation && $invitation->team_id !== $team->id) {
     throw new RuntimeException('A different team already has a pending invitation for this email.');
 }
+// Repair an unsent/unaccepted link from an earlier localhost CLI fallback.
+$publicUrl = rtrim(instanceSettings()->fqdn ?? '', '/');
+if ($publicUrl !== {{ coolify_public_url | default('https://deploy.batjaa.site') | to_json }}) {
+    throw new RuntimeException('Configure the public Coolify URL before sending invitations.');
+}
+if ($invitation && !$invitation->hasExpired() && !str_starts_with($invitation->link, $publicUrl.'/')) {
+    $path = parse_url($invitation->link, PHP_URL_PATH);
+    if (!$path || !str_starts_with($path, '/') || str_starts_with($path, '//')) {
+        throw new RuntimeException('Unexpected invitation path; refusing to send.');
+    }
+    $query = parse_url($invitation->link, PHP_URL_QUERY);
+    $invitation->update(['link' => $publicUrl.$path.($query ? '?'.$query : ''), 'via' => 'link']);
+}
 if ($invitation && $invitation->via === 'email' && !$invitation->hasExpired()) {
     echo "Admin invitation already sent; no duplicate email.\n";
     exit(0);
@@ -42,6 +55,10 @@ if (!$invitation || $invitation->hasExpired()) {
 }
 if ($invitation->role !== 'admin' || $invitation->hasExpired()) {
     throw new RuntimeException('Unexpected invitation role or expiry.');
+}
+
+if (!str_starts_with($invitation->link, $publicUrl.'/')) {
+    throw new RuntimeException('Refusing to email an invitation with an incorrect origin.');
 }
 
 // Send only this authorized invitation through the existing home-lab Postmark

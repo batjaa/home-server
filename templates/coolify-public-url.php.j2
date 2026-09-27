@@ -1,0 +1,17 @@
+<?php
+require '/var/www/html/vendor/autoload.php';
+$app = require '/var/www/html/bootstrap/app.php';
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$expected = {{ coolify_public_url | default('https://deploy.batjaa.site') | to_json }};
+$settings = instanceSettings();
+if ($settings->fqdn !== $expected) {
+    $settings->fqdn = $expected;
+    $settings->save();
+    echo "CHANGED: Configured Coolify public URL.\n";
+}
+// Exercise Coolify's actual invitation URL builder without creating a user,
+// invitation, or usable login token.
+$method = new ReflectionMethod(App\Livewire\Team\InviteLink::class, 'invitationUrl');
+$link = $method->invoke(new App\Livewire\Team\InviteLink, 'team.invitation.show', ['uuid' => 'configuration-verification']);
+if (!str_starts_with($link, $expected.'/')) throw new RuntimeException('Invitation URL origin validation failed');
+echo "OK: Invitation URLs use $expected.\n";

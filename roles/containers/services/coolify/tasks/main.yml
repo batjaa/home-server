@@ -135,3 +135,10 @@
   retries: 30
   delay: 10
   until: coolify_health.status == 200
+
+- name: Configure and verify Coolify public invitation URL
+  ansible.builtin.command:
+    argv: [docker, exec, -i, coolify, php]
+    stdin: '{{ lookup("template", playbook_dir ~ "/templates/coolify-public-url.php.j2") }}'
+  register: coolify_public_url_result
+  changed_when: "'CHANGED' in coolify_public_url_result.stdout"
