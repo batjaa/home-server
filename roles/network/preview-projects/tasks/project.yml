@@ -103,6 +103,7 @@
       - certbot
       - renew
       - --dry-run
+      - --no-random-sleep-on-renew
       - --non-interactive
       - --config
       - /dev/null
