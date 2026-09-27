@@ -1,0 +1,57 @@
+---
+- hosts: tech_nomads
+  gather_facts: false
+  tasks:
+    - name: Wait for first boot configuration
+      ansible.builtin.command: cloud-init status --wait
+      changed_when: false
+    - name: Install host prerequisites
+      ansible.builtin.apt:
+        name: [curl, wget, git, jq, openssl, ca-certificates, rsync, qemu-guest-agent]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+    - name: Create Docker configuration directories
+      ansible.builtin.file:
+        path: '{{ item }}'
+        state: directory
+        mode: '0755'
+      loop: [/etc/apt/keyrings, /etc/docker]
+    - name: Install Docker repository key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+    - name: Configure Docker repository
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable
+        filename: docker
+    - name: Configure bounded Docker logs and separate address pools
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {"log-driver":"json-file","log-opts":{"max-size":"10m","max-file":"3"},"default-address-pools":[{"base":"10.64.0.0/16","size":24}]}
+        mode: '0644'
+      notify: Restart guest Docker
+    - name: Install Docker engine and Compose
+      ansible.builtin.apt:
+        name: [docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin]
+        state: present
+    - name: Enable Docker and guest agent
+      ansible.builtin.systemd:
+        name: '{{ item }}'
+        enabled: true
+        state: started
+      loop: [docker, qemu-guest-agent]
+    - name: Create Jolly persistent directory
+      ansible.builtin.file:
+        path: /opt/docker/data/jolly
+        state: directory
+        owner: '1000'
+        group: '1000'
+        mode: '0700'
+  handlers:
+    - name: Restart guest Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted

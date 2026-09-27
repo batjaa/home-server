@@ -813,3 +813,13 @@ Edit secrets:
 ansible-vault edit host_vars/tentomon/secret.yml
 ansible-vault edit host_vars/andromon/secret.yml
 ```
+
+## Tech Nomads application VM
+
+Jolly runs in a dedicated Coolify team-owned KVM guest on wormmon: 2 vCPUs,
+4 GiB RAM, 30 GiB disk, private address `192.168.124.10`. Public traffic flows
+through andromon's SWAG, wormmon's restricted TCP relay `:8443`, then the VM's
+Traefik and Docker containers. Other home apps retain the shared wormmon host.
+See [the Coolify runbook](docs/wormmon-coolify.md#jolly-answer-jollyanswercom) for
+provisioning, routing, storage, team access, and recovery. `main.yml` includes
+the VM setup under `tech-nomads` and Jolly ingress under `jolly`.

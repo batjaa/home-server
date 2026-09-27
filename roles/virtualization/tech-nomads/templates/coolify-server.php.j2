@@ -1,0 +1,25 @@
+<?php
+require '/var/www/html/vendor/autoload.php';
+$app = require '/var/www/html/bootstrap/app.php';
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$team = App\Models\Team::where('name', 'Tech Nomads')->firstOrFail();
+$owner = App\Models\User::findOrFail(0);
+Illuminate\Support\Facades\Auth::login($owner);
+session(['currentTeam' => $team]);
+$key = App\Models\PrivateKey::where('team_id', $team->id)->where('name', 'tech-nomads-vm')->first();
+$changed = false;
+if (!$key) {
+    $pair = App\Models\PrivateKey::generateNewKeyPair('ed25519');
+    $key = App\Models\PrivateKey::createAndStore(['name' => 'tech-nomads-vm', 'description' => 'Dedicated KVM guest on wormmon, managed by home-server', 'team_id' => $team->id, 'private_key' => $pair['private_key']]);
+    $changed = true;
+}
+$server = App\Models\Server::where('ip', '{{ tech_nomads_vm_ip }}')->first();
+if ($server && $server->team_id !== $team->id) throw new RuntimeException('VM IP belongs to another team');
+if (!$server) {
+    $server = App\Models\Server::create(['name' => 'tech-nomads', 'description' => '2 vCPU / 4 GiB KVM guest on wormmon', 'ip' => '{{ tech_nomads_vm_ip }}', 'user' => 'root', 'port' => 22, 'team_id' => $team->id, 'private_key_id' => $key->id]);
+    $server->proxy->set('status', 'exited');
+    $server->proxy->set('type', App\Enums\ProxyTypes::TRAEFIK->value);
+    $server->save();
+    $changed = true;
+}
+echo json_encode(['changed' => $changed, 'public_key' => $key->public_key, 'server_uuid' => $server->uuid]).PHP_EOL;

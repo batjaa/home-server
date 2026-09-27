@@ -1,0 +1,146 @@
+---
+- name: Require hardware virtualization before provisioning
+  ansible.builtin.stat:
+    path: /dev/kvm
+  register: tech_nomads_kvm
+- name: Validate SVM prerequisite
+  ansible.builtin.assert:
+    that: tech_nomads_kvm.stat.exists
+    fail_msg: Enable AMD SVM in wormmon BIOS first.
+- name: Install KVM tools
+  ansible.builtin.apt:
+    name: [qemu-system-x86, libvirt-daemon-system, libvirt-clients, cloud-image-utils]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+- name: Enable libvirt
+  ansible.builtin.systemd:
+    name: libvirtd
+    enabled: true
+    state: started
+- name: Register the dedicated server and SSH key in Coolify
+  ansible.builtin.command:
+    argv: [docker, exec, -i, coolify, php]
+    stdin: "{{ lookup('template', 'coolify-server.php.j2') }}"
+  register: tech_nomads_registration
+  changed_when: (tech_nomads_registration.stdout | from_json).changed
+- name: Keep non-secret Coolify registration facts
+  ansible.builtin.set_fact:
+    tech_nomads_coolify: '{{ tech_nomads_registration.stdout | from_json }}'
+- name: Create VM directory
+  ansible.builtin.file:
+    path: '{{ tech_nomads_vm_dir }}'
+    state: directory
+    mode: '0755'
+- name: Fetch pinned Ubuntu cloud image
+  ansible.builtin.get_url:
+    url: '{{ tech_nomads_vm_image_url }}'
+    dest: '{{ tech_nomads_vm_dir }}/base.img'
+    checksum: 'sha256:{{ tech_nomads_vm_image_sha256 }}'
+    mode: '0644'
+- name: Create independent guest disk
+  ansible.builtin.command:
+    argv: [qemu-img, convert, -O, qcow2, '{{ tech_nomads_vm_dir }}/base.img', '{{ tech_nomads_vm_dir }}/root.qcow2']
+    creates: '{{ tech_nomads_vm_dir }}/root.qcow2'
+  register: tech_nomads_disk
+- name: Size newly created guest disk
+  ansible.builtin.command:
+    argv: [qemu-img, resize, '{{ tech_nomads_vm_dir }}/root.qcow2', '{{ tech_nomads_vm_disk_gb }}G']
+  when: tech_nomads_disk.changed
+- name: Render VM and seed configuration
+  ansible.builtin.template:
+    src: '{{ item }}.j2'
+    dest: '{{ tech_nomads_vm_dir }}/{{ item }}'
+    mode: '0644'
+  loop: [user-data, network.xml, vm.xml]
+  register: tech_nomads_config
+- name: Write cloud-init metadata
+  ansible.builtin.copy:
+    dest: '{{ tech_nomads_vm_dir }}/meta-data'
+    content: "instance-id: tech-nomads-001\nlocal-hostname: tech-nomads\n"
+    mode: '0644'
+- name: Write guest network configuration
+  ansible.builtin.copy:
+    dest: '{{ tech_nomads_vm_dir }}/network-config'
+    mode: '0644'
+    content: |
+      version: 2
+      ethernets:
+        primary:
+          match: {macaddress: '52:54:00:74:6e:01'}
+          set-name: ens3
+          addresses: ['{{ tech_nomads_vm_ip }}/24']
+          routes: [{to: default, via: '{{ tech_nomads_vm_gateway }}'}]
+          nameservers: {addresses: [1.1.1.1, 8.8.8.8]}
+- name: Create first-boot seed ISO
+  ansible.builtin.command:
+    argv: [cloud-localds, '--network-config={{ tech_nomads_vm_dir }}/network-config', '{{ tech_nomads_vm_dir }}/seed.iso', '{{ tech_nomads_vm_dir }}/user-data', '{{ tech_nomads_vm_dir }}/meta-data']
+    creates: '{{ tech_nomads_vm_dir }}/seed.iso'
+- name: Read existing libvirt networks
+  ansible.builtin.command: virsh net-list --all --name
+  register: tech_nomads_networks
+  changed_when: false
+- name: Define dedicated NAT network
+  ansible.builtin.command: 'virsh net-define {{ tech_nomads_vm_dir }}/network.xml'
+  when: "'tech-nomads' not in tech_nomads_networks.stdout_lines or tech_nomads_config.results[1].changed"
+- name: Read network status
+  ansible.builtin.command: virsh net-info tech-nomads
+  register: tech_nomads_network_status
+  changed_when: false
+- name: Autostart dedicated network
+  ansible.builtin.command: virsh net-autostart tech-nomads
+  when: "'Autostart:      yes' not in tech_nomads_network_status.stdout"
+- name: Start dedicated network
+  ansible.builtin.command: virsh net-start tech-nomads
+  when: "'Active:         yes' not in tech_nomads_network_status.stdout"
+- name: Install Docker and libvirt forwarding compatibility
+  ansible.builtin.copy:
+    src: forwarding.sh
+    dest: /usr/local/sbin/tech-nomads-forwarding
+    mode: '0755'
+  register: tech_nomads_forward_script
+- name: Install guest forwarding service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/tech-nomads-forwarding.service
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Allow Tech Nomads libvirt egress through Docker forwarding
+      After=docker.service libvirtd.service
+      Requires=docker.service
+      PartOf=docker.service libvirtd.service
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/sbin/tech-nomads-forwarding
+      RemainAfterExit=yes
+      [Install]
+      WantedBy=multi-user.target docker.service libvirtd.service
+  register: tech_nomads_forward_unit
+- name: Enable guest forwarding
+  ansible.builtin.systemd:
+    name: tech-nomads-forwarding.service
+    daemon_reload: '{{ tech_nomads_forward_unit.changed }}'
+    enabled: true
+    state: "{{ 'restarted' if tech_nomads_forward_unit.changed or tech_nomads_forward_script.changed else 'started' }}"
+- name: Read defined guests
+  ansible.builtin.command: virsh list --all --name
+  register: tech_nomads_guests
+  changed_when: false
+- name: Define guest
+  ansible.builtin.command: 'virsh define {{ tech_nomads_vm_dir }}/vm.xml'
+  when: 'tech_nomads_vm_name not in tech_nomads_guests.stdout_lines or tech_nomads_config.results[2].changed'
+- name: Read guest status
+  ansible.builtin.command: 'virsh dominfo {{ tech_nomads_vm_name }}'
+  register: tech_nomads_guest_status
+  changed_when: false
+- name: Autostart guest
+  ansible.builtin.command: 'virsh autostart {{ tech_nomads_vm_name }}'
+  when: "'Autostart:      enable' not in tech_nomads_guest_status.stdout"
+- name: Start guest
+  ansible.builtin.command: 'virsh start {{ tech_nomads_vm_name }}'
+  when: "'State:          running' not in tech_nomads_guest_status.stdout"
+- name: Wait for guest SSH
+  ansible.builtin.wait_for:
+    host: '{{ tech_nomads_vm_ip }}'
+    port: 22
+    timeout: 300

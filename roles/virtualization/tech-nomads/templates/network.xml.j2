@@ -1,0 +1,8 @@
+<network>
+  <name>tech-nomads</name>
+  <forward mode='nat'/>
+  <bridge name='virbr-tn' stp='on' delay='0'/>
+  <ip address='{{ tech_nomads_vm_gateway }}' netmask='255.255.255.0'>
+    <dhcp><range start='192.168.124.100' end='192.168.124.200'/></dhcp>
+  </ip>
+</network>

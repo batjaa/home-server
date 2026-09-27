@@ -1,0 +1,10 @@
+---
+- hosts: wormmon
+  become: true
+  tasks:
+    - name: Validate the team server and configure its trusted edge proxy
+      ansible.builtin.command:
+        argv: [docker, exec, -i, coolify, php]
+        stdin: "{{ lookup('template', 'templates/coolify-tech-nomads-server.php.j2') }}"
+      register: tech_nomads_proxy
+      changed_when: "'CHANGED' in tech_nomads_proxy.stdout"

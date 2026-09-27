@@ -1,0 +1,15 @@
+#cloud-config
+hostname: tech-nomads
+manage_etc_hosts: true
+ssh_pwauth: false
+disable_root: false
+users:
+  - name: root
+    lock_passwd: true
+    ssh_authorized_keys:
+      - {{ tech_nomads_vm_admin_key }}
+      - {{ tech_nomads_coolify.public_key }}
+package_update: true
+packages: [qemu-guest-agent, curl, ca-certificates]
+runcmd:
+  - [systemctl, enable, --now, qemu-guest-agent]

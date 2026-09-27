@@ -1,6 +1,6 @@
 ---
 # Coolify owns the app; this playbook owns its persistent directory and edge.
-- hosts: wormmon
+- hosts: tech_nomads
   become: true
   tasks:
     - name: Create Jolly SQLite storage for the Node container

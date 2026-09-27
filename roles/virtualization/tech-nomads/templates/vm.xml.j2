@@ -1,0 +1,20 @@
+<domain type='kvm'>
+  <name>{{ tech_nomads_vm_name }}</name>
+  <memory unit='MiB'>{{ tech_nomads_vm_memory }}</memory>
+  <vcpu>{{ tech_nomads_vm_cpus }}</vcpu>
+  <os><type arch='x86_64' machine='q35'>hvm</type><boot dev='hd'/></os>
+  <features><acpi/><apic/></features>
+  <cpu mode='host-passthrough'/>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff><on_reboot>restart</on_reboot><on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/bin/qemu-system-x86_64</emulator>
+    <disk type='file' device='disk'><driver name='qemu' type='qcow2'/><source file='{{ tech_nomads_vm_dir }}/root.qcow2'/><target dev='vda' bus='virtio'/></disk>
+    <disk type='file' device='cdrom'><driver name='qemu' type='raw'/><source file='{{ tech_nomads_vm_dir }}/seed.iso'/><target dev='sda' bus='sata'/><readonly/></disk>
+    <interface type='network'><mac address='52:54:00:74:6e:01'/><source network='tech-nomads'/><model type='virtio'/></interface>
+    <serial type='pty'><target port='0'/></serial>
+    <console type='pty'><target type='serial' port='0'/></console>
+    <channel type='unix'><target type='virtio' name='org.qemu.guest_agent.0'/></channel>
+    <rng model='virtio'><backend model='random'>/dev/urandom</backend></rng>
+  </devices>
+</domain>

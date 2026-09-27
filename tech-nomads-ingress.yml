@@ -1,0 +1,46 @@
+---
+- hosts: wormmon
+  become: true
+  tasks:
+    - name: Install the dedicated VM HTTPS relay socket
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/tech-nomads-https.socket
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Tech Nomads VM HTTPS ingress from SWAG
+          [Socket]
+          ListenStream=192.168.50.40:8443
+          NoDelay=true
+          IPAddressDeny=any
+          IPAddressAllow=192.168.50.20
+          IPAddressAllow=192.168.124.10
+          [Install]
+          WantedBy=sockets.target
+      register: tech_nomads_socket
+    - name: Install the dedicated VM HTTPS relay service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/tech-nomads-https.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Forward encrypted Tech Nomads traffic to its VM
+          Requires=tech-nomads-https.socket
+          After=network-online.target libvirtd.service
+          [Service]
+          ExecStart=/usr/lib/systemd/systemd-socket-proxyd 192.168.124.10:443
+          DynamicUser=yes
+          PrivateTmp=yes
+          ProtectSystem=strict
+          ProtectHome=yes
+          NoNewPrivileges=yes
+          IPAddressDeny=any
+          IPAddressAllow=192.168.50.20
+          IPAddressAllow=192.168.124.10
+      register: tech_nomads_relay
+    - name: Enable VM ingress socket
+      ansible.builtin.systemd:
+        name: tech-nomads-https.socket
+        enabled: true
+        state: "{{ 'restarted' if tech_nomads_socket.changed else 'started' }}"
+        daemon_reload: '{{ tech_nomads_socket.changed or tech_nomads_relay.changed }}'

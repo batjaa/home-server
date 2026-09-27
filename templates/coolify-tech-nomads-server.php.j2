@@ -1,0 +1,24 @@
+<?php
+require '/var/www/html/vendor/autoload.php';
+$app=require '/var/www/html/bootstrap/app.php';
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$server=App\Models\Server::where('name','tech-nomads')->firstOrFail();
+if ($server->team_id !== 2 || $server->ip !== '192.168.124.10') throw new RuntimeException('Unexpected server');
+Illuminate\Support\Facades\Auth::login(App\Models\User::findOrFail(0));
+session(['currentTeam'=>App\Models\Team::findOrFail(2)]);
+App\Actions\Server\ValidateServer::run($server);
+$config=App\Actions\Proxy\GetProxyConfiguration::run($server);
+$yaml=Symfony\Component\Yaml\Yaml::parse($config);
+foreach (['http','https'] as $entry) {
+    $arg="--entrypoints.$entry.forwardedHeaders.trustedIPs=192.168.124.1/32";
+    if (!in_array($arg,$yaml['services']['traefik']['command'])) $yaml['services']['traefik']['command'][]=$arg;
+}
+$desired=Symfony\Component\Yaml\Yaml::dump($yaml,10,2);
+$changed=$desired !== $config;
+if ($changed) App\Actions\Proxy\SaveProxyConfiguration::run($server,$desired);
+$running=instant_remote_process(["docker ps --filter name=^coolify-proxy$ --format '{{ '{{' }}.Names{{ '}}' }}'"],$server,false);
+if ($changed || trim($running ?? '') !== 'coolify-proxy') {
+    App\Actions\Proxy\StartProxy::run($server,async:false);
+    $changed=true;
+}
+echo $changed ? "CHANGED proxy configured\n" : "OK server and proxy ready\n";

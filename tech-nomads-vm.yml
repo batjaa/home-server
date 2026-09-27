@@ -1,0 +1,5 @@
+---
+- hosts: wormmon
+  become: true
+  roles:
+    - virtualization/tech-nomads

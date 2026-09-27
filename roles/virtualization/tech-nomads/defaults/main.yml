@@ -1,0 +1,11 @@
+---
+tech_nomads_vm_name: tech-nomads
+tech_nomads_vm_ip: 192.168.124.10
+tech_nomads_vm_gateway: 192.168.124.1
+tech_nomads_vm_memory: 4096
+tech_nomads_vm_cpus: 2
+tech_nomads_vm_disk_gb: 30
+tech_nomads_vm_dir: /var/lib/libvirt/images/tech-nomads
+tech_nomads_vm_image_url: https://cloud-images.ubuntu.com/noble/20260926/noble-server-cloudimg-amd64.img
+tech_nomads_vm_image_sha256: 6a81c37564db9b1ee84e141922625e1d7c5b389b99bb3c572e0243607d5bb4d2
+tech_nomads_vm_admin_key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"

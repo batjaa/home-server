@@ -27,6 +27,13 @@
     jolly_tls: '{{ jolly_certificate.stat.exists }}'
   notify: Reload Jolly ingress
 
+- name: Route Jolly preview to the dedicated team VM
+  ansible.builtin.template:
+    src: jolly-preview.conf.j2
+    dest: '{{ docker_dir }}/swag/nginx/proxy-confs/jolly-preview.subdomain.conf'
+    mode: '0664'
+  notify: Reload Jolly ingress
+
 - name: Install automatic DNS cutover script
   ansible.builtin.template:
     src: jolly-certificate.py.j2

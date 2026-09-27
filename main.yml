@@ -479,6 +479,16 @@
         tags: [arr-search, arr, containers]
         when: enable_arr_search | default(false) | bool
 
+# Dedicated Tech Nomads guest. Team bootstrap/invitation remains an explicit runbook step.
+- import_playbook: tech-nomads-vm.yml
+  tags: [tech-nomads]
+- import_playbook: tech-nomads-guest.yml
+  tags: [tech-nomads]
+- import_playbook: tech-nomads-ingress.yml
+  tags: [tech-nomads]
+- import_playbook: coolify-tech-nomads-server.yml
+  tags: [tech-nomads]
+
 # App-specific storage and GoDaddy HTTP-01 ingress. Coolify owns the workload.
 - import_playbook: jolly.yml
   tags: [jolly]

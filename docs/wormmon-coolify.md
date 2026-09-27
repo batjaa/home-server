@@ -304,18 +304,48 @@ through the existing vault-managed Postmark account; this does not enable
 Coolify-wide SMTP or send other notifications. Repeated runs do not duplicate a
 valid pending invitation.
 
-Jolly remains in Root Team until Tech Nomads has its own deployment server.
-Coolify v4 blocks sharing the same server across teams, and moving only the
-project would break non-root administrators' deployment authorization. The owner
-chose a dedicated VM on wormmon, initially 2 vCPUs / 4 GiB RAM / 30 GiB disk.
-Provisioning is blocked until AMD SVM is enabled in BIOS: the kernel explicitly
-reports `SVM disabled (by BIOS) in MSR_VM_CR`, and `/dev/kvm` is absent. Schedule
-the required reboot before proceeding; all wormmon applications are affected.
-At the September 26 check, 61 containers used about 7.2 GiB of 30 GiB RAM, 22 GiB
-was available, CPU was 96–98% idle, and the root filesystem had 92 GiB free.
+Jolly now belongs to Tech Nomads, together with its dedicated server
+`tech-nomads` (`192.168.124.10`, Coolify UUID `b3mwnfgzbdyjtb7uuzrz0qlw`).
+Coolify v4 requires team-owned deployment servers. This KVM guest has 2 vCPUs,
+4 GiB RAM, a 30 GiB disk, Ubuntu 24.04 LTS, and its own Docker/Traefik.
+AMD SVM was enabled through PiKVM and wormmon rebooted with the owner's
+permission on September 26. All existing containers recovered; Kedge, Groove,
+Jolly and Coolify returned HTTP 200. `/dev/kvm` is now available.
 
-Jolly's landing page is deployed in Coolify on wormmon, with persistent SQLite
-at `/opt/docker/data/jolly`. Its repository is `tech-nomads-inc/jolly`; the
+After provisioning, wormmon had about 21 GiB RAM available, no swap usage, and
+88 GiB free on its root filesystem. The LVM volume group also has about 750 GiB
+unallocated, which is not yet filesystem capacity.
+
+Provisioning order:
+
+```sh
+ansible-playbook coolify-tech-nomads.yml
+ansible-playbook tech-nomads-vm.yml
+ansible-playbook tech-nomads-guest.yml
+ansible-playbook tech-nomads-ingress.yml
+ansible-playbook coolify-tech-nomads-server.yml
+ansible-playbook jolly.yml
+```
+
+The VM/guest/relay/server playbooks are imported by `main.yml` with tag
+`tech-nomads`. VM image version and checksum, guest XML, seed configuration,
+SSH bootstrap, network, and forwarding rules are in
+`roles/virtualization/tech-nomads`. The one-time `jolly-migrate-team.yml` moved
+the existing project/service and copied its stopped SQLite data; it is not part
+of the regular convergence run. The stopped original container and cutover
+archive `/opt/docker/data/jolly-migration-source.tar` remain on wormmon.
+
+Traffic: SWAG `.20:443` → TCP relay `.40:8443` → VM `192.168.124.10:443` →
+Traefik → Jolly `:3000`. The relay's IP allowlist admits andromon. The guest's
+libvirt NAT network is `192.168.124.0/24` on `virbr-tn`; Docker/libvirt firewall
+compatibility is restored by `tech-nomads-forwarding.service`. The guest's Docker
+address pool is `10.64.0.0/16`. The exact Jolly preview vhost overrides the
+existing regex preview vhost, leaving other apps on wormmon's shared proxy.
+
+Use `ssh -J batjaa@192.168.50.40 root@192.168.124.10` to administer the VM.
+Persistent SQLite is at `/opt/docker/data/jolly` **inside the VM**, whose disk is
+`/var/lib/libvirt/images/tech-nomads/root.qcow2` on wormmon. No off-host application
+data backup is configured yet. Its repository is `tech-nomads-inc/jolly`; the
 application's `docs/INFRASTRUCTURE.md` is the detailed deployment and recovery
 runbook, including a rendered traffic diagram and the future multi-app layout.
 
@@ -329,7 +359,12 @@ Run `ansible-playbook jolly.yml` (also imported by the full playbook with the
 `jolly` tag). It creates the UID 1000 data directory and configures the SWAG route
 and `jolly-certificate.timer`. The timer activates HTTPS once GoDaddy apex and
 `www` records point home. Public TCP 80 must also forward to andromon for ACME;
-the initial public-IP test refused port 80 even though SWAG was listening locally.
+public DNS points home and the missing TCP 80 rule was added on September 26.
+The certificate was issued and production HTTPS verified at 18:31 PDT. The
+idempotent `bin/configure-jolly-router.py check|apply|version` helper preserves
+other forwards, uses `Private / ASUS Zen ET12` in 1Password, and logs out after
+use. It refuses conflicting port-80 rules. The router retains its existing
+TCP 443 → andromon forwarding.
 Split DNS is declared in `host_vars/tentomon/vars.yml` and applied with `pihole`.
 
 Initially the app uses a Coolify custom service built from the local checkout.

@@ -42,7 +42,7 @@ server {
 
     location / {
         include /config/nginx/proxy.conf;
-        proxy_pass https://{{ hostvars['wormmon']['ansible_host'] }}:443;
+        proxy_pass https://{{ hostvars['wormmon']['ansible_host'] }}:8443;
     }
 }
 {% endif %}

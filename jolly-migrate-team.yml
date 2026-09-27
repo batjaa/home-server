@@ -1,0 +1,52 @@
+---
+# One-time cutover. Keeps the original container (stopped), image and data for rollback.
+- hosts: wormmon
+  become: true
+  tasks:
+    - name: Read the current Jolly deployment host
+      ansible.builtin.command:
+        argv: [docker, exec, -i, coolify, php]
+        stdin: |
+          <?php
+          require '/var/www/html/vendor/autoload.php';
+          $app=require '/var/www/html/bootstrap/app.php';
+          $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+          echo App\Models\Service::where('uuid','rfu19wpoa6yajpckvqunvmct')->firstOrFail()->server_id;
+      register: jolly_previous_server
+      changed_when: false
+    - name: Migrate the original deployment
+      when: jolly_previous_server.stdout | trim == '0'
+      block:
+        - name: Verify target image exists before stopping writes
+          ansible.builtin.command: docker image inspect jolly:f779036
+          delegate_to: tech-nomads
+          changed_when: false
+          no_log: true
+        - name: Stop the original Jolly container gracefully
+          ansible.builtin.command: docker stop --time 20 app-rfu19wpoa6yajpckvqunvmct
+        - name: Archive the stopped database and persistent files
+          ansible.builtin.shell: umask 077 && tar -cf /opt/docker/data/jolly-migration-source.tar -C /opt/docker/data jolly
+        - name: Copy the stopped data to the dedicated VM
+          ansible.builtin.shell: |
+            set -o pipefail
+            ssh -o BatchMode=yes batjaa@192.168.50.40 'sudo cat /opt/docker/data/jolly-migration-source.tar' |
+              ssh -o BatchMode=yes -J batjaa@192.168.50.40 root@192.168.124.10 'tar -xf - -C /opt/docker/data'
+          args:
+            executable: /bin/bash
+          delegate_to: localhost
+          become: false
+        - name: Move the project and start its service through Coolify
+          ansible.builtin.command:
+            argv: [docker, exec, -i, coolify, php]
+            stdin: "{{ lookup('template', 'templates/coolify-jolly-move.php.j2') }}"
+          register: jolly_move
+          changed_when: "'CHANGED' in jolly_move.stdout"
+        - name: Wait for the migrated app to become healthy
+          ansible.builtin.command:
+            argv: [docker, inspect, '--format', '{{ "{{" }}.State.Health.Status{{ "}}" }}', app-rfu19wpoa6yajpckvqunvmct]
+          delegate_to: tech-nomads
+          register: jolly_health
+          until: jolly_health.stdout | trim == 'healthy'
+          retries: 30
+          delay: 3
+          changed_when: false
