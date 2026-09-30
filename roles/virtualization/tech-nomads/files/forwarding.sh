@@ -7,4 +7,13 @@ for rule in '-i virbr-tn -j ACCEPT' '-o virbr-tn -m conntrack --ctstate RELATED,
     iptables -C DOCKER-USER $rule 2>/dev/null || iptables -I DOCKER-USER 1 $rule
 done
 # Coolify's control-plane network may SSH to this team's guest.
-iptables -C LIBVIRT_FWI -s 10.0.1.0/24 -d 192.168.124.10/32 -o virbr-tn -p tcp --dport 22 -j ACCEPT 2>/dev/null || iptables -I LIBVIRT_FWI 1 -s 10.0.1.0/24 -d 192.168.124.10/32 -o virbr-tn -p tcp --dport 22 -j ACCEPT
+# Libvirt can prepend its reject rule after a network restart. Presence alone
+# is insufficient: this narrow allowance must precede that rejection.
+rule='-s 10.0.1.0/24 -d 192.168.124.10/32 -o virbr-tn -p tcp -m tcp --dport 22 -j ACCEPT'
+first=$(iptables -S LIBVIRT_FWI | sed -n '2p')
+if [ "$first" != "-A LIBVIRT_FWI $rule" ]; then
+    while iptables -C LIBVIRT_FWI $rule 2>/dev/null; do
+        iptables -w -D LIBVIRT_FWI $rule
+    done
+    iptables -w -I LIBVIRT_FWI 1 $rule
+fi
