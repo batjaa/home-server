@@ -1,0 +1,17 @@
+---
+# Product app has a separate lifecycle and certificate from the marketing site.
+- hosts: tech_nomads
+  become: true
+  tasks:
+    - name: Create Jolly product app state directory
+      ansible.builtin.file:
+        path: /opt/docker/data/jolly-app
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+
+- hosts: andromon
+  become: true
+  roles:
+    - network/jolly-app

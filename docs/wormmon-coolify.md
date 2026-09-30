@@ -693,3 +693,26 @@ disabled. Original site configurations and data remain intact; the removed
 symlink mapping is `/root/coolify-migrated-websites-disabled.json` on `tinker-box`.
 The old Neo4j container is stopped with restart policy `no`. Staging and the
 unmigrated Tipped site retain their original Nginx routes.
+
+### Jolly deployment on merge
+
+Both Jolly surfaces follow `tech-nomads-inc/jolly` branch `main` through GitHub App
+`jolly-deploy` (installation 165316538). Landing uses application
+`xnq4jaxnraw7ew8ubgbs5jer` and `/compose.yml`. Business uses application
+`6pf6ywqszc6pvszocrfowkq0` and `/compose.app.yml` in raw Compose mode. Runtime
+secrets remain scoped to each service; do not enable Coolify's default Compose
+parser, which injects its entire environment into every container. Full build,
+secret, verification, and recovery settings live in Jolly's
+`docs/APP_DEPLOYMENT.md`.
+
+The retired business image service `g8pfbaibxtqnjggnowwicjlp` must stay stopped;
+its PostgreSQL bind mount is shared with the replacement. Pre-cutover backups
+(database dump, role definitions, storage archive) are protected under
+`/data/backups/jolly/20260930T021942Z` on wormmon, with a copy inside the guest at
+`/root/jolly-backups/20260930T021942Z`. These are one-time backups, not a recurring
+backup policy.
+
+Coolify-to-guest SSH requires the narrow allowance from `10.0.1.0/24` to
+`192.168.124.10:22` **before** libvirt's reject rule. Network restarts can reorder
+those rules. `tech-nomads-forwarding` now repairs ordering, and its systemd timer
+reconciles every 60 seconds. The Ansible role carries both the fix and timer.

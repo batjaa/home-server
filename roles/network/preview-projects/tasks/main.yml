@@ -1,0 +1,26 @@
+---
+- name: Require selected project to exist
+  ansible.builtin.assert:
+    that: preview_project_filter is not defined or preview_project_filter in preview_projects
+
+- name: Configure each registered project
+  ansible.builtin.include_tasks: project.yml
+  loop: '{{ preview_projects | dict2items }}'
+  loop_control:
+    loop_var: preview_registration
+    label: '{{ preview_registration.key }}'
+  when: preview_project_filter is not defined or preview_registration.key == preview_project_filter
+
+- name: Renew registered project certificates twice daily
+  ansible.builtin.cron:
+    name: Renew registered preview project certificates
+    minute: '17'
+    hour: '4,16'
+    job: >-
+      docker exec swag certbot renew --quiet --config /dev/null
+      --config-dir /config/nginx/preview-letsencrypt --work-dir /tmp/preview-letsencrypt
+      --logs-dir /config/log/preview-letsencrypt
+      --deploy-hook 'nginx -t && nginx -s reload'
+
+- name: Activate validated preview routes
+  ansible.builtin.meta: flush_handlers

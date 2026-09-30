@@ -112,7 +112,6 @@
       [Service]
       Type=oneshot
       ExecStart=/usr/local/sbin/tech-nomads-forwarding
-      RemainAfterExit=yes
       [Install]
       WantedBy=multi-user.target docker.service libvirtd.service
   register: tech_nomads_forward_unit
@@ -122,6 +121,26 @@
     daemon_reload: '{{ tech_nomads_forward_unit.changed }}'
     enabled: true
     state: "{{ 'restarted' if tech_nomads_forward_unit.changed or tech_nomads_forward_script.changed else 'started' }}"
+- name: Repair forwarding order after libvirt network changes
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/tech-nomads-forwarding.timer
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Reconcile Tech Nomads firewall rule ordering
+      [Timer]
+      OnBootSec=30s
+      OnUnitInactiveSec=60s
+      Unit=tech-nomads-forwarding.service
+      [Install]
+      WantedBy=timers.target
+  register: tech_nomads_forward_timer
+- name: Enable periodic forwarding repair
+  ansible.builtin.systemd:
+    name: tech-nomads-forwarding.timer
+    daemon_reload: '{{ tech_nomads_forward_timer.changed }}'
+    enabled: true
+    state: started
 - name: Read defined guests
   ansible.builtin.command: virsh list --all --name
   register: tech_nomads_guests

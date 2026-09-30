@@ -823,3 +823,33 @@ Traefik and Docker containers. Other home apps retain the shared wormmon host.
 See [the Coolify runbook](docs/wormmon-coolify.md#jolly-answer-jollyanswercom) for
 provisioning, routing, storage, team access, and recovery. `main.yml` includes
 the VM setup under `tech-nomads` and Jolly ingress under `jolly`.
+
+The Jolly product app uses `app.jollyanswer.com` and a separate Coolify resource
+in the same VM. `ansible-playbook jolly-app.yml` prepares its state directory,
+SWAG route, and independent wildcard DNS-01 certificate. A 15-minute timer
+activates HTTPS after Cloudflare becomes authoritative, using SWAG's existing
+Cloudflare credential file. New first-level subdomains then need only a Coolify route.
+App state belongs under `/opt/docker/data/jolly-app/`. This does not change the
+marketing site's database or certificate. See the Jolly repository's app deployment
+guide for application images, migrations, secrets, health checks and backups.
+
+Cloudflare DNS migration is prepared, pending the GoDaddy owner's zone export
+and nameserver change. `ansible-playbook jolly-dns.yml` converges only the app and
+wildcard subdomain records in the pending Cloudflare zone; it preserves all other
+records. The assigned nameservers are `keaton.ns.cloudflare.com` and
+`kristina.ns.cloudflare.com`. Do not switch until the full export has been imported
+and checked. `jolly-app.preview.batjaa.site` provides a separate HTTPS app preview
+through the existing preview certificate while production DNS is pending.
+
+### Registered project previews
+
+Project namespaces now share an automated registration workflow. A single entry
+in `vars/preview-projects.json` provisions DNS, a project wildcard certificate,
+and routing to the approved Coolify target. `app-bootstrap` registers projects
+before deployment; additional service subdomains require only app hostname
+configuration. See [the preview runbook](docs/project-previews.md).
+
+Jolly's business app is at `https://app.jolly.preview.batjaa.site`; the old
+`jolly-app.preview.batjaa.site` remains an alias. Production nameservers are
+independent. `verify-jolly-dns.yml` checks the prepared Cloudflare zone against
+the owner-provided export, including mail records and MX priorities.

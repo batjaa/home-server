@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""Register a preview namespace against a centrally approved Coolify server."""
+import argparse
+import fcntl
+import ipaddress
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import tempfile
+
+ROOT = Path(__file__).resolve().parent.parent
+LABEL = re.compile(r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\Z')
+VERSION = os.environ.get('PREVIEW_REGISTRY_VERSION', 'dev')
+
+
+def read_registry(root):
+    projects = json.loads((root / 'vars/preview-projects.json').read_text())['preview_projects']
+    targets = json.loads((root / 'vars/preview-targets.json').read_text())['preview_targets']
+    uuids = set()
+    for name, target in targets.items():
+        if not LABEL.fullmatch(name) or not re.fullmatch(r'[a-zA-Z0-9]+', target['server_uuid']):
+            raise ValueError('Invalid preview target identity')
+        if target['server_uuid'] in uuids:
+            raise ValueError('Duplicate server UUID in preview targets')
+        uuids.add(target['server_uuid'])
+        ipaddress.IPv4Address(target['upstream_host'])
+        if type(target['upstream_port']) is not int or not 1 <= target['upstream_port'] <= 65535:
+            raise ValueError('Invalid upstream port')
+    for name, registration in projects.items():
+        if not LABEL.fullmatch(name) or registration['target'] not in targets:
+            raise ValueError('Invalid preview project registration')
+        for filename in registration.get('legacy_routes', []):
+            if not re.fullmatch(r'[a-z0-9-]+\.subdomain\.conf', filename):
+                raise ValueError('Invalid legacy route filename')
+    return projects, targets
+
+
+def register(root, project, server_uuid, dry_run=False, check=False):
+    if not LABEL.fullmatch(project):
+        raise ValueError('Project must be one lowercase DNS label (1–63 letters, digits or hyphens)')
+    projects, targets = read_registry(root)
+    target = next((name for name, row in targets.items() if row['server_uuid'] == server_uuid), None)
+    if target is None:
+        raise ValueError('Unknown Coolify server; register its approved edge target in vars/preview-targets.json first')
+    existing = projects.get(project)
+    if existing and existing['target'] != target:
+        raise ValueError('Project already belongs to another target; review and migrate its registry entry explicitly')
+    if check and not existing:
+        raise ValueError('Project is not registered')
+    changed = existing is None
+    if changed and not dry_run and not check:
+        projects[project] = {'target': target}
+        path = root / 'vars/preview-projects.json'
+        with tempfile.NamedTemporaryFile(mode='w', dir=path.parent, delete=False) as temporary:
+            temporary.write(json.dumps({'preview_projects': projects}, indent=2, sort_keys=True) + '\n')
+            temp_path = Path(temporary.name)
+        temp_path.chmod(0o644)
+        temp_path.replace(path)
+    return {'project': project, 'target': target, 'domain': project + '.preview.batjaa.site',
+            'changed': changed, 'dry_run': dry_run}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('command', choices=['register', 'check', 'version'])
+    parser.add_argument('project', nargs='?')
+    parser.add_argument('--server-uuid')
+    parser.add_argument('--root', type=Path, default=ROOT, help='Home-server checkout')
+    parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--apply', action='store_true', help='Converge DNS, certificates and routing through Ansible')
+    args = parser.parse_args()
+    if args.command == 'version':
+        print(VERSION)
+        return
+    if not args.project or not args.server_uuid:
+        parser.error('project and --server-uuid are required')
+    if args.command == 'check' and args.apply:
+        parser.error('--apply is only valid with register')
+    root = args.root.resolve()
+    if args.dry_run or args.command == 'check':
+        result = register(root, args.project, args.server_uuid, args.dry_run, args.command == 'check')
+    else:
+        # Lock the directory itself: no untracked lock file, and atomic rename stays protected.
+        lock = os.open(root / 'vars', os.O_RDONLY)
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            result = register(root, args.project, args.server_uuid)
+        finally:
+            os.close(lock)
+    print(json.dumps(result), flush=True)
+    if args.apply and not args.dry_run:
+        subprocess.run(['ansible-playbook', 'preview-projects.yml', '--extra-vars',
+                        json.dumps({'preview_project_filter': args.project})], cwd=root, check=True)
+    if result['changed'] and not args.dry_run:
+        print('Registration saved. Commit vars/preview-projects.json in home-server for recovery.')
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (ValueError, KeyError, OSError, subprocess.CalledProcessError) as error:
+        raise SystemExit(str(error))

@@ -1,0 +1,40 @@
+---
+- name: Validate registered project namespaces and targets
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Validate registry without changing state
+      ansible.builtin.command:
+        argv: [python3, '{{ playbook_dir }}/bin/validate-preview-registry']
+      changed_when: false
+
+- name: Converge registered preview DNS
+  hosts: tentomon
+  gather_facts: false
+  vars_files:
+    - vars/preview-projects.json
+    - vars/preview-targets.json
+  tasks:
+    - name: Converge project root and wildcard records
+      ansible.builtin.include_role:
+        name: network/cloudflare-dns
+        tasks_from: zone
+      vars:
+        cloudflare_managed_zone:
+          name: batjaa.site
+          records:
+            - { name: '{{ item.key }}.preview', type: CNAME, content: ddns.batjaa.site, proxied: false }
+            - { name: '*.{{ item.key }}.preview', type: CNAME, content: ddns.batjaa.site, proxied: false }
+      loop: '{{ preview_projects | dict2items }}'
+      when: preview_project_filter is not defined or item.key == preview_project_filter
+      loop_control:
+        label: '{{ item.key }}'
+
+- name: Converge project certificates and edge routes
+  hosts: andromon
+  become: true
+  vars_files:
+    - vars/preview-projects.json
+    - vars/preview-targets.json
+  roles:
+    - network/preview-projects

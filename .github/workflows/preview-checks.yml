@@ -1,0 +1,15 @@
+name: Preview registry checks
+on:
+  push:
+    paths: ['bin/*preview*', 'tests/test_preview_registry.py', 'vars/preview-*.json', '.github/workflows/preview-checks.yml']
+  pull_request:
+    paths: ['bin/*preview*', 'tests/test_preview_registry.py', 'vars/preview-*.json', '.github/workflows/preview-checks.yml']
+permissions:
+  contents: read
+jobs:
+  registry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bin/validate-preview-registry
+      - run: python3 -m unittest discover -s tests -p 'test_preview_registry.py'

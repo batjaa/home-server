@@ -1,0 +1,10 @@
+{
+  "preview_projects": {
+    "jolly": {
+      "target": "tech-nomads",
+      "legacy_routes": [
+        "jolly-preview.subdomain.conf"
+      ]
+    }
+  }
+}

@@ -699,3 +699,11 @@ human-only steps you'll have to redo:
   `192.168.50.10`
 - [ ] Cloudflare apex `batjaa.site` A record + MX records (Hover) — these
   predate our `cloudflare_records:` and aren't tracked
+
+## Project preview namespaces
+
+Shared infrastructure for `PROJECT.preview.batjaa.site` and
+`SERVICE.PROJECT.preview.batjaa.site`; see [project-previews.md](project-previews.md)
+for registration, approved Coolify targets, certificate renewal and recovery.
+Jolly's app uses `https://app.jolly.preview.batjaa.site` through the Tech Nomads
+relay; the project root remains its landing page. No separate daemon is added.

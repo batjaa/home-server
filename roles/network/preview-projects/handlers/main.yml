@@ -1,0 +1,4 @@
+---
+- name: Reload registered preview ingress
+  ansible.builtin.shell: docker exec swag nginx -t && docker exec swag nginx -s reload
+  changed_when: true

@@ -492,3 +492,11 @@
 # App-specific storage and GoDaddy HTTP-01 ingress. Coolify owns the workload.
 - import_playbook: jolly.yml
   tags: [jolly]
+- import_playbook: jolly-app.yml
+  tags: [jolly-app]
+- import_playbook: jolly-dns.yml
+  tags: [jolly-dns]
+
+# Project preview namespaces: shared DNS, isolated wildcard TLS, target routing.
+- import_playbook: preview-projects.yml
+  tags: [preview-projects]
