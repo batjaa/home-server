@@ -1,0 +1,7 @@
+---
+- name: Refuse a generic role import
+  ansible.builtin.fail:
+    msg: >-
+      Apply this route with ansible-playbook workout-edge.yml.
+      The SWAG, Pi-hole, and Cloudflare roles restart containers or
+      reconcile every record, so this role has no generic entry point.

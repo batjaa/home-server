@@ -492,3 +492,9 @@
 # App-specific storage and GoDaddy HTTP-01 ingress. Coolify owns the workload.
 - import_playbook: jolly.yml
   tags: [jolly]
+
+# Workout's public edge. The dedicated playbook reloads nginx and updates one
+# DNS record; a full converge includes it, but the scoped apply is
+# `ansible-playbook workout-edge.yml`.
+- import_playbook: workout-edge.yml
+  tags: [workout-edge]

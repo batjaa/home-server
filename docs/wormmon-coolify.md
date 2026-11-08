@@ -651,6 +651,112 @@ token value saved in 1Password. Revoke any superseded token from the UI once
 you regain access.
 
 
+## Workout (`workout.batjaa.site`)
+
+Coolify application `t1dy1s25oevzdserakz3otdm` already has the Traefik Host
+rule. This repository did not contain `recall.subdomain.conf.j2`. Workout uses
+the same HTTPS upstream shape as the other Coolify vhosts on SWAG, and adds
+the SNI and trust settings that hostname needs:
+
+- `server_name workout.batjaa.site`
+- upstream `https://192.168.50.40:443`
+- `Host` and `X-Forwarded-*` from SWAG's `proxy.conf` (`Host $host`)
+- `proxy_ssl_server_name on` and `proxy_ssl_name workout.batjaa.site`
+- `proxy_ssl_verify off`
+
+Direct HTTPS to Coolify with that hostname returns the app's HTTP 200, and
+certificate verification fails with curl exit 60 (the issuer is not locally
+trusted, OpenSSL error 20). SWAG still presents the `*.batjaa.site`
+certificate to clients. The name is covered by the existing wildcard, so this
+route does not change `swag_extra_domains` and does not run certbot.
+
+`workout.batjaa.site` is a DNS-only CNAME to `ddns.batjaa.site`. Pi-hole
+split DNS answers `192.168.50.20` so LAN clients reach SWAG without hairpin
+NAT. The vhost template lives with the workout role, outside
+`roles/network/swag/templates/proxy-confs/`, because that directory's install
+task notifies `restart swag`.
+
+### Scoped apply
+
+Run this from `~/git/home-server` on the Mac. `ansible.cfg` already sets
+`vault_password_file = pass.sh`, which reads the vault password from
+1Password or the local keychain. Do not put the vault password or
+`cloudflare_dns_token` on the command line.
+
+```bash
+cd ~/git/home-server
+ansible-playbook workout-edge.yml
+ansible-playbook workout-edge.yml
+```
+
+The second run is the idempotency check. It should finish with `changed=0`.
+The CNAME action in the output should be `workout CNAME none`.
+
+These commands are not the apply. They restart SWAG, can restart Pi-hole, or
+reconcile every Cloudflare record:
+
+```bash
+ansible-playbook main.yml -l andromon --tags swag
+ansible-playbook main.yml -l tentomon --tags pihole
+ansible-playbook main.yml -l tentomon --tags cloudflare-dns
+```
+
+A full `ansible-playbook main.yml` also imports `workout-edge.yml`, but it
+runs the other roles first. Use the dedicated playbook for this route.
+`ansible-playbook workout-edge.yml --check` does not call Cloudflare or
+Docker; it is not the idempotency proof.
+
+### What the playbook changes
+
+1. `host_vars/tentomon/vars.yml` gains the workout CNAME and the Pi-hole
+   address when those lists do not already contain them. Every other line
+   stays in place. A different existing workout value is left untouched and
+   the apply stops. On a real edit it copies the file to
+   `host_vars/tentomon/vars.yml.workout-edge-<UTC>.bak` before replacing it.
+   `host_vars/` stays gitignored.
+2. Cloudflare gets one `GET` for the `batjaa.site` zone and one `GET` for
+   `name=workout.batjaa.site`. A missing name is created. One differing
+   CNAME is updated in place, after writing its id, type, name, content,
+   proxied flag, and TTL to
+   `host_vars/tentomon/workout-edge-backups/<UTC>-workout-cname.json`.
+   Any other name is ignored. An A, AAAA, or second CNAME on this name
+   stops the apply. Requests that send the API token use `no_log: true`.
+   The shared record task also sets `no_log: true`; its problem is that
+   `zone.yml` loops every entry in `cloudflare_records` and the update
+   method is PUT when type, content, proxy, or TTL differs. This play
+   does not call that task.
+3. Pi-hole's current `dns.hosts` list is read and written back with
+   `192.168.50.20 workout.batjaa.site` added or corrected. Other rows stay
+   in their original text. The previous list is saved under
+   `/opt/docker/data/pihole/workout-edge-backups/<UTC>-dns.hosts.json` on
+   tentomon. The container is not recreated; the play checks
+   `State.StartedAt`.
+4. SWAG renders `workout.subdomain.conf` on andromon. When the file already
+   exists and changes, Ansible keeps the previous file beside it (the
+   `backup_file` path). `docker exec swag nginx -t` runs next. Only a
+   successful test is followed by `docker exec swag nginx -s reload`. A
+   failed test restores the previous file, or removes a vhost that had no
+   previous file, and does not reload. The play checks that the SWAG
+   container's `State.StartedAt` is unchanged.
+
+Nothing is backed up on a run that changes nothing.
+
+### Checks
+
+```bash
+dig +short CNAME workout.batjaa.site @1.1.1.1
+dig +short workout.batjaa.site @192.168.50.10
+curl -skI --resolve workout.batjaa.site:443:192.168.50.20 https://workout.batjaa.site/
+ssh -p 100 batjaa@192.168.50.20 'docker exec swag nginx -t && docker inspect -f "{{.State.StartedAt}}" swag'
+ssh tentomon@192.168.50.10 'docker inspect -f "{{.State.StartedAt}}" pihole'
+```
+
+Expected DNS results are `ddns.batjaa.site` from `1.1.1.1` and
+`192.168.50.20` from Pi-hole. The curl check should show the app's HTTP 200
+through SWAG. Compare the two `StartedAt` values with the values printed
+before the play if you want an independent restart check. `nginx -t` must
+succeed. The container start times should match the pre-apply values.
+
 ## Additional production apps
 
 These apps use `coolify-production-apps.subdomain.conf.j2` and share the

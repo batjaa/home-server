@@ -1,0 +1,58 @@
+---
+# workout.batjaa.site public and LAN edge.
+#
+# Safe apply, from ~/git/home-server on the Mac:
+#   ansible-playbook workout-edge.yml
+#
+# ansible.cfg sets vault_password_file=pass.sh. Do not pass the vault
+# password or the Cloudflare token on the command line.
+#
+# Do not apply this route with --tags swag, --tags pihole, or
+# --tags cloudflare-dns. Those roles restart SWAG, can restart Pi-hole,
+# or reconcile every Cloudflare record.
+
+- name: Record the workout DNS desired state in tentomon host vars
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+  tags: [workout-edge, workout-edge-config]
+  tasks:
+    - name: Update tentomon host vars
+      ansible.builtin.import_role:
+        name: network/workout-edge
+        tasks_from: host_vars.yml
+
+- name: Publish the workout CNAME
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+  tags: [workout-edge, workout-edge-cloudflare]
+  tasks:
+    - name: Update the single workout CNAME
+      ansible.builtin.import_role:
+        name: network/workout-edge
+        tasks_from: cloudflare.yml
+
+- name: Add workout split DNS without recreating Pi-hole
+  hosts: tentomon
+  gather_facts: false
+  become: true
+  tags: [workout-edge, workout-edge-pihole]
+  tasks:
+    - name: Update Pi-hole dns.hosts
+      ansible.builtin.import_role:
+        name: network/workout-edge
+        tasks_from: pihole.yml
+
+- name: Install the workout SWAG vhost and reload nginx
+  hosts: andromon
+  gather_facts: false
+  become: true
+  tags: [workout-edge, workout-edge-swag]
+  tasks:
+    - name: Update the workout vhost
+      ansible.builtin.import_role:
+        name: network/workout-edge
+        tasks_from: swag.yml

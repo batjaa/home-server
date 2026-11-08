@@ -1,0 +1,16 @@
+---
+# Desired workout.batjaa.site edge. These values are not secrets.
+workout_fqdn: workout.batjaa.site
+workout_record_name: workout
+workout_cname_target: ddns.batjaa.site
+workout_zone: batjaa.site
+workout_split_ip: 192.168.50.20
+workout_upstream_ip: 192.168.50.40
+workout_upstream_port: 443
+workout_coolify_app_uuid: t1dy1s25oevzdserakz3otdm
+workout_pihole_container: pihole
+workout_swag_container: swag
+workout_pihole_plan: /tmp/workout-edge-dns.hosts.json
+
+# Lowest precedence. host_vars still supply the live docker_dir.
+docker_dir: /opt/docker/data

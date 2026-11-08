@@ -1,0 +1,110 @@
+---
+# Install one vhost, run nginx -t, then reload. Never notify the SWAG
+# handler and never recreate the container.
+- name: Require the existing SWAG proxy directory
+  ansible.builtin.stat:
+    path: "{{ docker_dir }}/swag/nginx/proxy-confs"
+  register: workout_proxy_dir
+
+- name: Stop when SWAG's proxy directory is absent
+  ansible.builtin.fail:
+    msg: >-
+      {{ docker_dir }}/swag/nginx/proxy-confs is missing.
+      Refusing to create the SWAG tree from the workout apply.
+  when: not workout_proxy_dir.stat.exists
+
+- name: Record the SWAG container start time
+  ansible.builtin.command:
+    argv:
+      - docker
+      - inspect
+      - -f
+      - '{% raw %}{{.State.StartedAt}}{% endraw %}'
+      - "{{ workout_swag_container }}"
+  register: workout_swag_started
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Record whether the workout vhost already exists
+  ansible.builtin.stat:
+    path: "{{ docker_dir }}/swag/nginx/proxy-confs/workout.subdomain.conf"
+  register: workout_swag_live
+
+- name: Install the workout vhost
+  ansible.builtin.template:
+    src: workout.subdomain.conf.j2
+    dest: "{{ docker_dir }}/swag/nginx/proxy-confs/workout.subdomain.conf"
+    mode: "0664"
+    backup: true
+  register: workout_swag_template
+
+- name: Validate and reload nginx for the workout vhost
+  when:
+    - workout_swag_template is changed
+    - not ansible_check_mode
+  block:
+    - name: Validate SWAG nginx configuration
+      ansible.builtin.command:
+        argv:
+          - docker
+          - exec
+          - "{{ workout_swag_container }}"
+          - nginx
+          - -t
+      changed_when: false
+
+    - name: Reload SWAG nginx
+      ansible.builtin.command:
+        argv:
+          - docker
+          - exec
+          - "{{ workout_swag_container }}"
+          - nginx
+          - -s
+          - reload
+      changed_when: true
+  rescue:
+    - name: Restore the previous workout vhost
+      ansible.builtin.copy:
+        src: "{{ workout_swag_template.backup_file }}"
+        dest: "{{ docker_dir }}/swag/nginx/proxy-confs/workout.subdomain.conf"
+        remote_src: true
+        mode: "0664"
+      when:
+        - workout_swag_live.stat.exists
+        - workout_swag_template.backup_file is defined
+
+    - name: Remove a new workout vhost that failed validation
+      ansible.builtin.file:
+        path: "{{ docker_dir }}/swag/nginx/proxy-confs/workout.subdomain.conf"
+        state: absent
+      when: not workout_swag_live.stat.exists
+
+    - name: Stop after the workout vhost fails validation
+      ansible.builtin.fail:
+        msg: >-
+          nginx -t failed for workout.batjaa.site. The previous vhost was
+          restored when one existed, and SWAG was not reloaded or recreated.
+
+- name: Record the SWAG container start time after reload
+  ansible.builtin.command:
+    argv:
+      - docker
+      - inspect
+      - -f
+      - '{% raw %}{{.State.StartedAt}}{% endraw %}'
+      - "{{ workout_swag_container }}"
+  register: workout_swag_started_after
+  changed_when: false
+  when:
+    - not ansible_check_mode
+    - workout_swag_template is changed
+
+- name: Confirm SWAG was not recreated
+  ansible.builtin.assert:
+    that:
+      - workout_swag_started.stdout == workout_swag_started_after.stdout
+    fail_msg: SWAG container start time changed. This apply must reload nginx only.
+  when:
+    - not ansible_check_mode
+    - workout_swag_template is changed

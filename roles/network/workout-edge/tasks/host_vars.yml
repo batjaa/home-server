@@ -1,0 +1,24 @@
+---
+- name: Check tentomon host vars for the workout records
+  ansible.builtin.command:
+    argv:
+      - python3
+      - "{{ role_path }}/files/workout_edge.py"
+      - preview-host-vars
+      - "{{ playbook_dir }}/host_vars/tentomon/vars.yml"
+  register: workout_host_vars_preview
+  changed_when: false
+  check_mode: false
+
+- name: Add the workout records to tentomon host vars
+  ansible.builtin.command:
+    argv:
+      - python3
+      - "{{ role_path }}/files/workout_edge.py"
+      - ensure-host-vars
+      - "{{ playbook_dir }}/host_vars/tentomon/vars.yml"
+  register: workout_host_vars
+  changed_when: workout_host_vars.stdout == "CHANGED"
+  when:
+    - not ansible_check_mode
+    - workout_host_vars_preview.stdout == "CHANGED"

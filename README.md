@@ -708,6 +708,7 @@ What each thing in the stack is for. Per-service runbooks (config steps not yet 
 | Service | Subdomain | What it does |
 |---|---|---|
 | **Coolify** | `deploy.batjaa.site` | App platform on `wormmon` for side projects. SWAG on `andromon` stays the public edge and proxies the control plane to `wormmon`. Production apps use their own domains, previews use `*.preview.batjaa.site`. See `docs/wormmon-coolify.md`. |
+| **Workout** | `workout.batjaa.site` | Coolify app on `wormmon` (`192.168.50.40`). SWAG on `andromon` proxies HTTPS to Coolify. Public DNS-only CNAME to `ddns.batjaa.site`; Pi-hole resolves the name to `192.168.50.20`. Apply with `workout-edge.yml`. |
 
 ### Monitoring
 
