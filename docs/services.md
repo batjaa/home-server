@@ -145,6 +145,16 @@ DNS-01 wildcard cert challenge. Lives in
 
 **Manual:** make sure router forwards `:443/tcp` to `192.168.50.20`.
 
+### Workout — `https://workout.batjaa.site`
+
+Coolify application `t1dy1s25oevzdserakz3otdm` on `wormmon` already routes this
+hostname. The edge is a DNS-only Cloudflare CNAME to `ddns.batjaa.site`, a
+Pi-hole record for `192.168.50.20`, and an andromon SWAG vhost that proxies
+HTTPS to `192.168.50.40:443`. Apply it with `ansible-playbook workout-edge.yml`.
+The `swag`, `pihole`, and `cloudflare-dns` tags are the wrong tool for this
+route. Details and checks are in
+[Workout](wormmon-coolify.md#workout-workoutbatjaasite).
+
 ### Home Assistant — `https://hass.batjaa.site`
 
 **Auth:** created during Home Assistant onboarding and stored under

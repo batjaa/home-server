@@ -1,0 +1,192 @@
+---
+# One CNAME only. This file must not include the cloudflare-dns role:
+# that role loops every managed record and its update method is PUT.
+- name: Load the tentomon Cloudflare token
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/host_vars/tentomon/secret.yml"
+  no_log: true
+
+- name: Require cloudflare_dns_token in host_vars/tentomon/secret.yml
+  ansible.builtin.fail:
+    msg: cloudflare_dns_token is missing from host_vars/tentomon/secret.yml.
+  when: cloudflare_dns_token is not defined or cloudflare_dns_token | length == 0
+  no_log: true
+
+- name: Look up only the batjaa.site zone
+  ansible.builtin.uri:
+    url: "https://api.cloudflare.com/client/v4/zones?name={{ workout_zone | urlencode }}"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ cloudflare_dns_token }}"
+      Content-Type: application/json
+    status_code: 200
+    timeout: 30
+  register: workout_zone_lookup
+  no_log: true
+  failed_when: false
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Stop when the zone lookup does not succeed
+  ansible.builtin.fail:
+    msg: >-
+      Cloudflare zone lookup for batjaa.site failed
+      (HTTP {{ workout_zone_lookup.status | default('unknown') }}).
+  when: >-
+    not ansible_check_mode
+    and workout_zone_lookup.status is defined
+    and (workout_zone_lookup.status | int) != 200
+
+- name: Record the workout zone id
+  ansible.builtin.set_fact:
+    workout_zone_count: "{{ workout_zone_lookup.json.result | default([]) | length }}"
+    workout_zone_id: "{{ (workout_zone_lookup.json.result | default([{}]))[0].id | default('') }}"
+  no_log: true
+  when:
+    - not ansible_check_mode
+    - (workout_zone_lookup.status | default(0) | int) == 200
+
+- name: Require exactly one batjaa.site zone
+  ansible.builtin.fail:
+    msg: Cloudflare token cannot see exactly one batjaa.site zone.
+  when:
+    - not ansible_check_mode
+    - (workout_zone_count | default(0) | int) != 1
+
+- name: Look up only workout DNS records
+  ansible.builtin.uri:
+    url: >-
+      https://api.cloudflare.com/client/v4/zones/{{ workout_zone_id }}/dns_records?name={{ workout_fqdn | urlencode }}&per_page=50
+    method: GET
+    headers:
+      Authorization: "Bearer {{ cloudflare_dns_token }}"
+      Content-Type: application/json
+    status_code: 200
+    timeout: 30
+  register: workout_dns_lookup
+  no_log: true
+  failed_when: false
+  changed_when: false
+  when:
+    - not ansible_check_mode
+    - (workout_zone_count | default(0) | int) == 1
+
+- name: Stop when the workout record lookup does not succeed
+  ansible.builtin.fail:
+    msg: >-
+      Cloudflare lookup for workout.batjaa.site failed
+      (HTTP {{ workout_dns_lookup.status | default('unknown') }}).
+  when: >-
+    not ansible_check_mode
+    and workout_dns_lookup.status is defined
+    and (workout_dns_lookup.status | int) != 200
+
+- name: Decide whether the workout CNAME needs a change
+  ansible.builtin.command:
+    argv:
+      - python3
+      - "{{ role_path }}/files/workout_edge.py"
+      - decide-cname
+      - "{{ workout_fqdn }}"
+      - "{{ workout_cname_target }}"
+    stdin: "{{ workout_dns_lookup.json.result | default([]) | to_json }}"
+  register: workout_dns_decision
+  changed_when: false
+  when:
+    - not ansible_check_mode
+    - workout_dns_lookup.status is defined
+    - (workout_dns_lookup.status | int) == 200
+
+- name: Store the workout CNAME plan
+  ansible.builtin.set_fact:
+    workout_dns_plan: "{{ workout_dns_decision.stdout | from_json }}"
+  no_log: true
+  when:
+    - workout_dns_decision is not skipped
+    - workout_dns_decision.stdout is defined
+
+- name: Report the workout CNAME action
+  ansible.builtin.debug:
+    msg: "workout CNAME {{ workout_dns_plan.action }}"
+  when:
+    - workout_dns_plan is defined
+    - workout_dns_plan.action is defined
+
+- name: Ensure the workout CNAME backup directory exists
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/host_vars/tentomon/workout-edge-backups"
+    state: directory
+    mode: "0700"
+  when:
+    - not ansible_check_mode
+    - workout_dns_plan is defined
+    - workout_dns_plan.action | default('') == 'update'
+
+- name: Back up the current workout CNAME before updating it
+  ansible.builtin.copy:
+    dest: >-
+      {{ playbook_dir }}/host_vars/tentomon/workout-edge-backups/{{ lookup('pipe', 'date -u +%Y%m%dT%H%M%SZ') }}-workout-cname.json
+    content: "{{ workout_dns_plan.previous | to_nice_json }}\n"
+    mode: "0600"
+  when:
+    - not ansible_check_mode
+    - workout_dns_plan is defined
+    - workout_dns_plan.action | default('') == 'update'
+
+- name: Create the workout CNAME
+  when: >-
+    not ansible_check_mode
+    and workout_dns_plan is defined
+    and workout_dns_plan.action | default('') == 'create'
+  block:
+    - name: Send the workout CNAME create
+      ansible.builtin.uri:
+        url: "https://api.cloudflare.com/client/v4/zones/{{ workout_zone_id }}/dns_records"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ cloudflare_dns_token }}"
+          Content-Type: application/json
+        body_format: json
+        body: "{{ workout_dns_plan.body }}"
+        status_code: 200
+        timeout: 30
+      register: workout_dns_create
+      no_log: true
+      failed_when: false
+      changed_when: (workout_dns_create.status | default(0) | int) == 200
+
+    - name: Stop when creating the workout CNAME fails
+      ansible.builtin.fail:
+        msg: >-
+          Cloudflare rejected the new workout CNAME
+          (HTTP {{ workout_dns_create.status | default('unknown') }}).
+      when: (workout_dns_create.status | default(0) | int) != 200
+
+- name: Update the workout CNAME
+  when: >-
+    not ansible_check_mode
+    and workout_dns_plan is defined
+    and workout_dns_plan.action | default('') == 'update'
+  block:
+    - name: Send the workout CNAME update
+      ansible.builtin.uri:
+        url: "https://api.cloudflare.com/client/v4/zones/{{ workout_zone_id }}/dns_records/{{ workout_dns_plan.id }}"
+        method: PUT
+        headers:
+          Authorization: "Bearer {{ cloudflare_dns_token }}"
+          Content-Type: application/json
+        body_format: json
+        body: "{{ workout_dns_plan.body }}"
+        status_code: 200
+        timeout: 30
+      register: workout_dns_update
+      no_log: true
+      failed_when: false
+      changed_when: (workout_dns_update.status | default(0) | int) == 200
+
+    - name: Stop when updating the workout CNAME fails
+      ansible.builtin.fail:
+        msg: >-
+          Cloudflare rejected the workout CNAME update
+          (HTTP {{ workout_dns_update.status | default('unknown') }}).
+      when: (workout_dns_update.status | default(0) | int) != 200

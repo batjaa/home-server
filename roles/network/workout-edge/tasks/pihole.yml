@@ -1,0 +1,110 @@
+---
+# Read the live host list, add one name, and write that list back.
+# Do not import the Pi-hole role: it can restart the container and replaces
+# dns.hosts from the full variable lists.
+- name: Record the Pi-hole container start time
+  ansible.builtin.command:
+    argv:
+      - docker
+      - inspect
+      - -f
+      - '{% raw %}{{.State.StartedAt}}{% endraw %}'
+      - "{{ workout_pihole_container }}"
+  register: workout_pihole_started
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Plan the Pi-hole workout record
+  block:
+    - name: Read current Pi-hole dns.hosts
+      ansible.builtin.command:
+        argv:
+          - docker
+          - exec
+          - "{{ workout_pihole_container }}"
+          - pihole-FTL
+          - --config
+          - dns.hosts
+      register: workout_pihole_raw
+      changed_when: false
+      no_log: true
+
+    - name: Merge workout into the Pi-hole host list
+      ansible.builtin.command:
+        argv:
+          - python3
+          - "{{ role_path }}/files/workout_edge.py"
+          - merge-pihole
+          - "{{ workout_pihole_plan }}"
+          - "{{ workout_fqdn }}"
+          - "{{ workout_split_ip }}"
+        stdin: "{{ workout_pihole_raw.stdout }}"
+      delegate_to: localhost
+      become: false
+      register: workout_pihole_merge
+      changed_when: workout_pihole_merge.stdout == "CHANGED"
+
+    - name: Ensure the Pi-hole backup directory exists
+      ansible.builtin.file:
+        path: "{{ docker_dir }}/pihole/workout-edge-backups"
+        state: directory
+        mode: "0700"
+      when: workout_pihole_merge.stdout | default('') == "CHANGED"
+
+    - name: Back up Pi-hole dns.hosts before adding workout
+      ansible.builtin.copy:
+        dest: >-
+          {{ docker_dir }}/pihole/workout-edge-backups/{{ lookup('pipe', 'date -u +%Y%m%dT%H%M%SZ') }}-dns.hosts.json
+        content: "{{ workout_pihole_raw.stdout }}\n"
+        mode: "0600"
+      no_log: true
+      when: workout_pihole_merge.stdout | default('') == "CHANGED"
+
+    - name: Add workout.batjaa.site to Pi-hole dns.hosts
+      ansible.builtin.command:
+        argv:
+          - docker
+          - exec
+          - "{{ workout_pihole_container }}"
+          - pihole-FTL
+          - --config
+          - dns.hosts
+          - "{{ lookup('file', workout_pihole_plan) }}"
+      no_log: true
+      changed_when: true
+      when: workout_pihole_merge.stdout | default('') == "CHANGED"
+  when: not ansible_check_mode
+  always:
+    - name: Remove the local Pi-hole host-list plan
+      ansible.builtin.file:
+        path: "{{ workout_pihole_plan }}"
+        state: absent
+      delegate_to: localhost
+      become: false
+      changed_when: false
+      failed_when: false
+
+- name: Record the Pi-hole container start time after the host update
+  ansible.builtin.command:
+    argv:
+      - docker
+      - inspect
+      - -f
+      - '{% raw %}{{.State.StartedAt}}{% endraw %}'
+      - "{{ workout_pihole_container }}"
+  register: workout_pihole_started_after
+  changed_when: false
+  when:
+    - not ansible_check_mode
+    - workout_pihole_merge is defined
+    - workout_pihole_merge.stdout | default('') == "CHANGED"
+
+- name: Confirm Pi-hole was not recreated
+  ansible.builtin.assert:
+    that:
+      - workout_pihole_started.stdout == workout_pihole_started_after.stdout
+    fail_msg: Pi-hole container start time changed. This apply must not recreate it.
+  when:
+    - not ansible_check_mode
+    - workout_pihole_merge is defined
+    - workout_pihole_merge.stdout | default('') == "CHANGED"
